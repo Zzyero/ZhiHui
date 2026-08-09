@@ -1,0 +1,594 @@
+{
+  "file_type": "view_comfy",
+  "file_version": "1.0.0",
+  "version": "0.0.1",
+  "appTitle": "",
+  "appImg": "",
+  "workflows": [
+    {
+      "viewComfyJSON": {
+        "title": "我的工作流 1",
+        "description": "",
+        "viewcomfyEndpoint": "",
+        "previewImages": [],
+        "inputs": [
+          {
+            "title": "CLIP Text Encode (Positive Prompt)",
+            "inputs": [
+              {
+                "title": "CLIP Text Encode (Positive Prompt)",
+                "placeholder": "CLIP Text Encode (Positive Prompt)",
+                "value": "卡通3D风格海报，欢乐明亮。背景是春日蓝天白云下的户外踏青场景：绿色草地上点缀着五彩鲜花和飞舞的蝴蝶，远处有风筝在天空飘扬，草地上摆放着野餐毯和彩色遮阳伞，伞下挂着小彩灯，营造温馨春游氛围。前景是一位卡通小朋友手持风筝线，旁边一只可爱的小兔子蹦跳跟随，画面Q萌治愈。\n\n文字排版：\n上方大标题（粗体活泼中文，带花朵和风筝装饰）：“春日踏青 欢乐出游”\n副标题（英文点缀）： “SPRING OUTING”\n中部彩色圆角框内标语： “一起拥抱春天的快乐”\n活动亮点介绍（白色小字，居中两行）：\n“风筝大赛 · 野餐派对 · 花海拍照”\n“亲子游戏 · 自然探秘 · 春游市集”\n底部日期与地点（现代中文字体，居中两行）：\n“活动时间：2025年4月12日 活动地点：阳光花海公园”",
+                "workflowPath": [
+                  "6",
+                  "inputs",
+                  "text"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "long-text",
+                "validations": {
+                  "required": true
+                },
+                "key": "6-inputs-text"
+              }
+            ],
+            "key": "6-CLIPTextEncode"
+          },
+          {
+            "title": "CLIP Text Encode (Negative Prompt)",
+            "inputs": [
+              {
+                "title": "CLIP Text Encode (Negative Prompt)",
+                "placeholder": "CLIP Text Encode (Negative Prompt)",
+                "value": "低分辨率，低画质，肢体畸形，手指畸形，画面过饱和，蜡像感，人脸无细节，过度光滑，画面具有AI感。构图混乱。文字模糊，扭曲",
+                "workflowPath": [
+                  "7",
+                  "inputs",
+                  "text"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "long-text",
+                "validations": {
+                  "required": true
+                },
+                "key": "7-inputs-text"
+              }
+            ],
+            "key": "7-CLIPTextEncode"
+          }
+        ],
+        "advancedInputs": [
+          {
+            "title": "K采样器",
+            "inputs": [
+              {
+                "title": "Seed",
+                "placeholder": "Seed",
+                "value": 77,
+                "workflowPath": [
+                  "3",
+                  "inputs",
+                  "seed"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "seed",
+                "validations": {
+                  "required": true
+                },
+                "key": "3-inputs-seed"
+              },
+              {
+                "title": "Steps",
+                "placeholder": "Steps",
+                "value": 4,
+                "workflowPath": [
+                  "3",
+                  "inputs",
+                  "steps"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "3-inputs-steps"
+              },
+              {
+                "title": "Cfg",
+                "placeholder": "Cfg",
+                "value": 1,
+                "workflowPath": [
+                  "3",
+                  "inputs",
+                  "cfg"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "3-inputs-cfg"
+              },
+              {
+                "title": "Sampler_name",
+                "placeholder": "Sampler_name",
+                "value": "euler",
+                "workflowPath": [
+                  "3",
+                  "inputs",
+                  "sampler_name"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "3-inputs-sampler_name"
+              },
+              {
+                "title": "Scheduler",
+                "placeholder": "Scheduler",
+                "value": "simple",
+                "workflowPath": [
+                  "3",
+                  "inputs",
+                  "scheduler"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "3-inputs-scheduler"
+              },
+              {
+                "title": "Denoise",
+                "placeholder": "Denoise",
+                "value": 1,
+                "workflowPath": [
+                  "3",
+                  "inputs",
+                  "denoise"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "3-inputs-denoise"
+              }
+            ],
+            "key": "3-KSampler"
+          },
+          {
+            "title": "UNet加载器",
+            "inputs": [
+              {
+                "title": "Unet_name",
+                "placeholder": "Unet_name",
+                "value": "Qwen_Image\\qwen_image_2512_fp8_e4m3fn.safetensors",
+                "workflowPath": [
+                  "37",
+                  "inputs",
+                  "unet_name"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "37-inputs-unet_name"
+              },
+              {
+                "title": "Weight_dtype",
+                "placeholder": "Weight_dtype",
+                "value": "default",
+                "workflowPath": [
+                  "37",
+                  "inputs",
+                  "weight_dtype"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "37-inputs-weight_dtype"
+              }
+            ],
+            "key": "37-UNETLoader"
+          },
+          {
+            "title": "加载CLIP",
+            "inputs": [
+              {
+                "title": "Clip_name",
+                "placeholder": "Clip_name",
+                "value": "Qwen\\qwen_2.5_vl_7b_fp8_scaled.safetensors",
+                "workflowPath": [
+                  "38",
+                  "inputs",
+                  "clip_name"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "38-inputs-clip_name"
+              },
+              {
+                "title": "Type",
+                "placeholder": "Type",
+                "value": "qwen_image",
+                "workflowPath": [
+                  "38",
+                  "inputs",
+                  "type"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "38-inputs-type"
+              },
+              {
+                "title": "Device",
+                "placeholder": "Device",
+                "value": "default",
+                "workflowPath": [
+                  "38",
+                  "inputs",
+                  "device"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "38-inputs-device"
+              }
+            ],
+            "key": "38-CLIPLoader"
+          },
+          {
+            "title": "加载VAE",
+            "inputs": [
+              {
+                "title": "Vae_name",
+                "placeholder": "Vae_name",
+                "value": "Qwen\\qwen_image_vae.safetensors",
+                "workflowPath": [
+                  "39",
+                  "inputs",
+                  "vae_name"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "39-inputs-vae_name"
+              }
+            ],
+            "key": "39-VAELoader"
+          },
+          {
+            "title": "空Latent图像（SD3）",
+            "inputs": [
+              {
+                "title": "Width",
+                "placeholder": "Width",
+                "value": 1056,
+                "workflowPath": [
+                  "58",
+                  "inputs",
+                  "width"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "58-inputs-width"
+              },
+              {
+                "title": "Height",
+                "placeholder": "Height",
+                "value": 1584,
+                "workflowPath": [
+                  "58",
+                  "inputs",
+                  "height"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "58-inputs-height"
+              },
+              {
+                "title": "Batch_size",
+                "placeholder": "Batch_size",
+                "value": 1,
+                "workflowPath": [
+                  "58",
+                  "inputs",
+                  "batch_size"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "58-inputs-batch_size"
+              }
+            ],
+            "key": "58-EmptySD3LatentImage"
+          },
+          {
+            "title": "保存图像",
+            "inputs": [
+              {
+                "title": "Filename_prefix",
+                "placeholder": "Filename_prefix",
+                "value": "QwenImage/qwen",
+                "workflowPath": [
+                  "60",
+                  "inputs",
+                  "filename_prefix"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "60-inputs-filename_prefix"
+              }
+            ],
+            "key": "60-SaveImage"
+          },
+          {
+            "title": "采样算法（AuraFlow）",
+            "inputs": [
+              {
+                "title": "Shift",
+                "placeholder": "Shift",
+                "value": 3.1000000000000005,
+                "workflowPath": [
+                  "66",
+                  "inputs",
+                  "shift"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "float",
+                "validations": {
+                  "required": true
+                },
+                "key": "66-inputs-shift"
+              }
+            ],
+            "key": "66-ModelSamplingAuraFlow"
+          },
+          {
+            "title": "LoRA加载器（仅模型）",
+            "inputs": [
+              {
+                "title": "Lora_name",
+                "placeholder": "Lora_name",
+                "value": "Qwen-Image\\Qwen-Image-2512-Lightning-4steps-V1.0-fp32.safetensors",
+                "workflowPath": [
+                  "93",
+                  "inputs",
+                  "lora_name"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "93-inputs-lora_name"
+              },
+              {
+                "title": "Strength_model",
+                "placeholder": "Strength_model",
+                "value": 1,
+                "workflowPath": [
+                  "93",
+                  "inputs",
+                  "strength_model"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "93-inputs-strength_model"
+              }
+            ],
+            "key": "93-LoraLoaderModelOnly"
+          }
+        ],
+        "id": "c98924b3ad188"
+      },
+      "workflowApiJSON": {
+        "3": {
+          "inputs": {
+            "seed": 77,
+            "steps": 4,
+            "cfg": 1,
+            "sampler_name": "euler",
+            "scheduler": "simple",
+            "denoise": 1,
+            "model": [
+              "66",
+              0
+            ],
+            "positive": [
+              "6",
+              0
+            ],
+            "negative": [
+              "7",
+              0
+            ],
+            "latent_image": [
+              "58",
+              0
+            ]
+          },
+          "class_type": "KSampler",
+          "_meta": {
+            "title": "K采样器"
+          }
+        },
+        "6": {
+          "inputs": {
+            "text": "卡通3D风格海报，欢乐明亮。背景是春日蓝天白云下的户外踏青场景：绿色草地上点缀着五彩鲜花和飞舞的蝴蝶，远处有风筝在天空飘扬，草地上摆放着野餐毯和彩色遮阳伞，伞下挂着小彩灯，营造温馨春游氛围。前景是一位卡通小朋友手持风筝线，旁边一只可爱的小兔子蹦跳跟随，画面Q萌治愈。\n\n文字排版：\n上方大标题（粗体活泼中文，带花朵和风筝装饰）：“春日踏青 欢乐出游”\n副标题（英文点缀）： “SPRING OUTING”\n中部彩色圆角框内标语： “一起拥抱春天的快乐”\n活动亮点介绍（白色小字，居中两行）：\n“风筝大赛 · 野餐派对 · 花海拍照”\n“亲子游戏 · 自然探秘 · 春游市集”\n底部日期与地点（现代中文字体，居中两行）：\n“活动时间：2025年4月12日 活动地点：阳光花海公园”",
+            "clip": [
+              "38",
+              0
+            ]
+          },
+          "class_type": "CLIPTextEncode",
+          "_meta": {
+            "title": "CLIP Text Encode (Positive Prompt)"
+          }
+        },
+        "7": {
+          "inputs": {
+            "text": "低分辨率，低画质，肢体畸形，手指畸形，画面过饱和，蜡像感，人脸无细节，过度光滑，画面具有AI感。构图混乱。文字模糊，扭曲",
+            "clip": [
+              "38",
+              0
+            ]
+          },
+          "class_type": "CLIPTextEncode",
+          "_meta": {
+            "title": "CLIP Text Encode (Negative Prompt)"
+          }
+        },
+        "8": {
+          "inputs": {
+            "samples": [
+              "3",
+              0
+            ],
+            "vae": [
+              "39",
+              0
+            ]
+          },
+          "class_type": "VAEDecode",
+          "_meta": {
+            "title": "VAE解码"
+          }
+        },
+        "37": {
+          "inputs": {
+            "unet_name": "Qwen_Image\\qwen_image_2512_fp8_e4m3fn.safetensors",
+            "weight_dtype": "default"
+          },
+          "class_type": "UNETLoader",
+          "_meta": {
+            "title": "UNet加载器"
+          }
+        },
+        "38": {
+          "inputs": {
+            "clip_name": "Qwen\\qwen_2.5_vl_7b_fp8_scaled.safetensors",
+            "type": "qwen_image",
+            "device": "default"
+          },
+          "class_type": "CLIPLoader",
+          "_meta": {
+            "title": "加载CLIP"
+          }
+        },
+        "39": {
+          "inputs": {
+            "vae_name": "Qwen\\qwen_image_vae.safetensors"
+          },
+          "class_type": "VAELoader",
+          "_meta": {
+            "title": "加载VAE"
+          }
+        },
+        "58": {
+          "inputs": {
+            "width": 1056,
+            "height": 1584,
+            "batch_size": 1
+          },
+          "class_type": "EmptySD3LatentImage",
+          "_meta": {
+            "title": "空Latent图像（SD3）"
+          }
+        },
+        "60": {
+          "inputs": {
+            "filename_prefix": "QwenImage/qwen",
+            "images": [
+              "8",
+              0
+            ]
+          },
+          "class_type": "SaveImage",
+          "_meta": {
+            "title": "保存图像"
+          }
+        },
+        "66": {
+          "inputs": {
+            "shift": 3.1000000000000005,
+            "model": [
+              "93",
+              0
+            ]
+          },
+          "class_type": "ModelSamplingAuraFlow",
+          "_meta": {
+            "title": "采样算法（AuraFlow）"
+          }
+        },
+        "93": {
+          "inputs": {
+            "lora_name": "Qwen-Image\\Qwen-Image-2512-Lightning-4steps-V1.0-fp32.safetensors",
+            "strength_model": 1,
+            "model": [
+              "37",
+              0
+            ]
+          },
+          "class_type": "LoraLoaderModelOnly",
+          "_meta": {
+            "title": "LoRA加载器（仅模型）"
+          }
+        }
+      }
+    }
+  ]
+}

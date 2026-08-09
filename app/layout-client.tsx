@@ -11,8 +11,6 @@ import { Suspense, useEffect } from "react";
 
 const settingsService = new SettingsService();
 
-const showSidebar = !settingsService.getIsViewMode();
-
 export default function ClientRootLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
@@ -30,7 +28,7 @@ export default function ClientRootLayout({ children }: { children: React.ReactNo
         <SidebarProvider>
           <div className="flex flex-1 overflow-hidden">
             <AppSidebar />
-            <main className={`flex-1 overflow-x-auto overflow-y-hidden ${showSidebar ? 'ml-[var(--sidebar-width)]' : ''}`}>
+            <main className="flex-1 overflow-x-auto overflow-y-hidden ml-[var(--sidebar-width)]">
               {children}
             </main>
           </div>
@@ -45,9 +43,6 @@ export default function ClientRootLayout({ children }: { children: React.ReactNo
 
 export function AppSidebar() {
   const pathname = usePathname();
-  if (!showSidebar) {
-    return <></>
-  }
 
   const items = [
     ...(settingsService.getIsViewMode() ? [] : [{
@@ -56,7 +51,7 @@ export function AppSidebar() {
       icon: FileJson,
     }]),
     {
-      title: "试运行",
+      title: "智能生图",
       url: "/playground",
       icon: SquareTerminal,
     },
