@@ -4,7 +4,7 @@ import { SettingsService } from '@/app/services/settings-service';
 import { TopNav } from '@/components/top-nav';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider } from '@/components/ui/sidebar';
 import { Toaster } from 'sonner';
-import { FileJson, SquareTerminal } from 'lucide-react';
+import { FileJson, SquareTerminal, Wand2 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from "next/navigation";
 import { Suspense, useEffect } from "react";
@@ -54,6 +54,11 @@ export function AppSidebar() {
       title: "智能生图",
       url: "/playground",
       icon: SquareTerminal,
+    },
+    {
+      title: "智能修图",
+      url: "/image-edit",
+      icon: Wand2,
     },
   ];
 

@@ -4,17 +4,21 @@ import { Dropzone } from '@/components/ui/dropzone';
 import ViewComfyFormEditor from '@/components/pages/view-comfy/view-comfy-form-editor';
 import { workflowAPItoViewComfy } from '@/lib/workflow-api-parser';
 import { useState, useEffect } from 'react';
-import { ActionType, type IViewComfy, type IViewComfyBase, type IViewComfyJSON, useViewComfy } from '@/app/providers/view-comfy-provider';
+import { ActionType, type IViewComfy, type IViewComfyBase, type IViewComfyJSON, type IViewComfySection, useViewComfy } from '@/app/providers/view-comfy-provider';
 import { Label } from '@/components/ui/label';
 import { ErrorAlertDialog } from '@/components/ui/error-alert-dialog';
 import WorkflowSwitcher from '@/components/workflow-switchter';
 import { Input } from '@/components/ui/input';
+import { Checkbox } from '@/components/ui/checkbox';
+import { toast } from 'sonner';
 
 class WorkflowJSONError extends Error {
     constructor() {
         super("不支持 workflow.json 文件，请使用 workflow_api.json");
     }
 }
+
+const DEFAULT_SECTIONS = ['智能生图', '智能修图'];
 
 
 
@@ -26,6 +30,50 @@ export default function ViewComfyPage() {
     const [appTitle, setAppTitle] = useState<string>(viewComfyState.appTitle || "");
     const [appImg, setAppImg] = useState<string>(viewComfyState.appImg || "");
     const [appImgError, setAppImgError] = useState<string | undefined>(undefined);
+    const [savingSections, setSavingSections] = useState(false);
+
+    // 如果 sections 为空，初始化默认两个分类（不持久化，等用户点保存再写）
+    useEffect(() => {
+        if (viewComfyState.sections.length === 0 && viewComfyState.viewComfys.length > 0) {
+            const initial: IViewComfySection[] = DEFAULT_SECTIONS.map((name) => ({ name, workflows: [] }));
+            // 默认把当前所有 workflow 都放到"智能生图"
+            initial[0].workflows = viewComfyState.viewComfys.map((vc) => vc.viewComfyJSON.title);
+            viewComfyStateDispatcher({ type: ActionType.SET_SECTIONS, payload: initial });
+        }
+    }, [viewComfyState.sections.length, viewComfyState.viewComfys, viewComfyStateDispatcher]);
+
+    // 当前 workflow 在每个 section 里的"是否归属"
+    const currentTitle = viewComfyState.currentViewComfy?.viewComfyJSON.title;
+
+    const toggleSectionForCurrent = (sectionName: string) => {
+        if (!currentTitle) return;
+        const next = viewComfyState.sections.map((s) => {
+            if (s.name !== sectionName) return s;
+            const has = s.workflows.includes(currentTitle);
+            return {
+                ...s,
+                workflows: has ? s.workflows.filter((t) => t !== currentTitle) : [...s.workflows, currentTitle],
+            };
+        });
+        viewComfyStateDispatcher({ type: ActionType.SET_SECTIONS, payload: next });
+    };
+
+    const saveSections = async () => {
+        setSavingSections(true);
+        try {
+            const res = await fetch('/api/view-comfy', {
+                method: 'POST',
+                headers: { 'content-type': 'application/json' },
+                body: JSON.stringify({ action: 'update-sections', sections: viewComfyState.sections }),
+            });
+            if (!res.ok) throw new Error(await res.text());
+            toast.success('分类已保存到 view_comfy.json');
+        } catch (err) {
+            toast.error('保存分类失败: ' + (err instanceof Error ? err.message : String(err)));
+        } finally {
+            setSavingSections(false);
+        }
+    };
 
     const handleOnBlur = (inputBlur: "appTitle" | "appImg") => {
         if (inputBlur === "appTitle") {
@@ -214,6 +262,31 @@ export default function ViewComfyPage() {
                                     {(viewComfyState.viewComfys.length > 0 && viewComfyState.currentViewComfy) && (
                                         <div className="flex">
                                             <WorkflowSwitcher viewComfys={viewComfyState.viewComfys} currentViewComfy={viewComfyState.currentViewComfy} onSelectChange={onSelectChange} />
+                                        </div>
+                                    )}
+                                    {currentTitle && viewComfyState.sections.length > 0 && (
+                                        <div className="flex items-center gap-3 border rounded-md px-3 py-1.5 bg-background">
+                                            <Label className="text-xs text-muted-foreground">归类到：</Label>
+                                            {viewComfyState.sections.map((section) => {
+                                                const checked = section.workflows.includes(currentTitle);
+                                                return (
+                                                    <label key={section.name} className="flex items-center gap-1.5 text-sm cursor-pointer">
+                                                        <Checkbox
+                                                            checked={checked}
+                                                            onCheckedChange={() => toggleSectionForCurrent(section.name)}
+                                                        />
+                                                        {section.name}
+                                                    </label>
+                                                );
+                                            })}
+                                            <Button
+                                                size="sm"
+                                                variant="default"
+                                                disabled={savingSections}
+                                                onClick={saveSections}
+                                            >
+                                                {savingSections ? '保存中…' : '保存分类'}
+                                            </Button>
                                         </div>
                                     )}
                                     {showDeleteWorkflowButton() && (

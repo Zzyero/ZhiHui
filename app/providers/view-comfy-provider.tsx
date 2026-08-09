@@ -30,6 +30,12 @@ export interface IViewComfyJSON {
     file_version?: string;
     version?: string;
     workflows: IViewComfy[];
+    sections?: IViewComfySection[];
+}
+
+export interface IViewComfySection {
+    name: string;
+    workflows: string[];
 }
 
 export interface IViewComfy {
@@ -44,6 +50,7 @@ export interface IViewComfyState {
     viewComfys: IViewComfy[];
     viewComfyDraft: IViewComfyDraft | undefined;
     currentViewComfy: IViewComfy | undefined;
+    sections: IViewComfySection[];
 }
 
 // Define action types as an enum
@@ -56,7 +63,8 @@ export enum ActionType {
     RESET_CURRENT_AND_DRAFT_VIEW_COMFY = "RESET_CURRENT_AND_DRAFT_VIEW_COMFY",
     INIT_VIEW_COMFY = "INIT_VIEW_COMFY",
     SET_APP_TITLE = "SET_APP_TITLE",
-    SET_APP_IMG = "SET_APP_IMG"
+    SET_APP_IMG = "SET_APP_IMG",
+    SET_SECTIONS = "SET_SECTIONS"
 }
 
 // Update the Action type to use the enum
@@ -70,6 +78,7 @@ export type Action =
     | { type: ActionType.INIT_VIEW_COMFY; payload: IViewComfyJSON }
     | { type: ActionType.SET_APP_TITLE; payload: string }
     | { type: ActionType.SET_APP_IMG; payload: string }
+    | { type: ActionType.SET_SECTIONS; payload: IViewComfySection[] }
 
 function viewComfyReducer(state: IViewComfyState, action: Action): IViewComfyState {
     switch (action.type) {
@@ -164,6 +173,7 @@ function viewComfyReducer(state: IViewComfyState, action: Action): IViewComfySta
                 }))],
                 currentViewComfy: { viewComfyJSON: action.payload.workflows[0].viewComfyJSON, workflowApiJSON: action.payload.workflows[0].workflowApiJSON },
                 viewComfyDraft: { viewComfyJSON: action.payload.workflows[0].viewComfyJSON, workflowApiJSON: action.payload.workflows[0].workflowApiJSON },
+                sections: action.payload.sections ?? [],
             };
         }
         case ActionType.SET_APP_TITLE:
@@ -175,6 +185,11 @@ function viewComfyReducer(state: IViewComfyState, action: Action): IViewComfySta
             return {
                 ...state,
                 appImg: action.payload
+            };
+        case ActionType.SET_SECTIONS:
+            return {
+                ...state,
+                sections: action.payload
             };
         default:
             return state;
@@ -189,7 +204,7 @@ interface ViewComfyContextType {
 const ViewComfyContext = createContext<ViewComfyContextType | undefined>(undefined);
 
 export function ViewComfyProvider({ children }: { children: ReactNode }) {
-    const [viewComfyState, dispatch] = useReducer(viewComfyReducer, { viewComfys: [], viewComfyDraft: undefined, currentViewComfy: undefined });
+    const [viewComfyState, dispatch] = useReducer(viewComfyReducer, { viewComfys: [], viewComfyDraft: undefined, currentViewComfy: undefined, sections: [] });
 
     return (
         <ViewComfyContext.Provider value={{ viewComfyState, viewComfyStateDispatcher: dispatch }}>

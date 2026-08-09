@@ -68,6 +68,7 @@ interface IPlaygroundPageContent {
     doPost: (params: IUsePostPlayground) => void;
     loading: boolean;
     setLoading: (loading: boolean) => void;
+    sectionName?: string;
 }
 
 const getOutputFileName = (output: { file: File | S3FilesData, url: string }): string => {
@@ -86,13 +87,36 @@ const getOutputContentType = (output: IOutput): string => {
     }
 }
 
-function PlaygroundPageContent({ doPost, loading, setLoading }: IPlaygroundPageContent) {
+function PlaygroundPageContent({ doPost, loading, setLoading, sectionName }: IPlaygroundPageContent) {
     const [results, setResults] = useState<IResults>({});
     const { viewComfyState, viewComfyStateDispatcher } = useViewComfy();
     const viewMode = process.env.NEXT_PUBLIC_VIEW_MODE === "true";
     const [errorAlertDialog, setErrorAlertDialog] = useState<{ open: boolean, errorTitle: string | undefined, errorDescription: React.JSX.Element, onClose: () => void }>({ open: false, errorTitle: undefined, errorDescription: <></>, onClose: () => { } });
     const [textOutputEnabled, setTextOutputEnabled] = useState(false);
     const [showOutputFileName, setShowOutputFileName] = useState(false);
+
+    // 按 section 过滤工作流（按标题匹配）
+    const filteredViewComfys = useMemo(() => {
+        if (!sectionName) return viewComfyState.viewComfys;
+        const section = viewComfyState.sections.find((s) => s.name === sectionName);
+        if (!section) return [];
+        const titles = new Set(section.workflows);
+        return viewComfyState.viewComfys.filter((vc) => titles.has(vc.viewComfyJSON.title));
+    }, [sectionName, viewComfyState.viewComfys, viewComfyState.sections]);
+
+    // 如果当前选中的工作流不在过滤集合内，自动选第一个
+    useEffect(() => {
+        if (!sectionName) return;
+        if (filteredViewComfys.length === 0) return;
+        const current = viewComfyState.currentViewComfy;
+        const stillVisible = current && filteredViewComfys.some((vc) => vc.viewComfyJSON.id === current.viewComfyJSON.id);
+        if (!stillVisible) {
+            viewComfyStateDispatcher({
+                type: "UPDATE_CURRENT_VIEW_COMFY" as any,
+                payload: filteredViewComfys[0],
+            });
+        }
+    }, [sectionName, filteredViewComfys, viewComfyState.currentViewComfy, viewComfyStateDispatcher]);
 
     useEffect(() => {
         if (!viewMode) return;
@@ -307,7 +331,7 @@ function PlaygroundPageContent({ doPost, loading, setLoading }: IPlaygroundPageC
             <div className="flex flex-col h-[calc(100vh-var(--top-nav-height))]">
                 <div className="md:hidden w-full flex pl-4 gap-x-2">
                     {viewComfyState.currentViewComfy && (
-                        <WorkflowSwitcher viewComfys={viewComfyState.viewComfys} currentViewComfy={viewComfyState.currentViewComfy} onSelectChange={onSelectChange} />
+                        <WorkflowSwitcher viewComfys={filteredViewComfys} currentViewComfy={viewComfyState.currentViewComfy} onSelectChange={onSelectChange} />
                     )}
                     <Drawer>
                         <DrawerTrigger asChild>
@@ -324,9 +348,9 @@ function PlaygroundPageContent({ doPost, loading, setLoading }: IPlaygroundPageC
                 <main className="flex overflow-hidden flex-1 gap-0">
                     <div className="relative hidden flex-col w-full max-w-[450px] items-start md:flex flex-shrink-0 overflow-hidden rounded-l-xl bg-muted/50 p-4">
                         <div className="flex flex-col w-full h-full min-h-0 min-w-0 bg-background rounded-xl overflow-hidden border shadow-md">
-                            {viewComfyState.viewComfys.length > 0 && viewComfyState.currentViewComfy && (
+                            {filteredViewComfys.length > 0 && viewComfyState.currentViewComfy && (
                                 <div className="px-2 pt-4 w-full">
-                                    <WorkflowSwitcher viewComfys={viewComfyState.viewComfys} currentViewComfy={viewComfyState.currentViewComfy} onSelectChange={onSelectChange} />
+                                    <WorkflowSwitcher viewComfys={filteredViewComfys} currentViewComfy={viewComfyState.currentViewComfy} onSelectChange={onSelectChange} />
                                 </div>
                             )}
                             {renderForm()}
@@ -389,13 +413,14 @@ function PlaygroundPageContent({ doPost, loading, setLoading }: IPlaygroundPageC
     )
 }
 
-export default function PlaygroundPage() {
+export default function PlaygroundPage({ sectionName }: { sectionName?: string }) {
     const params = usePostPlayground();
     return (
         <PlaygroundPageContent
             doPost={params.doPost}
             loading={params.loading}
             setLoading={params.setLoading}
+            sectionName={sectionName}
         />
     );
 }

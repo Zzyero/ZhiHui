@@ -4,6 +4,20 @@
   "version": "0.0.1",
   "appTitle": "",
   "appImg": "",
+  "sections": [
+    {
+      "name": "智能生图",
+      "workflows": [
+        "我的工作流 1"
+      ]
+    },
+    {
+      "name": "智能修图",
+      "workflows": [
+        "我的工作流 1"
+      ]
+    }
+  ],
   "workflows": [
     {
       "viewComfyJSON": {
