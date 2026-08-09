@@ -113,7 +113,7 @@ export function PreviewOutputsImageGallery({
             {!(image1 ?? image2 ?? image3) && (
                 <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full text-center">
                     <span className="text-lg">
-                        Click the Generate button to start.
+                        点击「生成」按钮开始。
                     </span>
                 </div>
             )}

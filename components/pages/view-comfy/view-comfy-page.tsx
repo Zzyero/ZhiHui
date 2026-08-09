@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 
 class WorkflowJSONError extends Error {
     constructor() {
-        super("Workflow.json file is not supported, please use workflow_api.json");
+        super("不支持 workflow.json 文件，请使用 workflow_api.json");
     }
 }
 
@@ -40,7 +40,7 @@ export default function ViewComfyPage() {
                     viewComfyStateDispatcher({ type: ActionType.SET_APP_IMG, payload: appImg });
                 } catch (error) {
                     console.error('Error parsing image URL:', error);
-                    setAppImgError("Invalid image URL");
+                    setAppImgError("无效的图片 URL");
                 }
             }
         }
@@ -95,11 +95,11 @@ export default function ViewComfyPage() {
     const getDropZoneText = () => {
         if (viewComfyState.viewComfyDraft?.viewComfyJSON) {
             return <div className="text-muted-foreground text-lg">
-                Drag and drop your <b>workflow_api.json</b> to start
+                拖入你的 <b>workflow_api.json</b> 开始
             </div>
         }
         return <div className="text-muted-foreground text-lg">
-            Drag and drop your <b>workflow_api.json</b> or <b>view_comfy.json</b> to start
+            拖入你的 <b>workflow_api.json</b> 或 <b>view_comfy.json</b> 开始
         </div>
     }
 
@@ -142,7 +142,7 @@ export default function ViewComfyPage() {
             });
         } else {
             if (data.title === "") {
-                data.title = `My Awesome Workflow ${viewComfyState.viewComfys.length + 1}`;
+                data.title = `我的工作流 ${viewComfyState.viewComfys.length + 1}`;
             }
 
             viewComfyStateDispatcher({
@@ -168,7 +168,7 @@ export default function ViewComfyPage() {
 
     return (
         <div className="flex flex-col h-full overflow-hidden">
-            <Header title="Editor">
+            <Header title="编辑器">
             </Header>
             <main className="flex-1 overflow-hidden p-2 pb-12">
                 {showDropZone() && (
@@ -193,12 +193,12 @@ export default function ViewComfyPage() {
                                         <div className="w-1/2 flex">
                                             <div className="w-full flex gap-4">
                                                 <div className="grid w-1/2 items-center gap-1.5">
-                                                    <Label htmlFor="appTitle">App Title</Label>
+                                                    <Label htmlFor="appTitle">应用标题</Label>
                                                     <Input id="appTitle" placeholder="ViewComfy" value={appTitle} onBlur={() => handleOnBlur("appTitle")} onChange={(e) => setAppTitle(e.target.value)} />
                                                 </div>
 
                                                 <div className="grid w-full items-center gap-1.5 pr-4">
-                                                    <Label htmlFor="appImg">App Image URL</Label>
+                                                    <Label htmlFor="appImg">应用图片 URL</Label>
                                                     <Input id="appImg" placeholder="https://example.com/image.png" value={appImg} onBlur={() => handleOnBlur("appImg")} onChange={(e) => setAppImg(e.target.value)} />
                                                 </div>
                                             </div>
@@ -222,10 +222,10 @@ export default function ViewComfyPage() {
                                                 variant="destructive"
                                                 onClick={deleteViewComfyJSON}
                                             >
-                                                Delete Workflow
+                                                删除工作流
                                             </Button>
                                             <Button onClick={addWorkflowOnClick}>
-                                                Add Workflow
+                                                新建工作流
                                             </Button>
                                         </div>
                                     )}
@@ -252,11 +252,11 @@ function getErrorText(error: Error | undefined) {
     }
     if (error instanceof WorkflowJSONError) {
         return <>
-            Looks like you have uploaded a workflow.json instead of workflow_api.json <br />
-            To generate workflow_api.json, enable dev mode options in the ComfyUI settings and export using the “Save (API format)” button.
+            你上传的似乎是 workflow.json 而不是 workflow_api.json<br />
+            若要生成 workflow_api.json，请在 ComfyUI 设置中开启开发者模式选项，然后使用「保存（API 格式）」按钮导出。
         </>
     }
 
-    return <> An error occurred while parsing the JSON, most commons cuase is the json is not valid or is empty. <br /> <b> error details: </b> <br /> {error.message} </>
+    return <> 解析 JSON 时出错，最常见的原因是 JSON 不合法或为空。<br /> <b> 错误详情：</b> <br /> {error.message} </>
 
 }

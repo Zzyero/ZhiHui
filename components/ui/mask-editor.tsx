@@ -693,7 +693,7 @@ export function MaskEditor({ imageUrl, existingMask, onSave, onCancel, className
       {/* Right Sidebar - Tools */}
       <div className="w-80 border-l bg-background flex flex-col">
         <div className="p-4 border-b">
-          <h3 className="font-semibold mb-3">Tools</h3>
+          <h3 className="font-semibold mb-3">工具</h3>
           <div className="flex gap-2">
             <Tooltip>
               <TooltipTrigger asChild>
@@ -705,7 +705,7 @@ export function MaskEditor({ imageUrl, existingMask, onSave, onCancel, className
                   <Pencil className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Brush (Draw Mask)</TooltipContent>
+              <TooltipContent>画笔（绘制蒙版）</TooltipContent>
             </Tooltip>
             {/* // TODO: THIS FUNCTION HAS THE SAME PROBLEM AS THE CLEAR MASK FUNCTION */}
             {/* <Tooltip>
@@ -731,7 +731,7 @@ export function MaskEditor({ imageUrl, existingMask, onSave, onCancel, className
                   <Move className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Pan</TooltipContent>
+              <TooltipContent>平移</TooltipContent>
             </Tooltip>
           </div>
         </div>
@@ -739,10 +739,10 @@ export function MaskEditor({ imageUrl, existingMask, onSave, onCancel, className
         <div className="flex-1 overflow-y-auto p-4 space-y-6">
           {/* Brush/Eraser Settings */}
           <div className="space-y-4">
-            <h4 className="font-medium text-sm">Brush Settings</h4>
+            <h4 className="font-medium text-sm">画笔设置</h4>
 
             <div className="space-y-2">
-              <label className="text-sm">Size: {brushSize}px</label>
+              <label className="text-sm">大小：{brushSize}px</label>
               <Slider
                 value={[brushSize]}
                 onValueChange={(value) => setBrushSize(value[0])}
@@ -755,7 +755,7 @@ export function MaskEditor({ imageUrl, existingMask, onSave, onCancel, className
 
             <div className="space-y-2">
               <label className="text-sm">
-                {tool === 'brush' ? 'Opacity' : 'Eraser Opacity'}: {Math.round((tool === 'brush' ? brushOpacity : eraserOpacity) * 100)}%
+                {tool === 'brush' ? '不透明度' : '橡皮不透明度'}：{Math.round((tool === 'brush' ? brushOpacity : eraserOpacity) * 100)}%
               </label>
               <Slider
                 value={[tool === 'brush' ? brushOpacity : eraserOpacity]}
@@ -769,7 +769,7 @@ export function MaskEditor({ imageUrl, existingMask, onSave, onCancel, className
 
             <div className="space-y-2">
               <label className="text-sm">
-                Hardness: {Math.round((tool === 'brush' ? brushHardness : eraserHardness) * 100)}%
+                硬度：{Math.round((tool === 'brush' ? brushHardness : eraserHardness) * 100)}%
               </label>
               <Slider
                 value={[tool === 'brush' ? brushHardness : eraserHardness]}
@@ -784,7 +784,7 @@ export function MaskEditor({ imageUrl, existingMask, onSave, onCancel, className
 
           {/* History */}
           <div className="space-y-3">
-            <h4 className="font-medium text-sm">History</h4>
+            <h4 className="font-medium text-sm">历史记录</h4>
             <div className="flex gap-2">
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -796,10 +796,10 @@ export function MaskEditor({ imageUrl, existingMask, onSave, onCancel, className
                     className="flex-1"
                   >
                     <Undo2 className="h-4 w-4 mr-2" />
-                    Undo
+                    撤销
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>Undo</TooltipContent>
+                <TooltipContent>撤销</TooltipContent>
               </Tooltip>
 
               <Tooltip>
@@ -812,10 +812,10 @@ export function MaskEditor({ imageUrl, existingMask, onSave, onCancel, className
                     className="flex-1"
                   >
                     <Redo2 className="h-4 w-4 mr-2" />
-                    Redo
+                    重做
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>Redo</TooltipContent>
+                <TooltipContent>重做</TooltipContent>
               </Tooltip>
             </div>
 
@@ -828,16 +828,16 @@ export function MaskEditor({ imageUrl, existingMask, onSave, onCancel, className
                   className="w-full"
                 >
                   <Trash2 className="h-4 w-4 mr-2" />
-                  Clear Mask
+                  清除蒙版
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Clear Mask</TooltipContent>
+              <TooltipContent>清除蒙版</TooltipContent>
             </Tooltip>
           </div>
 
           {/* Zoom */}
           <div className="space-y-3">
-            <h4 className="font-medium text-sm">View</h4>
+            <h4 className="font-medium text-sm">视图</h4>
             <div className="flex items-center gap-2">
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -845,7 +845,7 @@ export function MaskEditor({ imageUrl, existingMask, onSave, onCancel, className
                     <ZoomOut className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>Zoom Out</TooltipContent>
+                <TooltipContent>缩小</TooltipContent>
               </Tooltip>
 
               <span className="text-sm flex-1 text-center">{Math.round(zoom * 100)}%</span>
@@ -856,7 +856,7 @@ export function MaskEditor({ imageUrl, existingMask, onSave, onCancel, className
                     <ZoomIn className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>Zoom In</TooltipContent>
+                <TooltipContent>放大</TooltipContent>
               </Tooltip>
             </div>
 
@@ -864,10 +864,10 @@ export function MaskEditor({ imageUrl, existingMask, onSave, onCancel, className
               <TooltipTrigger asChild>
                 <Button size="sm" variant="outline" onClick={() => fitToScreen()} className="w-full">
                   <Maximize2 className="h-4 w-4 mr-2" />
-                  Fit to Screen
+                  适应屏幕
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Fit to Screen</TooltipContent>
+              <TooltipContent>适应屏幕</TooltipContent>
             </Tooltip>
           </div>
         </div>
@@ -880,7 +880,7 @@ export function MaskEditor({ imageUrl, existingMask, onSave, onCancel, className
             className="w-full"
           >
             <Save className="h-4 w-4 mr-2" />
-            Save Mask
+            保存蒙版
           </Button>
           <Button
             type="button"
@@ -888,7 +888,7 @@ export function MaskEditor({ imageUrl, existingMask, onSave, onCancel, className
             onClick={onCancel}
             className="w-full"
           >
-            Cancel
+            取消
           </Button>
         </div>
       </div>

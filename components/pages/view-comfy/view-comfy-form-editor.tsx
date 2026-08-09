@@ -63,8 +63,8 @@ export default function ViewComfyFormEditor({ onSubmit, viewComfyJSON }: ViewCom
         onSubmit(data);
 
         toast.success(
-            "Form Saved!", {
-            description: "Go to the Playground to run it",
+            "表单已保存！", {
+            description: "前往试运行页面运行它",
             duration: 3000,
         })
     }

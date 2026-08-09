@@ -51,7 +51,7 @@ const DatePickerWithRange = React.forwardRef<
                   format(dateRange.from, "LLL dd, y")
                 )
               ) : (
-                <span>Pick a date</span>
+                <span>选择日期</span>
               )}
             </Button>
           </PopoverTrigger>

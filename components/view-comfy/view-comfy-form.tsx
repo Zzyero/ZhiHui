@@ -152,7 +152,7 @@ export function ViewComfyForm(args: {
             }
             // Validate the existing endpoint value
             if (!validateViewComfyEndpoint(value)) {
-                form.setError("viewcomfyEndpoint", { type: "custom", message: "The API endpoint URL is invalid" }, { shouldFocus: true })
+                form.setError("viewcomfyEndpoint", { type: "custom", message: "API 端点 URL 无效" }, { shouldFocus: true })
             }
         }
     }, [form]);
@@ -296,9 +296,9 @@ export function ViewComfyForm(args: {
                                                     name="title"
                                                     render={({ field }) => (
                                                         <FormItem key="title" className="m-1">
-                                                            <FormLabel>Title</FormLabel>
+                                                            <FormLabel>标题</FormLabel>
                                                             <FormControl>
-                                                                <Input className="" placeholder="The name of your workflow" {...field} />
+                                                                <Input className="" placeholder="工作流名称" {...field} />
                                                             </FormControl>
                                                             <FormMessage />
                                                         </FormItem>
@@ -309,9 +309,9 @@ export function ViewComfyForm(args: {
                                                     name="description"
                                                     render={({ field }) => (
                                                         <FormItem key="description" className="m-1">
-                                                            <FormLabel>Description</FormLabel>
+                                                            <FormLabel>描述</FormLabel>
                                                             <FormControl>
-                                                                <Textarea placeholder="The description of your workflow" {...field} />
+                                                                <Textarea placeholder="工作流描述" {...field} />
                                                             </FormControl>
                                                             <FormMessage />
                                                         </FormItem>
@@ -322,13 +322,13 @@ export function ViewComfyForm(args: {
                                                     name="viewcomfyEndpoint"
                                                     rules={{
                                                         validate: {
-                                                            endpoint: (value) => !value || validateViewComfyEndpoint(value) || "The API endpoint URL is invalid",
+                                                            endpoint: (value) => !value || validateViewComfyEndpoint(value) || "API 端点 URL 无效",
                                                         }
                                                     }}
                                                     render={({ field }) => (
                                                         <FormItem key="viewcomfyEndpoint" className="m-1" ref={viewcomfyEndpointRef}>
                                                             <FormLabel>
-                                                                ViewComfy Endpoint {!settingsService.getIsRunningInViewComfy() && <span>(optional)</span>}
+                                                                ViewComfy 端点 {!settingsService.getIsRunningInViewComfy() && <span>（可选）</span>}
                                                                 <Tooltip>
                                                                     <TooltipTrigger asChild>
                                                                         <Button
@@ -346,15 +346,15 @@ export function ViewComfyForm(args: {
                                                                     </TooltipTrigger>
                                                                     <TooltipContent className="max-w-[300px]">
                                                                         <p>
-                                                                            You can run your workflow on a cloud GPU by deploying it on ViewComfy first.
-                                                                            To get started, select deploy on the left hand side menu.
+                                                                            你可以先将工作流部署到 ViewComfy，从而在云端 GPU 上运行。
+                                                                            开始之前，请在左侧菜单中选择「部署」。
                                                                         </p>
                                                                     </TooltipContent>
                                                                 </Tooltip>
                                                             </FormLabel>
                                                             <FormControl
                                                             >
-                                                                <Input placeholder="ViewComfy endpoint (optional)" {...field} />
+                                                                <Input placeholder="ViewComfy 端点（可选）" {...field} />
                                                             </FormControl>
                                                             <FormMessage />
                                                         </FormItem>
@@ -367,7 +367,7 @@ export function ViewComfyForm(args: {
                                                         <FormItem key="textOutputEnabled" className="">
                                                             <FormControl>
                                                                 <div className={"flex ml-0.5 space-x-2 pt-2 mb-[-5px]"}>
-                                                                    <FormLabel>Enable text output</FormLabel>
+                                                                    <FormLabel>启用文本输出</FormLabel>
                                                                     <Checkbox
                                                                         checked={field.value}
                                                                         onCheckedChange={field.onChange}
@@ -375,7 +375,7 @@ export function ViewComfyForm(args: {
                                                                 </div>
                                                             </FormControl>
                                                             <FormDescription className="pt-2 pb-2">
-                                                                Text output is in beta and can lead to unexpected text being rendered
+                                                                文本输出仍处于测试阶段，可能导致出现意料之外的文字内容
                                                             </FormDescription>
                                                         </FormItem>
                                                     )}
@@ -388,7 +388,7 @@ export function ViewComfyForm(args: {
                                                             <FormControl>
                                                                 <div className={"flex ml-0.5 space-x-2 mb-[-5px]"}>
                                                                     <FormLabel>
-                                                                        Show file names on output
+                                                                        在输出下方显示文件名
                                                                     </FormLabel>
                                                                     <Checkbox
                                                                         checked={field.value}
@@ -397,7 +397,7 @@ export function ViewComfyForm(args: {
                                                                 </div>
                                                             </FormControl>
                                                             <FormDescription className="pt-2 pb-2">
-                                                                Show the filename below the file, you can parse the display by surrounding the filename with __
+                                                                在文件下方显示文件名，可以用 __ 包裹文件名来自定义显示内容
                                                                 <br />
                                                                 __example__123.png =&gt; example
                                                             </FormDescription>
@@ -416,7 +416,7 @@ export function ViewComfyForm(args: {
                                         <fieldset disabled={isLoading} className="grid gap-4 rounded-lg p-1">
                                             {editMode && (
                                                 <legend className="-ml-1 px-1 text-md font-medium">
-                                                    Basic Inputs
+                                                    基本输入
                                                 </legend>
                                             )}
                                             {inputFieldArray.fields.map((field, index) => {
@@ -486,9 +486,9 @@ export function ViewComfyForm(args: {
                                                                                 <MoveDown />
                                                                             </Button>
                                                                         </TooltipTrigger>
-                                                                        <TooltipContent>
-                                                                            <p>Move to Advanced Inputs</p>
-                                                                        </TooltipContent>
+                                                                    <TooltipContent>
+                                                                        <p>移到高级输入</p>
+                                                                    </TooltipContent>
                                                                     </Tooltip>
 
                                                                     <Tooltip>
@@ -504,7 +504,7 @@ export function ViewComfyForm(args: {
                                                                             </Button>
                                                                         </TooltipTrigger>
                                                                         <TooltipContent>
-                                                                            <p>Delete Input</p>
+                                                                            <p>删除输入</p>
                                                                         </TooltipContent>
                                                                     </Tooltip>
 
@@ -562,12 +562,12 @@ export function ViewComfyForm(args: {
                         {editMode && (
                             <div className={cn("sticky bottom-0 p-4 bg-background w-full flex flex-row gap-x-4 items-end rounded-md")}>
                                 <Button type="submit" className="w-full" onClick={form.handleSubmit(handleSaveSubmit)}>
-                                    Save Changes
+                                    保存修改
                                 </Button>
                                 <div className="flex flex-col gap-y-2 w-full">
                                     {downloadViewComfyJSON && (
                                         <Button type="button" variant="secondary" className="w-full" onClick={form.handleSubmit(downloadViewComfyJSON)}>
-                                            Download as ViewComfy JSON
+                                            下载为 ViewComfy JSON
                                         </Button>
                                 )}
                             </div>
@@ -617,7 +617,7 @@ function PreviewImagesInput({ form }: { form: UseFormReturn<IViewComfyBase> }) {
         } catch (e) {
             // Invalid URL, set error message but keep the input value
             const newErrors = [...urlErrors];
-            newErrors[index] = "Please enter a valid URL";
+            newErrors[index] = "请输入有效的 URL";
             setUrlErrors(newErrors);
         }
     };
@@ -631,14 +631,14 @@ function PreviewImagesInput({ form }: { form: UseFormReturn<IViewComfyBase> }) {
                     name={`previewImages.${index}`}
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Preview Image {index + 1}</FormLabel>
+                            <FormLabel>预览图 {index + 1}</FormLabel>
                             <FormControl>
                                 <div className="space-y-2">
                                     {field.value ? (
                                         <div className="flex flex-col gap-2">
                                             <img
                                                 src={field.value}
-                                                alt={`Preview ${index + 1}`}
+                                                alt={`预览 ${index + 1}`}
                                                 className="w-full object-contain rounded-md max-h-[300px]"
                                                 onError={() => {
                                                     form.setValue(`previewImages.${index}`, "");
@@ -663,7 +663,7 @@ function PreviewImagesInput({ form }: { form: UseFormReturn<IViewComfyBase> }) {
                                                     });
                                                 }}
                                             >
-                                                <Trash2 className="size-5 mr-2" /> Remove image
+                                                <Trash2 className="size-5 mr-2" /> 移除图片
                                             </Button>
                                         </div>
                                     ) : (
@@ -714,7 +714,7 @@ function AdvancedInputSection(args: {
             {!editMode && (<div className="flex items-center space-x-4 px-4">
                 <CollapsibleTrigger asChild>
                     <Button type="button" variant="ghost" size="default" className="w-full">
-                        Advanced Inputs
+                        高级输入
                         <ChevronsUpDown className="size-5" />
                     </Button>
                 </CollapsibleTrigger>
@@ -724,7 +724,7 @@ function AdvancedInputSection(args: {
                 <fieldset className="grid gap-2 rounded-lg p-1">
                     {editMode && (
                         <legend className="-ml-1 px-1 text-md font-medium">
-                            Advanced Inputs
+                            高级输入
                         </legend>
                     )}
                     {advancedFieldArray.fields.map((advancedField, index) => {
@@ -796,7 +796,7 @@ function AdvancedInputSection(args: {
                                                     </Button>
                                                 </TooltipTrigger>
                                                 <TooltipContent>
-                                                    <p>Move to Basic Inputs</p>
+                                                    <p>移到基本输入</p>
                                                 </TooltipContent>
                                             </Tooltip>
                                             <Tooltip>
@@ -812,7 +812,7 @@ function AdvancedInputSection(args: {
                                                     </Button>
                                                 </TooltipTrigger>
                                                 <TooltipContent>
-                                                    <p>Delete Input</p>
+                                                    <p>删除输入</p>
                                                 </TooltipContent>
                                             </Tooltip>
 
@@ -852,7 +852,7 @@ function NestedInputField(args: {
         if (input.validations.errorMsg && input.validations.errorMsg != "") {
             return input.validations.errorMsg
         } else {
-            return "This field is required"
+            return "此字段为必填项"
         }
     }
 
@@ -899,10 +899,10 @@ function NestedInputField(args: {
                         rules={{
                             required: !editMode && input.validations.required ? getErrorMsg(input) : false,
                             min: (!editMode && input.range?.min !== undefined)
-                                ? { value: input.range.min, message: `Value must be at least ${input.range.min}` }
+                                ? { value: input.range.min, message: `值不能小于 ${input.range.min}` }
                                 : undefined,
                             max: (!editMode && input.range?.max !== undefined)
-                                ? { value: input.range.max, message: `Value must be at most ${input.range.max}` }
+                                ? { value: input.range.max, message: `值不能大于 ${input.range.max}` }
                                 : undefined,
                         }}
                         render={({ field }) => (
@@ -1046,7 +1046,7 @@ function FormSeedInput(args: { input: IInputForm, field: any, editMode?: boolean
                     />
                     <div className="grid gap-1.5 leading-none">
                         <FormLabel className={CHECKBOX_STYLE.checkBoxLabel}>
-                            Randomize
+                            随机化
                         </FormLabel>
                     </div>
                 </div>
@@ -1149,7 +1149,7 @@ function FormMediaInput(args: { input: IInputForm, field: any, editMode?: boolea
                                         className="border-2 text-muted-foreground"
                                         onClick={onDelete}
                                     >
-                                        <Trash2 className="size-5 mr-2" /> Remove {input.valueType}
+                                        <Trash2 className="size-5 mr-2" /> 移除 {input.valueType}
                                     </Button>
                                 </div>
                             </>
@@ -1355,7 +1355,7 @@ function FormMaskInput(args: { input: IInputForm, field: any, editMode?: boolean
                                     className="border-2 text-muted-foreground"
                                     onClick={() => setShowMaskEditor(true)}
                                 >
-                                    <Brush className="size-5 mr-2" /> Edit Mask
+                                    <Brush className="size-5 mr-2" /> 编辑蒙版
                                 </Button>
                                 <Button
                                     type="button"
@@ -1363,7 +1363,7 @@ function FormMaskInput(args: { input: IInputForm, field: any, editMode?: boolean
                                     className="border-2 text-muted-foreground"
                                     onClick={onDelete}
                                 >
-                                    <Trash2 className="size-5 mr-2" /> Remove Image
+                                    <Trash2 className="size-5 mr-2" /> 移除图片
                                 </Button>
                             </div>
                         </div>
@@ -1549,9 +1549,9 @@ function FormBasicInput(args: {
             {!editMode && (input.range?.min !== undefined || input.range?.max !== undefined) && (
                 <FormDescription className="text-xs">
                     {[
-                        input.range?.min !== undefined && `Min: ${input.range.min}`,
-                        input.range?.max !== undefined && `Max: ${input.range.max}`,
-                        `Default: ${input.value}`,
+                        input.range?.min !== undefined && `最小：${input.range.min}`,
+                        input.range?.max !== undefined && `最大：${input.range.max}`,
+                        `默认：${input.value}`,
                     ].filter(Boolean).join(' • ')}
                 </FormDescription>
             )}
@@ -1674,7 +1674,7 @@ function FormComboboxInput(args: { input: IInputForm, field: any, editMode?: boo
                         >
                             {value
                                 ? options.find((opt) => opt.value === value)?.label
-                                : "Select..."}
+                                : "请选择..."}
                             <ChevronsUpDown className="opacity-50" />
                         </Button>
                     </PopoverTrigger>
@@ -1683,9 +1683,9 @@ function FormComboboxInput(args: { input: IInputForm, field: any, editMode?: boo
                         style={{ width: buttonWidth > 0 ? `${buttonWidth}px` : '400px' }}
                     >
                         <Command>
-                            <CommandInput placeholder="Search..." className="h-9" />
+                            <CommandInput placeholder="搜索..." className="h-9" />
                             <CommandList>
-                                <CommandEmpty>No value found.</CommandEmpty>
+                                <CommandEmpty>未找到匹配项。</CommandEmpty>
                                 <CommandGroup>
                                     {options.map((opt) => (
                                         <CommandItem
@@ -1811,9 +1811,9 @@ function FieldActionButtons(props: {
                         {isHidden ? <EyeOff className="size-5" /> : <Eye className="size-5" />}
                     </Button>
                 </TooltipTrigger>
-                <TooltipContent>
-                {isHidden ? <p>Show Input in Playground </p> : <p>Hide input from the Playground</p>}
-                </TooltipContent>
+            <TooltipContent>
+                {isHidden ? <p>在试运行中显示输入 </p> : <p>在试运行中隐藏输入</p>}
+            </TooltipContent>
             </Tooltip>
 
             <Button
@@ -1939,18 +1939,18 @@ function EditFieldDialog(props: {
     }, [showEditDialog]);
 
     const typeOptions = [
-        { label: "Text", value: "string" },
-        { label: "Long text", value: "long-text" },
-        { label: "Image", value: "image" },
-        { label: "Image with Mask Editor", value: "image-mask" },
-        { label: "Video", value: "video" },
-        { label: "Audio", value: "audio" },
-        { label: "Select", value: "select" },
-        { label: "Slider", value: "slider" },
-        { label: "Number", value: "number" },
-        { label: "Float", value: "float" },
-        { label: "CheckBox", value: "boolean" },
-        { label: "Seed", value: "seed" },
+        { label: "文本", value: "string" },
+        { label: "长文本", value: "long-text" },
+        { label: "图片", value: "image" },
+        { label: "带蒙版编辑器的图片", value: "image-mask" },
+        { label: "视频", value: "video" },
+        { label: "音频", value: "audio" },
+        { label: "下拉选择", value: "select" },
+        { label: "滑块", value: "slider" },
+        { label: "整数", value: "number" },
+        { label: "小数", value: "float" },
+        { label: "复选框", value: "boolean" },
+        { label: "随机种子", value: "seed" },
     ];
 
     const parseSelectOptions = (text: string): { label: string, value: string }[] => {
@@ -2237,115 +2237,115 @@ function EditFieldDialog(props: {
         <Dialog open={showEditDialog !== undefined} onOpenChange={() => setShowEditDialog(undefined)}>
             <DialogContent className="sm:max-w-[500px]">
                 <form onSubmit={handleSave}>
-                    <DialogHeader>
-                        <DialogTitle>Transform input</DialogTitle>
-                    </DialogHeader>
-                    <div className="grid gap-4 mt-4">
-                        <div className="grid gap-3">
-                            <Label>Label</Label>
-                            <Input
-                                placeholder={"Field label"}
-                                value={fieldTitle}
-                                onChange={(e) => setFieldTitle(e.target.value)}
-                            />
-                        </div>
-                        <div className="grid gap-3">
-                            <Label>Type</Label>
-                            <Select value={selectedType} onValueChange={(v) => setSelectedType(v)}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Select a type" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {typeOptions.map(o => (
-                                        <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        {selectedType === "select" && (
+                        <DialogHeader>
+                            <DialogTitle>编辑输入字段</DialogTitle>
+                        </DialogHeader>
+                        <div className="grid gap-4 mt-4">
                             <div className="grid gap-3">
-                                <Label>Options (one per line)</Label>
-                                <Textarea
-                                    placeholder={"label: \"Label A\", value: \"Value A\"\nlabel: \"Label B\", value: \"Value B\""}
-                                    value={selectOptionsText}
-                                    onChange={(e) => setSelectOptionsText(e.target.value)}
+                                <Label>标签</Label>
+                                <Input
+                                    placeholder={"字段标签"}
+                                    value={fieldTitle}
+                                    onChange={(e) => setFieldTitle(e.target.value)}
                                 />
-                                <p className="text-sm text-muted-foreground">Enter one per line as label: &quot;...&quot;, value: &quot;...&quot;. The current default will always be included.</p>
                             </div>
-                        )}
-
-                        {selectedType === "slider" && (
                             <div className="grid gap-3">
-                                <div className="grid gap-1">
-                                    <Label htmlFor="min">Min</Label>
-                                    <Input id="min" type="number" value={sliderMin} onChange={(e) => setSliderMin(parseFloat(e.target.value))} />
-                                </div>
-                                <div className="grid gap-1">
-                                    <Label htmlFor="max">Max</Label>
-                                    <Input id="max" type="number" value={sliderMax} onChange={(e) => setSliderMax(parseFloat(e.target.value))} />
-                                </div>
-                                <div className="grid gap-1">
-                                    <Label htmlFor="step">Step</Label>
-                                    <Input id="step" type="number" value={sliderStep} onChange={(e) => setSliderStep(parseFloat(e.target.value))} />
-                                </div>
-                            </div>
-                        )}
-
-                        {(selectedType === "number" || selectedType === "float") && (
-                            <div className="grid gap-3">
-                                <div className="grid gap-1">
-                                    <Label htmlFor="numberMin">Min (optional)</Label>
-                                    <Input
-                                        id="numberMin"
-                                        type="number"
-                                        value={numberMin ?? ""}
-                                        onChange={(e) => setNumberMin(e.target.value === "" ? undefined : parseFloat(e.target.value))}
-                                        placeholder="No minimum"
-                                    />
-                                </div>
-                                <div className="grid gap-1">
-                                    <Label htmlFor="numberMax">Max (optional)</Label>
-                                    <Input
-                                        id="numberMax"
-                                        type="number"
-                                        value={numberMax ?? ""}
-                                        onChange={(e) => setNumberMax(e.target.value === "" ? undefined : parseFloat(e.target.value))}
-                                        placeholder="No maximum"
-                                    />
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-                    <div className="grid gap-4 mt-4">
-                        <div className="grid gap-3">
-                            <Label>Default value</Label>
-                            {(selectedType === "select" || selectedType === "combobox") && (
-                                <Select value={String(defaultValue ?? "")} onValueChange={(v) => setDefaultValue(v)}>
+                                <Label>类型</Label>
+                                <Select value={selectedType} onValueChange={(v) => setSelectedType(v)}>
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Select default" />
+                                        <SelectValue placeholder="选择类型" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        {(() => {
-                                            const fromText = parseSelectOptions(selectOptionsText);
-                                            const base = fromText.length > 0 ? fromText : (showEditDialog?.input.options ?? []);
-                                            return base
-                                                .map(o => ({ label: (o.label ?? "").trim() || (o.value ?? "").trim(), value: (o.value ?? "").trim() }))
-                                                .filter(o => o.value !== "")
-                                                .map(o => (
-                                                    <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
-                                                ));
-                                        })()}
+                                        {typeOptions.map(o => (
+                                            <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                                        ))}
                                     </SelectContent>
                                 </Select>
-                            )}
-                            {selectedType === "boolean" && (
-                                <div className="flex items-center space-x-2">
-                                    <Checkbox checked={Boolean(defaultValue)} onCheckedChange={(v) => setDefaultValue(Boolean(v))} />
-                                    <Label>Checked by default</Label>
+                            </div>
+
+                            {selectedType === "select" && (
+                                <div className="grid gap-3">
+                                    <Label>选项（每行一个）</Label>
+                                    <Textarea
+                                        placeholder={"label: \"选项 A\", value: \"Value A\"\nlabel: \"选项 B\", value: \"Value B\""}
+                                        value={selectOptionsText}
+                                        onChange={(e) => setSelectOptionsText(e.target.value)}
+                                    />
+                                    <p className="text-sm text-muted-foreground">每行一个，格式为 label: &quot;...&quot;, value: &quot;...&quot;。当前默认值会自动包含在选项中。</p>
                                 </div>
                             )}
+
+                            {selectedType === "slider" && (
+                                <div className="grid gap-3">
+                                    <div className="grid gap-1">
+                                        <Label htmlFor="min">最小值</Label>
+                                        <Input id="min" type="number" value={sliderMin} onChange={(e) => setSliderMin(parseFloat(e.target.value))} />
+                                    </div>
+                                    <div className="grid gap-1">
+                                        <Label htmlFor="max">最大值</Label>
+                                        <Input id="max" type="number" value={sliderMax} onChange={(e) => setSliderMax(parseFloat(e.target.value))} />
+                                    </div>
+                                    <div className="grid gap-1">
+                                        <Label htmlFor="step">步长</Label>
+                                        <Input id="step" type="number" value={sliderStep} onChange={(e) => setSliderStep(parseFloat(e.target.value))} />
+                                    </div>
+                                </div>
+                            )}
+
+                            {(selectedType === "number" || selectedType === "float") && (
+                                <div className="grid gap-3">
+                                    <div className="grid gap-1">
+                                        <Label htmlFor="numberMin">最小值（可选）</Label>
+                                        <Input
+                                            id="numberMin"
+                                            type="number"
+                                            value={numberMin ?? ""}
+                                            onChange={(e) => setNumberMin(e.target.value === "" ? undefined : parseFloat(e.target.value))}
+                                            placeholder="无最小值"
+                                        />
+                                    </div>
+                                    <div className="grid gap-1">
+                                        <Label htmlFor="numberMax">最大值（可选）</Label>
+                                        <Input
+                                            id="numberMax"
+                                            type="number"
+                                            value={numberMax ?? ""}
+                                            onChange={(e) => setNumberMax(e.target.value === "" ? undefined : parseFloat(e.target.value))}
+                                            placeholder="无最大值"
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="grid gap-4 mt-4">
+                            <div className="grid gap-3">
+                                <Label>默认值</Label>
+                                {(selectedType === "select" || selectedType === "combobox") && (
+                                    <Select value={String(defaultValue ?? "")} onValueChange={(v) => setDefaultValue(v)}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="选择默认值" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {(() => {
+                                                const fromText = parseSelectOptions(selectOptionsText);
+                                                const base = fromText.length > 0 ? fromText : (showEditDialog?.input.options ?? []);
+                                                return base
+                                                    .map(o => ({ label: (o.label ?? "").trim() || (o.value ?? "").trim(), value: (o.value ?? "").trim() }))
+                                                    .filter(o => o.value !== "")
+                                                    .map(o => (
+                                                        <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                                                    ));
+                                            })()}
+                                        </SelectContent>
+                                    </Select>
+                                )}
+                                {selectedType === "boolean" && (
+                                    <div className="flex items-center space-x-2">
+                                        <Checkbox checked={Boolean(defaultValue)} onCheckedChange={(v) => setDefaultValue(Boolean(v))} />
+                                        <Label>默认勾选</Label>
+                                    </div>
+                                )}
                             {selectedType === "long-text" && (
                                 <Textarea value={String(defaultValue ?? "")} onChange={(e) => setDefaultValue(e.target.value)} />
                             )}
@@ -2361,46 +2361,46 @@ function EditFieldDialog(props: {
                         </div>
                     </div>
 
-                    <div className="grid gap-4 mt-4">
-                        <div className="grid gap-3">
-                            <Label>Help text</Label>
-                            <Textarea
-                                placeholder={"Helper text shown under the field"}
-                                value={helpText}
-                                onChange={(e) => setHelpText(e.target.value)}
-                            />
-                        </div>
-                        <div className="grid gap-3">
-                            <Label>Tooltip</Label>
-                            <Input
-                                placeholder={"Short tooltip text"}
-                                value={tooltip}
-                                onChange={(e) => setTooltip(e.target.value)}
-                            />
-                        </div>
-                        {selectedType !== "boolean" && (
+                        <div className="grid gap-4 mt-4">
                             <div className="grid gap-3">
-                                <div className="flex items-center space-x-2">
-                                    <Checkbox checked={isRequired} onCheckedChange={(v) => setIsRequired(Boolean(v))} />
-                                    <Label>Required</Label>
-                                </div>
-                                <div className="grid gap-1">
-                                    <Label>Error message (shown when required)</Label>
-                                    <Input
-                                        placeholder={"This field is required"}
-                                        value={errorMsg}
-                                        onChange={(e) => setErrorMsg(e.target.value)}
-                                    />
-                                </div>
+                                <Label>帮助文本</Label>
+                                <Textarea
+                                    placeholder={"显示在字段下方的说明文字"}
+                                    value={helpText}
+                                    onChange={(e) => setHelpText(e.target.value)}
+                                />
                             </div>
-                        )}
-                    </div>
-                    <DialogFooter className="mt-5 gap-2">
-                        <DialogClose asChild>
-                            <Button variant="outline" type="button">Cancel</Button>
-                        </DialogClose>
-                        <Button type="submit">Save changes</Button>
-                    </DialogFooter>
+                            <div className="grid gap-3">
+                                <Label>悬浮提示</Label>
+                                <Input
+                                    placeholder={"简短的悬浮提示文字"}
+                                    value={tooltip}
+                                    onChange={(e) => setTooltip(e.target.value)}
+                                />
+                            </div>
+                            {selectedType !== "boolean" && (
+                                <div className="grid gap-3">
+                                    <div className="flex items-center space-x-2">
+                                        <Checkbox checked={isRequired} onCheckedChange={(v) => setIsRequired(Boolean(v))} />
+                                        <Label>必填</Label>
+                                    </div>
+                                    <div className="grid gap-1">
+                                        <Label>错误提示（在字段必填时显示）</Label>
+                                        <Input
+                                            placeholder={"此字段为必填项"}
+                                            value={errorMsg}
+                                            onChange={(e) => setErrorMsg(e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                        <DialogFooter className="mt-5 gap-2">
+                            <DialogClose asChild>
+                                <Button variant="outline" type="button">取消</Button>
+                            </DialogClose>
+                            <Button type="submit">保存修改</Button>
+                        </DialogFooter>
                 </form>
             </DialogContent>
         </Dialog>
@@ -2432,7 +2432,7 @@ function ViewComfyFormEditorRighSide({ deletedInputs, onRestore, form }: ViewCom
             <Tabs defaultValue="deleted-inputs">
                 <TabsList>
                     <TabsTrigger value="deleted-inputs">
-                        Deleted Inputs
+                        已删除输入
                         {deletedInputs.length > 0 && (
                             <span className="ml-2 inline-flex items-center justify-center rounded-full bg-destructive px-2 py-0.5 text-xs font-medium text-destructive-foreground">
                                 {deletedInputs.length}
@@ -2440,7 +2440,7 @@ function ViewComfyFormEditorRighSide({ deletedInputs, onRestore, form }: ViewCom
                         )}
                     </TabsTrigger>
                     <TabsTrigger value="preview-images">
-                        Preview Images
+                        预览图
                     </TabsTrigger>
                 </TabsList>
                 <TabsContent value="deleted-inputs" className="mt-4">
@@ -2448,7 +2448,7 @@ function ViewComfyFormEditorRighSide({ deletedInputs, onRestore, form }: ViewCom
                         <Card>
                             <CardContent className="pt-6">
                                 <p className="text-sm text-muted-foreground text-center">
-                                    No deleted inputs. Deleted inputs will appear here and can be restored.
+                                    暂无已删除的输入。被删除的输入会显示在此处，可恢复。
                                 </p>
                             </CardContent>
                         </Card>
@@ -2468,24 +2468,24 @@ function ViewComfyFormEditorRighSide({ deletedInputs, onRestore, form }: ViewCom
                                                     {deletedInput.type === 'group' ? (
                                                         <span className="inline-flex items-center gap-1">
                                                             <span className="px-1.5 py-0.5 rounded bg-secondary text-secondary-foreground">
-                                                                Group
+                                                                分组
                                                             </span>
                                                             <span>•</span>
                                                             <span>
-                                                                {getGroupInputCount(deletedInput)} input(s)
+                                                                {getGroupInputCount(deletedInput)} 个输入
                                                             </span>
                                                         </span>
                                                     ) : (
                                                         <span className="inline-flex items-center gap-1">
                                                             <span className="px-1.5 py-0.5 rounded bg-secondary text-secondary-foreground">
-                                                                Input
+                                                                输入
                                                             </span>
                                                             <span>•</span>
-                                                            <span>from {deletedInput.groupTitle}</span>
+                                                            <span>来自 {deletedInput.groupTitle}</span>
                                                         </span>
                                                     )}
                                                     <span className="ml-1">
-                                                        • {deletedInput.section === 'inputs' ? 'Basic' : 'Advanced'}
+                                                        • {deletedInput.section === 'inputs' ? '基本' : '高级'}
                                                     </span>
                                                 </CardDescription>
                                             </div>
@@ -2502,7 +2502,7 @@ function ViewComfyFormEditorRighSide({ deletedInputs, onRestore, form }: ViewCom
                                                     </Button>
                                                 </TooltipTrigger>
                                                 <TooltipContent>
-                                                    <p>Restore Input</p>
+                                                    <p>恢复输入</p>
                                                 </TooltipContent>
                                             </Tooltip>
                                         </div>

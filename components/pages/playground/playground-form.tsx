@@ -57,7 +57,7 @@ export default function PlaygroundForm(props: {
     return (
         <ViewComfyForm form={form} onSubmit={onSubmit} inputFieldArray={inputFieldArray} advancedFieldArray={advancedFieldArray} isLoading={loading}>
             <Button type="submit" className="w-full" disabled={loading}>
-                Generate <WandSparkles className={cn("size-5 ml-2")} />
+                生成 <WandSparkles className={cn("size-5 ml-2")} />
             </Button>
         </ViewComfyForm>
     )

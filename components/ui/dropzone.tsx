@@ -104,7 +104,7 @@ export function Dropzone({
                 return;
             } catch (err) {
                 console.error('Failed to parse drag media data:', err);
-                setError('Failed to process dropped media. Please try uploading manually.');
+                setError('处理拖入的媒体失败，请尝试手动上传。');
                 return;
             }
         }
@@ -120,7 +120,7 @@ export function Dropzone({
 
         // Validate content type against allowed extensions
         if (fileExtensions && !isContentTypeAllowed(contentType, fileExtensions)) {
-            setError(`Invalid file type. Expected: ${fileExtensions.join(', ')}`);
+            setError(`不支持的文件类型。允许的类型：${fileExtensions.join(', ')}`);
             return;
         }
 
@@ -133,7 +133,7 @@ export function Dropzone({
             setError(null);
         } catch (err) {
             console.error('Failed to fetch dropped media:', err);
-            setError('Failed to load dropped media. Please try uploading the file manually.');
+            setError('加载拖入的媒体失败，请尝试手动上传该文件。');
         } finally {
             setIsLoading(false);
         }
@@ -150,21 +150,21 @@ export function Dropzone({
     // Function to handle processing of uploaded files
     const handleFiles = (files: FileList) => {
         if (files.length > 1) {
-            setError("You can only upload one file at a time");
+            setError("一次只能上传一个文件");
             return;
         }
 
         const uploadedFile = files[0];
 
         if (!uploadedFile) {
-            setError("Something went wrong uploading your file, please try again.");
+            setError("文件上传失败，请重试。");
             return;
         }
 
         // Check file extension
         if (fileExtensions && !fileExtensions.some(fileExtension => uploadedFile.name.endsWith(fileExtension))) {
             // if (fileExtensions && !uploadedFile.name.endsWith(`${fileExtension}`)) {
-            setError(`Invalid file type. Expected: ${fileExtensions.join(', ')}`);
+            setError(`不支持的文件类型。允许的类型：${fileExtensions.join(', ')}`);
             return;
         }
 
@@ -202,7 +202,7 @@ export function Dropzone({
                     {isLoading ? (
                         <div className="flex items-center">
                             <Loader2 className="size-6 mr-2 animate-spin" />
-                            <span className="font-medium">Loading media...</span>
+                            <span className="font-medium">正在加载媒体...</span>
                         </div>
                     ) : inputPlaceholder ? (
                         <>
@@ -211,7 +211,7 @@ export function Dropzone({
                         </>
                     ) : (
                         <div className="flex items-center">
-                            <span className="font-medium mr-2">Drag Files to Upload</span>
+                            <span className="font-medium mr-2">拖入文件以上传</span>
                             <FileUp className="size-6" />
                         </div>
                     )}

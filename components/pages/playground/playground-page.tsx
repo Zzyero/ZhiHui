@@ -26,12 +26,13 @@ import { createMediaDragHandler } from "@/lib/drag-utils";
 import WorkflowSwitcher from "@/components/workflow-switchter";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { PreviewOutputsImageGallery } from "@/components/images-preview"
-import dynamic from "next/dynamic";
 import { useRouter, useSearchParams } from 'next/navigation';
 import {
     Dialog,
     DialogContent,
     DialogFooter,
+    DialogHeader,
+    DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog"
 import {
@@ -47,11 +48,9 @@ import {
 } from "@/components/ui/alert-dialog"
 import { toast } from "sonner"
 import { IUsePostPlayground } from "@/hooks/playground/interfaces";
-import { Textarea } from "@/components/ui/textarea";
 import * as constants from "@/app/constants";
 import { ISetResults, S3FilesData } from "@/app/models/prompt-result";
-import { ComparisonButton } from "@/components/comparison/comparison-button";
-import { ComparisonDialog } from "@/components/comparison/comparison-dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { SelectableImage } from "@/components/comparison/selectable-image";
 
 import {
@@ -60,12 +59,6 @@ import {
 } from "react-zoom-pan-pinch";
 import { IWorkflowHistoryModel, IWorkflowResult } from "@/app/interfaces/workflow-history";
 import { useWorkflowData } from "@/app/providers/workflows-data-provider";
-
-// Dynamically import web component to avoid hydration issues
-const ImgComparisonSlider = dynamic(
-    () => import("@img-comparison-slider/react").then((mod) => mod.ImgComparisonSlider),
-    { ssr: false }
-);
 
 export interface IOutput {
     file: File | S3FilesData,
@@ -153,8 +146,8 @@ function PlaygroundPageContent({ doPost, loading, setLoading, runningWorkflows, 
             return;
         }
         if (permission === 'granted') {
-            new Notification('ViewComfy Generation Complete!', {
-                body: 'Your image generation has finished.',
+            new Notification('ViewComfy 生成完成！', {
+                body: '你的图像生成已完成。',
                 icon: '/view_comfy_logo.svg',
             });
         } else if (permission === 'default') {
@@ -172,8 +165,8 @@ function PlaygroundPageContent({ doPost, loading, setLoading, runningWorkflows, 
             removeRunningWorkflow(promptId);
         } catch (error) {
             removeCancellingWorkflow(promptId);
-            toast.error("Failed to cancel generation", {
-                description: "Please try again or wait for the generation to complete."
+            toast.error("取消生成失败", {
+                description: "请重试或等待生成完成。"
             });
         }
     }, [cancelJob, setCancellingWorkflow, removeRunningWorkflow, removeCancellingWorkflow]);
@@ -220,8 +213,8 @@ function PlaygroundPageContent({ doPost, loading, setLoading, runningWorkflows, 
                 } else {
                     setErrorAlertDialog({
                         open: true,
-                        errorTitle: "Error",
-                        errorDescription: <>{typedError.message || "Unknown error"}</>,
+                        errorTitle: "错误",
+                        errorDescription: <>{typedError.message || "未知错误"}</>,
                         onClose: () => { },
                     });
                 }
@@ -376,7 +369,7 @@ function PlaygroundPageContent({ doPost, loading, setLoading, runningWorkflows, 
     const onShowErrorDialog = (error: string) => {
         setErrorAlertDialog({
             open: true,
-            errorTitle: "Error",
+            errorTitle: "错误",
             errorDescription: <> {error} </>,
             onClose: () => {
                 setErrorAlertDialog({ open: false, errorTitle: undefined, errorDescription: <></>, onClose: () => { } });
@@ -419,7 +412,7 @@ function PlaygroundPageContent({ doPost, loading, setLoading, runningWorkflows, 
                         <DrawerTrigger asChild>
                             <Button variant="ghost" size="icon" className="md:hidden self-bottom w-[85px] gap-1">
                                 <Settings className="size-4" />
-                                Settings
+                                设置
                             </Button>
                         </DrawerTrigger>
                         <DrawerContent className="max-h-[80vh] gap-4 px-4 h-full">
@@ -439,24 +432,20 @@ function PlaygroundPageContent({ doPost, loading, setLoading, runningWorkflows, 
                         </div>
                     </div>
                     <div className="relative flex h-full min-h-[50vh] w-full rounded-r-xl bg-muted/50 lg:col-span-2">
-                        <div className="absolute right-3 top-3 z-20 hidden md:flex items-center gap-2">
-                            <ComparisonButton />
-                            <ComparisonDialog />
-                        </div>
                         <ScrollArea className="relative flex h-full w-full flex-1 flex-col">
                             {(Object.keys(results).length === 0) && runningWorkflows.length === 0 && !loading && viewComfyState.currentViewComfy && (
                                 <>  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full">
                                     <PreviewOutputsImageGallery viewComfyJSON={viewComfyState.currentViewComfy.viewComfyJSON} />
                                 </div>
                                     <Badge variant="outline" className="absolute right-3 top-14">
-                                        Output preview
+                                        输出预览
                                     </Badge>
                                 </>
                             )}
                             {(Object.keys(results).length > 0) && (
                                 <div className="absolute right-3 top-14 flex gap-2">
                                     <Badge variant="outline">
-                                        Output
+                                        输出结果
                                     </Badge>
                                 </div>
                             )}
@@ -606,6 +595,9 @@ export function ImageDialog({ output, showOutputFileName }: { output: { file: Fi
             </DialogTrigger>
             {showOutputFileName && parseFileName(getOutputFileName(output))}
             <DialogContent className="max-w-fit max-h-[90vh] border-0 p-0 bg-transparent [&>button]:bg-background [&>button]:border [&>button]:border-border [&>button]:rounded-full [&>button]:p-1 [&>button]:shadow-md">
+                <DialogHeader className="sr-only">
+                    <DialogTitle>图片预览</DialogTitle>
+                </DialogHeader>
                 <div
                     className="rounded-md"
                     style={{
@@ -647,7 +639,7 @@ export function ImageDialog({ output, showOutputFileName }: { output: { file: Fi
                             link.download = `${output.url.split('/').pop()}`;
                             link.click();
                         }}
-                    >Download</Button>
+                    >下载</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
@@ -678,6 +670,9 @@ export function VideoDialog({ output }: { output: IOutput }) {
                 </div>
             </DialogTrigger>
             <DialogContent className="max-w-fit max-h-[90vh] border-0 p-0 bg-transparent [&>button]:bg-background [&>button]:border [&>button]:border-border [&>button]:rounded-full [&>button]:p-1 [&>button]:shadow-md">
+                <DialogHeader className="sr-only">
+                    <DialogTitle>视频预览</DialogTitle>
+                </DialogHeader>
                 <video
                     key={output.url}
                     className="max-h-[85vh] w-auto object-contain rounded-md"
@@ -707,6 +702,9 @@ export function AudioDialog({ output }: { output: IOutput }) {
                 </div>
             </DialogTrigger>
             <DialogContent className="max-w-fit max-h-[90vh] border-0 p-0 bg-transparent [&>button]:bg-background [&>button]:border [&>button]:border-border [&>button]:rounded-full [&>button]:p-1 [&>button]:shadow-md">
+                <DialogHeader className="sr-only">
+                    <DialogTitle>音频预览</DialogTitle>
+                </DialogHeader>
                 <audio src={output.url} controls />
             </DialogContent>
         </Dialog>
@@ -825,26 +823,6 @@ function OutputRenderer({
 }
 
 
-export function ImageCompareDialog({ image1, image2, onClose, isOpen }: { image1: string, image2: string, onClose: () => void, isOpen: boolean }) {
-    const handleOpenChange = (open: boolean) => {
-        if (!open) {
-            onClose();
-        }
-    };
-    return (
-        <Dialog open={isOpen} onOpenChange={handleOpenChange}>
-            <DialogContent className="max-w-fit max-h-[90vh] border-0 p-0 bg-transparent [&>button]:bg-background [&>button]:border [&>button]:border-border [&>button]:rounded-full [&>button]:p-1 [&>button]:shadow-md">
-                <div className="inline-block">
-                    <ImgComparisonSlider>
-                        <img slot="first" alt="first image" src={image1} className="max-h-[85vh] w-auto object-contain" />
-                        <img slot="second" alt="second image" src={image2} className="max-h-[85vh] w-auto object-contain" />
-                    </ImgComparisonSlider>
-                </div>
-            </DialogContent>
-        </Dialog>
-    )
-}
-
 function parseFileName(filename: string): string {
 
     if (filename.startsWith("__")) {
@@ -860,7 +838,7 @@ const IndeterminateLoadingBar = () => {
     return (
         <div
             role="progressbar"
-            aria-label="Generating"
+            aria-label="正在生成"
             className="relative h-1.5 w-full overflow-hidden rounded-full bg-muted-foreground/10"
         >
             <div className="vc-indeterminate absolute inset-y-0 w-1/3 rounded-full bg-muted-foreground/40" />
@@ -933,30 +911,30 @@ const Generating = (props: {
                                                                 ? "bg-muted-foreground/10"
                                                                 : "bg-muted-foreground/20 animate-pulse"
                                                         )}></div>
-                                                        <span className={cn(
-                                                            "text-sm text-muted-foreground",
-                                                            !isCancelling && "animate-pulse"
-                                                        )}>
-                                                            {isCancelling ? "Cancelling..." : "Generating..."}
-                                                        </span>
+                                <span className={cn(
+                                    "text-sm text-muted-foreground",
+                                    !isCancelling && "animate-pulse"
+                                )}>
+                                    {isCancelling ? "正在取消..." : "正在生成..."}
+                                </span>
                                                     </div>
                                                 </button>
                                             </AlertDialogTrigger>
                                         </BlurFade>
                                         <AlertDialogContent>
                                             <AlertDialogHeader>
-                                                <AlertDialogTitle>Cancel generation?</AlertDialogTitle>
+                                                <AlertDialogTitle>取消生成？</AlertDialogTitle>
                                                 <AlertDialogDescription>
-                                                    Are you sure you want to cancel this generation? This action cannot be undone.
+                                                    确定要取消这次生成吗？此操作无法撤销。
                                                 </AlertDialogDescription>
                                             </AlertDialogHeader>
                                             <AlertDialogFooter>
-                                                <AlertDialogCancel>Continue generating</AlertDialogCancel>
+                                                <AlertDialogCancel>继续生成</AlertDialogCancel>
                                                 <AlertDialogAction
                                                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                                     onClick={() => onCancelWorkflow(w.promptId)}
                                                 >
-                                                    Cancel generation
+                                                    取消生成
                                                 </AlertDialogAction>
                                             </AlertDialogFooter>
                                         </AlertDialogContent>
@@ -983,7 +961,7 @@ const Generating = (props: {
                                 <div className="w-full h-64 rounded-md bg-muted animate-pulse flex items-center justify-center">
                                     <div className="flex flex-col items-center gap-2">
                                         <div className="w-8 h-8 rounded-full bg-muted-foreground/20 animate-pulse"></div>
-                                        <span className="text-sm text-muted-foreground animate-pulse">Generating...</span>
+                                        <span className="text-sm text-muted-foreground animate-pulse">正在生成...</span>
                                     </div>
                                 </div>
                             </BlurFade>
@@ -1007,7 +985,7 @@ const GenerationError = (params: {
     const { generation, promptId, onShowErrorDialog } = params;
 
     const getErrorMessage = (gen: IGeneration): string => {
-        return gen.errorData || "Something went wrong running your workflow";
+        return gen.errorData || "运行工作流时发生错误";
     }
 
     return (
@@ -1023,7 +1001,7 @@ const GenerationError = (params: {
                                     <Button
                                         variant={"outline"}
                                         onClick={() => onShowErrorDialog(getErrorMessage(generation))}>
-                                        Show Error
+                                        查看错误
                                     </Button>
                                 </span>
                             </div>

@@ -53,7 +53,7 @@ export default function WorkflowSwitcher({ className, currentViewComfy, viewComf
 
     const groups = [
         {
-            label: "Workflows",
+            label: "工作流",
             viewComfys
         },
     ];
@@ -66,7 +66,7 @@ export default function WorkflowSwitcher({ className, currentViewComfy, viewComf
                         variant="outline"
                         role="combobox"
                         aria-expanded={open}
-                        aria-label="Select a team"
+                        aria-label="选择工作流"
                         className={cn("w-full max-w-[300px] justify-between overflow-hidden", className)}
                     >
                         <span className="line-clamp-1 overflow-hidden">
@@ -77,9 +77,9 @@ export default function WorkflowSwitcher({ className, currentViewComfy, viewComf
                 </PopoverTrigger>
                 <PopoverContent className="w-full p-0">
                     <Command>
-                        <CommandInput placeholder="Search team..." />
+                        <CommandInput placeholder="搜索工作流..." />
                         <CommandList>
-                            <CommandEmpty>No team found.</CommandEmpty>
+                            <CommandEmpty>未找到工作流。</CommandEmpty>
                             {groups.map((group) => (
                                 <CommandGroup key={group.label} heading={group.label}>
                                     {group.viewComfys.map((viewComfy) => (
@@ -126,18 +126,18 @@ export default function WorkflowSwitcher({ className, currentViewComfy, viewComf
             </Popover>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Create team</DialogTitle>
+                    <DialogTitle>创建工作流</DialogTitle>
                     <DialogDescription>
-                        Add a new team to manage products and customers.
+                        添加一个新的工作流。
                     </DialogDescription>
                 </DialogHeader>
                 <div>
                 </div>
                 <DialogFooter>
                     <Button variant="outline" onClick={() => setShowNewTeamDialog(false)}>
-                        Cancel
+                        取消
                     </Button>
-                    <Button type="submit">Continue</Button>
+                    <Button type="submit">继续</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

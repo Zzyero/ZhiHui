@@ -7,8 +7,8 @@ import { ViewComfyProvider } from './providers/view-comfy-provider';
 import { Suspense } from 'react';
 
 const metadata: Metadata = {
-  title: "ViewComfy",
-  description: "From ComfyUI to beautiful web apps",
+  title: "ViewComfy - 从工作流生成可视化应用",
+  description: "将 ComfyUI 工作流转化为漂亮的 Web 应用",
 };
 
 export function generateMetadata(): Metadata {

@@ -56,7 +56,7 @@ export function Sidebar({ currentTab, onTabChange, deployWindow, onDeployWindow 
                         {settingsService.getIsRunningInViewComfy() &&
                             <SidebarButton
                                 icon={<SquarePlay className="size-5" />}
-                                label="Apps"
+                                label="应用"
                                 isActive={currentTab === TabValue.Apps}
                                 onClick={() => onTabChange(TabValue.Apps)}
                                 isSmallScreen={isSmallScreen}
@@ -64,7 +64,7 @@ export function Sidebar({ currentTab, onTabChange, deployWindow, onDeployWindow 
                         }
                         <SidebarButton
                             icon={<SquareTerminal className="size-5" />}
-                            label="Playground"
+                            label="试运行"
                             isActive={currentTab === TabValue.Playground}
                             onClick={() => onTabChange(TabValue.Playground)}
                             isSmallScreen={isSmallScreen}
@@ -74,21 +74,21 @@ export function Sidebar({ currentTab, onTabChange, deployWindow, onDeployWindow 
                     <>
                         <SidebarButton
                             icon={<FileJson className="size-5" />}
-                            label="Editor"
+                            label="编辑器"
                             isActive={currentTab === TabValue.Editor}
                             onClick={() => onTabChange(TabValue.Editor)}
                             isSmallScreen={isSmallScreen}
                         />
                         <SidebarButton
                             icon={<SquareTerminal className="size-5" />}
-                            label="Playground"
+                            label="试运行"
                             isActive={currentTab === TabValue.Playground}
                             onClick={() => onTabChange(TabValue.Playground)}
                             isSmallScreen={isSmallScreen}
                         />
                         <SidebarButton
                             icon={<Cloud className="size-5" />}
-                            label="Deploy"
+                            label="部署"
                             isActive={deployWindow === true}
                             onClick={() => onDeployWindow(!deployWindow)}
                             isSmallScreen={isSmallScreen}
@@ -101,14 +101,14 @@ export function Sidebar({ currentTab, onTabChange, deployWindow, onDeployWindow 
                     {isSmallScreen ? (
                         <TooltipButton
                             icon={<LifeBuoy className="size-5" />}
-                            label="Help"
-                            tooltipContent="Help"
+                            label="帮助"
+                            tooltipContent="帮助"
                             variant="outline"
                         />
                     ) : (
                         <Button variant="outline" className="w-full justify-start">
                             <LifeBuoy className="size-5 mr-2" />
-                            Help
+                            帮助
                         </Button>
                     )}
                 </Link>

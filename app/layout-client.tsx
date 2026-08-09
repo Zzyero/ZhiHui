@@ -7,7 +7,6 @@ import { useEffect } from 'react';
 import { Toaster } from 'sonner';
 import { FileJson, SquareTerminal } from 'lucide-react';
 import Link from 'next/link';
-import { ImageComparisonProvider } from "@/components/comparison/image-comparison-provider";
 import { usePathname, useRouter } from "next/navigation";
 import { Suspense } from "react";
 
@@ -45,20 +44,18 @@ export default function ClientRootLayout({ children }: { children: React.ReactNo
 
   const content = (
     <Suspense>
-      <ImageComparisonProvider>
-        <div className="flex flex-col h-screen w-full overflow-hidden" style={{ '--top-nav-height': '57px', '--sidebar-width': '12rem' } as React.CSSProperties}>
-          <TopNav />
-          <SidebarProvider>
-            <div className="flex flex-1 overflow-hidden">
-              <AppSidebar />
-              <main className={`flex-1 overflow-x-auto overflow-y-hidden ${showSidebar ? 'ml-[var(--sidebar-width)]' : ''}`}>
-                {children}
-              </main>
-            </div>
-          </SidebarProvider>
-        </div>
-        <Toaster />
-      </ImageComparisonProvider>
+      <div className="flex flex-col h-screen w-full overflow-hidden" style={{ '--top-nav-height': '57px', '--sidebar-width': '12rem' } as React.CSSProperties}>
+        <TopNav />
+        <SidebarProvider>
+          <div className="flex flex-1 overflow-hidden">
+            <AppSidebar />
+            <main className={`flex-1 overflow-x-auto overflow-y-hidden ${showSidebar ? 'ml-[var(--sidebar-width)]' : ''}`}>
+              {children}
+            </main>
+          </div>
+        </SidebarProvider>
+      </div>
+      <Toaster />
     </Suspense>
   );
 
@@ -75,13 +72,13 @@ export function AppSidebar() {
   if (settingsService.getIsRunningInViewComfy()) {
     if (settingsService.getIsViewMode()) {
       items.push({
-        title: "Apps",
+        title: "应用",
         url: "/apps",
         icon: FileJson,
       });
     } else {
       items.push({
-        title: "Editor",
+        title: "编辑器",
         url: "/editor",
         icon: FileJson,
       });
@@ -89,7 +86,7 @@ export function AppSidebar() {
   } else {
     if (!settingsService.getIsViewMode()) {
       items.push({
-        title: "Editor",
+        title: "编辑器",
         url: "/editor",
         icon: FileJson,
       });
@@ -97,7 +94,7 @@ export function AppSidebar() {
   };
 
   items.push({
-    title: "Playground",
+    title: "试运行",
     url: isPlaygroundRouteEnabled ? "" : "/playground",
     icon: SquareTerminal,
   });
@@ -110,7 +107,7 @@ export function AppSidebar() {
             <SidebarMenu>
               {items.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={pathname == `/${item.title.toLocaleLowerCase()}`}>
+                  <SidebarMenuButton asChild isActive={pathname == item.url}>
                     <Link href={item.url}>
                       <item.icon className="size-5" />
                       <span className="ml-2">{item.title}</span>
