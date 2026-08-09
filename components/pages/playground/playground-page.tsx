@@ -2,7 +2,6 @@
 
 import {
     Settings,
-    History,
     Download,
     CircleX
 } from "lucide-react"
@@ -19,8 +18,6 @@ import PlaygroundForm from "./playground-form";
 import { usePostPlayground } from "@/hooks/playground/use-post-playground";
 import { ActionType, type IViewComfy, type IViewComfyWorkflow, useViewComfy } from "@/app/providers/view-comfy-provider";
 import { ErrorAlertDialog } from "@/components/ui/error-alert-dialog";
-import { ApiErrorDialog } from "@/components/ui/api-error-dialog";
-import { ApiError } from "@/src/generated";
 import { ApiErrorHandler } from "@/lib/api-error-handler";
 import { ResponseError } from "@/app/models/errors";
 import BlurFade from "@/components/ui/blur-fade";
@@ -50,11 +47,9 @@ import {
 } from "@/components/ui/alert-dialog"
 import { toast } from "sonner"
 import { IUsePostPlayground } from "@/hooks/playground/interfaces";
-import { HistorySidebar } from "@/components/history-sidebar";
 import { Textarea } from "@/components/ui/textarea";
 import * as constants from "@/app/constants";
 import { ISetResults, S3FilesData } from "@/app/models/prompt-result";
-import { usePostPlaygroundUser } from "@/hooks/playground/use-post-playground-user";
 import { ComparisonButton } from "@/components/comparison/comparison-button";
 import { ComparisonDialog } from "@/components/comparison/comparison-dialog";
 import { SelectableImage } from "@/components/comparison/selectable-image";
@@ -62,25 +57,15 @@ import { SelectableImage } from "@/components/comparison/selectable-image";
 import {
     TransformWrapper,
     TransformComponent,
-
 } from "react-zoom-pan-pinch";
-import { IWorkflowHistoryFileModel, IWorkflowHistoryModel, IWorkflowResult } from "@/app/interfaces/workflow-history";
+import { IWorkflowHistoryModel, IWorkflowResult } from "@/app/interfaces/workflow-history";
 import { useWorkflowData } from "@/app/providers/workflows-data-provider";
-import { useApiAppExecutionData, type RunningApiAppExecution } from "@/app/providers/api-app-execution-provider";
-import { SettingsService } from "@/app/services/settings-service";
-import { ApiAppPlaygroundForm } from "./api-app-form";
-import { AppsService } from "@/src/generated";
-import type { AppOutputDTO, AppExecutionOutputDTO } from "@/src/generated";
-import { type AppType, parseAppIdParam } from "@/app/interfaces/unified-app";
-import { convertApiAppResults, getApiAppPromptId } from "@/lib/api-app-results";
 
 // Dynamically import web component to avoid hydration issues
 const ImgComparisonSlider = dynamic(
     () => import("@img-comparison-slider/react").then((mod) => mod.ImgComparisonSlider),
     { ssr: false }
 );
-
-const settingsService = new SettingsService();
 
 export interface IOutput {
     file: File | S3FilesData,
@@ -98,27 +83,7 @@ interface IResults {
     [promptId: string]: IGeneration;
 }
 
-
 const apiErrorHandler = new ApiErrorHandler();
-
-// Dynamically import the user content wrapper
-const UserContentWrapper = dynamic(
-    () => import("@/components/auth/user-content-wrapper"),
-    { ssr: false }
-);
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function PlaygroundWithAuth({ userId }: { userId: string | null }) {
-    const { setLoading, cancelJob, ...params } = usePostPlaygroundUser();
-    const { runningWorkflows, workflowsCompleted, cancellingWorkflows, setCancellingWorkflow, removeRunningWorkflow, removeCancellingWorkflow } = useWorkflowData();
-
-    return <PlaygroundPageContent {...{ ...params, runningWorkflows, setLoading, workflowsCompleted, cancellingWorkflows, setCancellingWorkflow, removeRunningWorkflow, removeCancellingWorkflow, cancelJob }} />;
-}
-
-function PlaygroundWithoutAuth() {
-    const params = usePostPlayground();
-    return <PlaygroundPageContent {...{ ...params, runningWorkflows: [], workflowsCompleted: [], cancellingWorkflows: [], setCancellingWorkflow: () => {}, removeRunningWorkflow: () => {}, removeCancellingWorkflow: () => {}, cancelJob: undefined }} />;
-}
 
 interface IPlaygroundPageContent {
     doPost: (params: IUsePostPlayground) => void;
@@ -152,26 +117,17 @@ const getOutputContentType = (output: IOutput): string => {
 function PlaygroundPageContent({ doPost, loading, setLoading, runningWorkflows, workflowsCompleted, cancellingWorkflows, setCancellingWorkflow, removeRunningWorkflow, removeCancellingWorkflow, cancelJob }: IPlaygroundPageContent) {
     const [results, setResults] = useState<IResults>({});
     const { viewComfyState, viewComfyStateDispatcher } = useViewComfy();
-    const { runningExecutions, completedExecutions, addRunningExecution, clearCompletedExecution } = useApiAppExecutionData();
     const viewMode = process.env.NEXT_PUBLIC_VIEW_MODE === "true";
     const [errorAlertDialog, setErrorAlertDialog] = useState<{ open: boolean, errorTitle: string | undefined, errorDescription: React.JSX.Element, onClose: () => void }>({ open: false, errorTitle: undefined, errorDescription: <></>, onClose: () => { } });
-    const [apiErrorDialog, setApiErrorDialog] = useState<{ open: boolean, error: unknown }>({ open: false, error: null });
     const searchParams = useSearchParams();
     const router = useRouter();
     const appIdParam = searchParams?.get("appId");
-    // Parse the appId param to extract type and actual ID
-    // API apps use "api-" prefix (e.g., "api-123"), ViewComfy apps use plain UUIDs
-    const parsedAppId = appIdParam ? parseAppIdParam(appIdParam) : null;
-    const appId = parsedAppId?.id ?? null;
-    const appTypeFromUrl = parsedAppId?.type ?? null;
-    const [apiApp, setApiApp] = useState<AppOutputDTO | null>(null);
-    const [appType, setAppType] = useState<AppType | null>("viewcomfy");
-    const [historySidebarOpen, setHistorySidebarOpen] = useState(false);
+    const appId = appIdParam ?? null;
     const [textOutputEnabled, setTextOutputEnabled] = useState(false);
     const [showOutputFileName, setShowOutputFileName] = useState(false);
     const [permission, setPermission] = useState<"default" | "granted" | "denied">("default");
     const [isRequesting, setIsRequesting] = useState(false);
-    const isNotificationAvailable = window && 'Notification' in window;
+    const isNotificationAvailable = typeof window !== 'undefined' && 'Notification' in window;
 
     const requestPermission = useCallback(async () => {
         if (!isNotificationAvailable) {
@@ -214,7 +170,6 @@ function PlaygroundPageContent({ doPost, loading, setLoading, runningWorkflows, 
         try {
             await cancelJob(promptId);
             removeRunningWorkflow(promptId);
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error) {
             removeCancellingWorkflow(promptId);
             toast.error("Failed to cancel generation", {
@@ -226,33 +181,6 @@ function PlaygroundPageContent({ doPost, loading, setLoading, runningWorkflows, 
     useEffect(() => {
         if (!viewMode) return;
 
-        // Handle API app type (detected by "api-" prefix in URL)
-        if (appTypeFromUrl === "api" && appId) {
-            const fetchApiApp = async () => {
-                try {
-                    // API apps use numeric IDs
-                    const numericId = parseInt(appId, 10);
-                    if (isNaN(numericId)) {
-                        throw new Error("Invalid app ID for API app");
-                    }
-                    const app = await AppsService.getAppApiAppsAppIdGet(numericId);
-                    setApiApp(app);
-                    setAppType("api");
-                } catch (error: unknown) {
-                    const errorMessage = error instanceof Error ? error.message : "Failed to load API app";
-                    setErrorAlertDialog({
-                        open: true,
-                        errorTitle: "Error",
-                        errorDescription: <>{errorMessage}</>,
-                        onClose: () => { },
-                    });
-                }
-            };
-            fetchApiApp();
-            return;
-        }
-
-        // Handle ViewComfy app type (default - no prefix)
         const fetchViewComfy = async () => {
             try {
                 const apiUrl = appId ? `/api/playground?appId=${appId}` : "/api/playground";
@@ -272,15 +200,12 @@ function PlaygroundPageContent({ doPost, loading, setLoading, runningWorkflows, 
                         throw responseError;
                     } else {
                         const err = new ResponseError(data);
-
                         throw err;
                     }
-                    
+
                 }
                 const data = await response.json();
                 viewComfyStateDispatcher({ type: ActionType.INIT_VIEW_COMFY, payload: data.viewComfyJSON });
-                setAppType("viewcomfy");
-
             } catch (error: unknown) {
                 const typedError = error as ResponseError & { message?: string };
                 if (typedError.errorType) {
@@ -303,37 +228,38 @@ function PlaygroundPageContent({ doPost, loading, setLoading, runningWorkflows, 
             }
         };
         fetchViewComfy();
-    }, [viewMode, viewComfyStateDispatcher, appId, appTypeFromUrl, router]);
+    }, [viewMode, viewComfyStateDispatcher, appId, router]);
 
     const onSetResults = useCallback(async (params: ISetResults) => {
         const { promptId, status, errorData } = params;
         const outputs = params.outputs || [];
         const resultOutputs: {
-            file: File | S3FilesData | IWorkflowHistoryFileModel,
+            file: File | S3FilesData,
             url: string
         }[] = [];
 
         for (const output of outputs) {
-            let url;
+            let url: string;
             if (output instanceof File) {
                 try {
                     url = URL.createObjectURL(output);
-                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 } catch (error) {
                     console.error("cannot parse output to URL")
                     console.log({ output });
                     url = "";
                 }
+                resultOutputs.push({ file: output, url });
             } else {
+                // IWorkflowHistoryFileModel or S3FilesData
                 url = output.filepath;
+                const s3File = new S3FilesData({
+                    filename: output.filename,
+                    contentType: output.contentType,
+                    filepath: output.filepath,
+                    size: output.size ?? 0,
+                });
+                resultOutputs.push({ file: s3File, url });
             }
-            // if (output instanceof S3FilesData || output.hasOwnProperty("filepath")) {
-            //     url = output.filepath;
-            // } else {
-
-
-            // }
-            resultOutputs.push({ file: output, url })
         }
 
         const newGeneration: IResults = {
@@ -380,7 +306,7 @@ function PlaygroundPageContent({ doPost, loading, setLoading, runningWorkflows, 
                 if (input.visibility === undefined || input.visibility !== "deleted") {
                     inputs.push({ key: input.key, value: input.value });
                 }
-                
+
             }
         }
 
@@ -438,7 +364,6 @@ function PlaygroundPageContent({ doPost, loading, setLoading, runningWorkflows, 
                 }
             }
         };
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const onSelectChange = (data: IViewComfy) => {
@@ -459,115 +384,19 @@ function PlaygroundPageContent({ doPost, loading, setLoading, runningWorkflows, 
         });
     }
 
-    // Handlers for API app submissions
-    const handleApiAppSubmitStart = useCallback(() => {
-        setLoading(true);
-    }, [setLoading]);
-
-    const handleApiAppSuccess = useCallback((result: AppExecutionOutputDTO) => {
-        // Add to running executions - provider will handle background polling
-        addRunningExecution({
-            executionId: result.id,
-            appId: result.appId,
-            submittedAt: new Date().toISOString(),
-        });
-        toast.success("Generation started", {
-            description: "Your generation is being processed..."
-        });
-        // Re-enable form for new submissions - runningExecutions will show loading card
-        setLoading(false);
-    }, [addRunningExecution, setLoading]);
-
-    const handleApiAppError = useCallback((error: unknown) => {
-        setLoading(false);
-
-        // Check if this is an ApiError from the generated client
-        if (error instanceof ApiError) {
-            setApiErrorDialog({ open: true, error });
-        } else {
-            // Fallback to generic error dialog
-            const errorMessage = error instanceof Error ? error.message : "Failed to execute app";
-            setErrorAlertDialog({
-                open: true,
-                errorTitle: "Execution Error",
-                errorDescription: <>{errorMessage}</>,
-                onClose: () => {
-                    setErrorAlertDialog({ open: false, errorTitle: undefined, errorDescription: <></>, onClose: () => { } });
-                }
-            });
-        }
-    }, [setLoading]);
-
-    // Handle completed API app executions
-    useEffect(() => {
-        if (completedExecutions.length === 0) return;
-
-        const processCompletedExecutions = async () => {
-            for (const exec of completedExecutions) {
-                const promptId = getApiAppPromptId(exec.executionId);
-
-                // Check for failure by result field OR status field
-                const isFailure = exec.result === "failure" || exec.status === "failed";
-
-                if (!isFailure && exec.status === "completed" && exec.results) {
-                    const outputs = convertApiAppResults(exec.results);
-                    await onSetResults({
-                        promptId,
-                        outputs,
-                        status: "completed",
-                    });
-                    await sendNotification();
-                } else if (isFailure) {
-                    await onSetResults({
-                        promptId,
-                        outputs: [],
-                        status: "error",
-                        errorData: exec.errorMessage || "Execution failed",
-                    });
-                }
-
-                // Clear the completed execution from provider
-                clearCompletedExecution(exec.executionId);
-            }
-
-            // Set loading to false after processing all completions
-            setLoading(false);
-        };
-
-        processCompletedExecutions();
-    }, [completedExecutions, onSetResults, sendNotification, clearCompletedExecution, setLoading]);
-
     // Show loading/error state when no app is loaded yet
-    const hasViewComfyApp = appType === "viewcomfy" && viewComfyState.currentViewComfy;
-    const hasApiApp = appType === "api" && apiApp;
+    const hasViewComfyApp = viewComfyState.currentViewComfy !== undefined;
 
-    if (!hasViewComfyApp && !hasApiApp) {
+    if (!hasViewComfyApp) {
         return <>
             <div className="flex flex-col h-screen">
                 <ErrorAlertDialog open={errorAlertDialog.open} errorTitle={errorAlertDialog.errorTitle} errorDescription={errorAlertDialog.errorDescription} onClose={errorAlertDialog.onClose} />
-                <ApiErrorDialog
-                    open={apiErrorDialog.open}
-                    error={apiErrorDialog.error}
-                    onClose={() => setApiErrorDialog({ open: false, error: null })}
-                />
             </div>
         </>;
     }
 
-    // Render the appropriate form based on app type
     const renderForm = () => {
-        if (hasApiApp && apiApp) {
-            return (
-                <ApiAppPlaygroundForm
-                    app={apiApp}
-                    loading={loading}
-                    onSubmitStart={handleApiAppSubmitStart}
-                    onSuccess={handleApiAppSuccess}
-                    onError={handleApiAppError}
-                />
-            );
-        }
-        if (hasViewComfyApp && viewComfyState.currentViewComfy) {
+        if (viewComfyState.currentViewComfy) {
             return (
                 <PlaygroundForm
                     viewComfyJSON={viewComfyState.currentViewComfy.viewComfyJSON}
@@ -583,7 +412,7 @@ function PlaygroundPageContent({ doPost, loading, setLoading, runningWorkflows, 
         <>
             <div className="flex flex-col h-[calc(100vh-var(--top-nav-height))]">
                 <div className="md:hidden w-full flex pl-4 gap-x-2">
-                    {hasViewComfyApp && viewComfyState.currentViewComfy && (
+                    {viewComfyState.currentViewComfy && (
                         <WorkflowSwitcher viewComfys={viewComfyState.viewComfys} currentViewComfy={viewComfyState.currentViewComfy} onSelectChange={onSelectChange} />
                     )}
                     <Drawer>
@@ -601,7 +430,7 @@ function PlaygroundPageContent({ doPost, loading, setLoading, runningWorkflows, 
                 <main className="flex overflow-hidden flex-1 gap-0">
                     <div className="relative hidden flex-col w-full max-w-[450px] items-start md:flex flex-shrink-0 overflow-hidden rounded-l-xl bg-muted/50 p-4">
                         <div className="flex flex-col w-full h-full min-h-0 min-w-0 bg-background rounded-xl overflow-hidden border shadow-md">
-                            {hasViewComfyApp && viewComfyState.viewComfys.length > 0 && viewComfyState.currentViewComfy && (
+                            {viewComfyState.viewComfys.length > 0 && viewComfyState.currentViewComfy && (
                                 <div className="px-2 pt-4 w-full">
                                     <WorkflowSwitcher viewComfys={viewComfyState.viewComfys} currentViewComfy={viewComfyState.currentViewComfy} onSelectChange={onSelectChange} />
                                 </div>
@@ -610,22 +439,12 @@ function PlaygroundPageContent({ doPost, loading, setLoading, runningWorkflows, 
                         </div>
                     </div>
                     <div className="relative flex h-full min-h-[50vh] w-full rounded-r-xl bg-muted/50 lg:col-span-2">
-                        {!historySidebarOpen && (
-                            <div className="absolute right-3 top-3 z-20 hidden md:flex items-center gap-2">
-                                <ComparisonButton />
-                                <ComparisonDialog />
-                                <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => setHistorySidebarOpen(value => !value)}
-                                >
-                                    <History className="h-4 w-4" />
-                                    History
-                                </Button>
-                            </div>
-                        )}
+                        <div className="absolute right-3 top-3 z-20 hidden md:flex items-center gap-2">
+                            <ComparisonButton />
+                            <ComparisonDialog />
+                        </div>
                         <ScrollArea className="relative flex h-full w-full flex-1 flex-col">
-                            {(Object.keys(results).length === 0) && runningWorkflows.length === 0 && !loading && hasViewComfyApp && viewComfyState.currentViewComfy && (
+                            {(Object.keys(results).length === 0) && runningWorkflows.length === 0 && !loading && viewComfyState.currentViewComfy && (
                                 <>  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full">
                                     <PreviewOutputsImageGallery viewComfyJSON={viewComfyState.currentViewComfy.viewComfyJSON} />
                                 </div>
@@ -643,7 +462,7 @@ function PlaygroundPageContent({ doPost, loading, setLoading, runningWorkflows, 
                             )}
                             <div className="flex-1 h-full p-4 flex overflow-y-auto">
                                 <div className="flex flex-col w-full h-full">
-                                    <Generating loading={loading} runningWorkflows={runningWorkflows} runningApiExecutions={runningExecutions} cancellingWorkflows={cancellingWorkflows} onCancelWorkflow={handleCancelWorkflow} />
+                                    <Generating loading={loading} runningWorkflows={runningWorkflows} cancellingWorkflows={cancellingWorkflows} onCancelWorkflow={handleCancelWorkflow} />
                                     {Object.entries(results).map(([promptId, generation], index, array) => (
                                         <div className="flex flex-col gap-4 w-full h-full" key={promptId}>
                                             <div className="flex flex-wrap w-full h-full gap-4 pt-4" key={promptId}>
@@ -652,7 +471,6 @@ function PlaygroundPageContent({ doPost, loading, setLoading, runningWorkflows, 
                                                         generation={generation}
                                                         onShowErrorDialog={onShowErrorDialog}
                                                         promptId={promptId}
-
                                                     />
                                                 }
                                                 {!(generation.status && generation.status === "error") && generation.outputs.map((output) => (
@@ -666,7 +484,7 @@ function PlaygroundPageContent({ doPost, loading, setLoading, runningWorkflows, 
                                                 ))}
                                             </div>
                                             <hr className={
-                                                `w-full py-4 
+                                                `w-full py-4
                                             ${index !== array.length - 1 ? 'border-gray-300' : 'border-transparent'}
                                             `
                                             }
@@ -676,32 +494,31 @@ function PlaygroundPageContent({ doPost, loading, setLoading, runningWorkflows, 
                                 </div>
                             </div>
                         </ScrollArea>
-                        <div className="py-4 pr-1 h-full">
-                            <HistorySidebar open={historySidebarOpen} setOpen={setHistorySidebarOpen} appType={appType} apiApp={apiApp} />
-                        </div>
                     </div>
                 </main>
                 <ErrorAlertDialog open={errorAlertDialog.open} errorTitle={errorAlertDialog.errorTitle} errorDescription={errorAlertDialog.errorDescription} onClose={errorAlertDialog.onClose} />
-                <ApiErrorDialog
-                    open={apiErrorDialog.open}
-                    error={apiErrorDialog.error}
-                    onClose={() => setApiErrorDialog({ open: false, error: null })}
-                />
             </div>
         </>
     )
 }
 
 export default function PlaygroundPage() {
-    const userManagement = settingsService.isUserManagementEnabled();
-
-    const content = !userManagement ? <PlaygroundWithoutAuth /> : (
-        <UserContentWrapper>
-            {(userId) => <PlaygroundWithAuth userId={userId} />}
-        </UserContentWrapper>
+    const params = usePostPlayground();
+    const { runningWorkflows, workflowsCompleted, cancellingWorkflows, setCancellingWorkflow, removeRunningWorkflow, removeCancellingWorkflow } = useWorkflowData();
+    return (
+        <PlaygroundPageContent
+            doPost={params.doPost}
+            loading={params.loading}
+            setLoading={params.setLoading}
+            runningWorkflows={runningWorkflows}
+            workflowsCompleted={workflowsCompleted}
+            cancellingWorkflows={cancellingWorkflows}
+            setCancellingWorkflow={setCancellingWorkflow}
+            removeRunningWorkflow={removeRunningWorkflow}
+            removeCancellingWorkflow={removeCancellingWorkflow}
+            cancelJob={undefined}
+        />
     );
-
-    return content;
 }
 
 export function ImageDialog({ output, showOutputFileName }: { output: { file: File | S3FilesData, url: string }, showOutputFileName: boolean }) {
@@ -806,7 +623,6 @@ export function ImageDialog({ output, showOutputFileName }: { output: { file: Fi
                         minScale={imageScale}
                         maxScale={imageScale * zoomFactor}
                         centerOnInit
-
                     >
                         <TransformComponent
                             wrapperStyle={{
@@ -912,7 +728,6 @@ export function TextOutput({ output }: { output: IOutput }) {
                     }
                     const textData = await response.text();
                     setText(textData);
-                    // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 } catch (e: any) {
                     setText("");
                 }
@@ -1075,12 +890,11 @@ const IndeterminateLoadingBarStyles = () => {
 
 const Generating = (props: {
     runningWorkflows: IWorkflowHistoryModel[],
-    runningApiExecutions: RunningApiAppExecution[],
     cancellingWorkflows: string[],
     loading: boolean,
     onCancelWorkflow: (promptId: string) => void,
 }) => {
-    const { runningWorkflows, runningApiExecutions, cancellingWorkflows, loading, onCancelWorkflow } = props;
+    const { runningWorkflows, cancellingWorkflows, loading, onCancelWorkflow } = props;
 
     const generatingDetails = (
         <div className="flex flex-col gap-2">
@@ -1094,7 +908,7 @@ const Generating = (props: {
                 <IndeterminateLoadingBarStyles />
                 {runningWorkflows.map((w) => {
                     const isCancelling = cancellingWorkflows.includes(w.promptId);
-                    
+
                     return (
                         <div key={w.promptId} className="flex flex-col gap-4 w-full">
                             <div className="flex flex-wrap w-full gap-4 pt-4">
@@ -1102,21 +916,21 @@ const Generating = (props: {
                                     <AlertDialog>
                                         <BlurFade delay={0.25} inView className="flex items-center justify-center w-full h-full">
                                             <AlertDialogTrigger asChild disabled={isCancelling}>
-                                                <button 
+                                                <button
                                                     type="button"
                                                     disabled={isCancelling}
                                                     className={cn(
                                                         "w-full h-64 rounded-md flex items-center justify-center transition-all",
-                                                        isCancelling 
-                                                            ? "bg-muted/50" 
+                                                        isCancelling
+                                                            ? "bg-muted/50"
                                                             : "bg-muted animate-pulse cursor-pointer hover:ring-2 hover:ring-primary/50"
                                                     )}
                                                 >
                                                     <div className="flex flex-col items-center gap-2">
                                                         <div className={cn(
                                                             "w-8 h-8 rounded-full",
-                                                            isCancelling 
-                                                                ? "bg-muted-foreground/10" 
+                                                            isCancelling
+                                                                ? "bg-muted-foreground/10"
                                                                 : "bg-muted-foreground/20 animate-pulse"
                                                         )}></div>
                                                         <span className={cn(
@@ -1138,7 +952,7 @@ const Generating = (props: {
                                             </AlertDialogHeader>
                                             <AlertDialogFooter>
                                                 <AlertDialogCancel>Continue generating</AlertDialogCancel>
-                                                <AlertDialogAction 
+                                                <AlertDialogAction
                                                     className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                                     onClick={() => onCancelWorkflow(w.promptId)}
                                                 >
@@ -1154,32 +968,6 @@ const Generating = (props: {
                         </div>
                     );
                 })}
-            </>
-        );
-    }
-
-    if (runningApiExecutions.length > 0) {
-        return (
-            <>
-                <IndeterminateLoadingBarStyles />
-                {runningApiExecutions.map((exec) => (
-                    <div key={`api-exec-${exec.executionId}`} className="flex flex-col gap-4 w-full">
-                        <div className="flex flex-wrap w-full gap-4 pt-4">
-                            <div className="flex flex-col gap-2 sm:w-[calc(50%-2rem)] lg:w-[calc(33.333%-2rem)]">
-                                <BlurFade delay={0.25} inView className="flex items-center justify-center w-full h-full">
-                                    <div className="w-full h-64 rounded-md bg-muted animate-pulse flex items-center justify-center">
-                                        <div className="flex flex-col items-center gap-2">
-                                            <div className="w-8 h-8 rounded-full bg-muted-foreground/20 animate-pulse"></div>
-                                            <span className="text-sm text-muted-foreground animate-pulse">Generating...</span>
-                                        </div>
-                                    </div>
-                                </BlurFade>
-                                {generatingDetails}
-                            </div>
-                        </div>
-                        <hr className="w-full py-4 border-gray-300" />
-                    </div>
-                ))}
             </>
         );
     }
@@ -1229,7 +1017,6 @@ const GenerationError = (params: {
                     <BlurFade delay={0.25} inView className="flex items-center justify-center w-full h-full">
                         <div className="w-full h-64 rounded-md bg-muted flex items-center justify-center">
                             <div className="flex flex-col items-center gap-2">
-                                {/* <div className="w-8 h-8 rounded-full bg-muted-foreground/20"></div> */}
                                 <CircleX color="#ff0000" />
 
                                 <span className="text-sm text-muted-foreground">
@@ -1244,7 +1031,6 @@ const GenerationError = (params: {
                     </BlurFade>
                 </div>
             </div>
-            {/* <hr className="w-full py-4 border-gray-300" /> */}
         </div>
     )
 }

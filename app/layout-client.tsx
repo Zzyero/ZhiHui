@@ -1,32 +1,26 @@
 "use client"
 import "./globals.css";
 import { SettingsService } from '@/app/services/settings-service';
-import { DeployDialog } from '@/components/deploy/deploy-dialog';
 import { TopNav } from '@/components/top-nav';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider } from '@/components/ui/sidebar';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Toaster } from 'sonner';
-import { FileJson, SquarePlay, SquareTerminal } from 'lucide-react';
+import { FileJson, SquareTerminal } from 'lucide-react';
 import Link from 'next/link';
 import { ImageComparisonProvider } from "@/components/comparison/image-comparison-provider";
-import dynamic from "next/dynamic";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Suspense } from "react";
 
 const settingsService = new SettingsService();
 
-const validUrls = ["/playground", "/apps", "/sso"];
+const validUrls = ["/playground", "/sso"];
 
 const showSidebar = !(settingsService.getIsRunningInViewComfy() && settingsService.getIsViewMode());
 
 export default function ClientRootLayout({ children }: { children: React.ReactNode }) {
-  const [deployWindow, setDeployWindow] = useState<boolean>(false);
-  const userManagement = settingsService.isUserManagementEnabled();
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const appId: string | null | undefined = searchParams?.get("appId");
+  const appId: string | null | undefined = null;
   const pathname = usePathname();
-  
+  const router = useRouter();
 
   useEffect(() => {
     if (settingsService.getIsRunningInViewComfy()) {
@@ -46,8 +40,7 @@ export default function ClientRootLayout({ children }: { children: React.ReactNo
         router.push("/editor");
       }
     }
-  }, [pathname, router, userManagement, appId]);
-
+  }, [pathname, router, appId]);
 
 
   const content = (
@@ -59,14 +52,11 @@ export default function ClientRootLayout({ children }: { children: React.ReactNo
             <div className="flex flex-1 overflow-hidden">
               <AppSidebar />
               <main className={`flex-1 overflow-x-auto overflow-y-hidden ${showSidebar ? 'ml-[var(--sidebar-width)]' : ''}`}>
-                <PageWrapper>
-                  {children}
-                </PageWrapper>
+                {children}
               </main>
             </div>
           </SidebarProvider>
         </div>
-        <DeployDialog open={deployWindow} setOpen={setDeployWindow} />
         <Toaster />
       </ImageComparisonProvider>
     </Suspense>
@@ -87,7 +77,7 @@ export function AppSidebar() {
       items.push({
         title: "Apps",
         url: "/apps",
-        icon: SquarePlay,
+        icon: FileJson,
       });
     } else {
       items.push({
@@ -136,24 +126,4 @@ export function AppSidebar() {
       </ SidebarFooter>
     </Sidebar>
   )
-}
-
-// Dynamically import the authenticated wrapper component
-const AuthenticatedWrapper = dynamic(
-  () => import("@/components/auth/authenticated-wrapper"),
-  { ssr: false }
-);
-
-function PageWrapper({ children }: { children: React.ReactNode }) {
-  const userManagement = settingsService.isUserManagementEnabled();
-
-  // If user management is enabled, wrap the app content with authentication
-  if (userManagement === true) {
-    return <AuthenticatedWrapper>
-      {children}
-    </AuthenticatedWrapper>;
-  }
-
-  // Otherwise render the app content directly
-  return children
 }

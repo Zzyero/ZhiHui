@@ -56,11 +56,8 @@ import { Label } from "@/components/ui/label";
 import { ActionType, useViewComfy } from "@/app/providers/view-comfy-provider";
 import { MaskEditor } from "@/components/ui/mask-editor";
 import { ImageMasked } from "@/app/models/prompt-result";
-import { useBoundStore } from "@/stores/bound-store";
-import { IWorkflow } from "@/app/interfaces/workflow";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { DeployAppDialog } from "@/components/apps/deploy-app";
 
 
 interface IInputForm extends IInputField {
@@ -80,14 +77,9 @@ interface IDeletedInputDisplay {
 }
 
 const settingsService = new SettingsService();
-const validateViewComfyEndpoint = (endpoint: string | undefined, workflows: IWorkflow[] | undefined) => {
+const validateViewComfyEndpoint = (endpoint: string | undefined) => {
     if (!settingsService.getIsRunningInViewComfy()) {
         return true;
-    }
-
-    if (workflows) {
-        const found = workflows.some(w => w.apiUrl === endpoint);
-        return found;
     }
 
     return endpoint && endpoint.startsWith("https://viewcomfy");
@@ -109,7 +101,6 @@ export function ViewComfyForm(args: {
     const { form, onSubmit, inputFieldArray, advancedFieldArray, editMode = false, isLoading = false, downloadViewComfyJSON } = args;
     const [editDialogInput, setShowEditDialogInput] = useState<IEditFieldDialog | undefined>(undefined);
     const { viewComfyState, viewComfyStateDispatcher } = useViewComfy();
-    const { workflows } = useBoundStore();
     const viewcomfyEndpointRef = useRef<HTMLDivElement>(null);
     const hasInitializedEndpoint = useRef(false);
     const { errors } = form.formState;
@@ -153,26 +144,18 @@ export function ViewComfyForm(args: {
             return;
         }
         const value = form.getValues("viewcomfyEndpoint");
-        if (settingsService.getIsRunningInViewComfy() && workflows) {
+        if (settingsService.getIsRunningInViewComfy()) {
             hasInitializedEndpoint.current = true;
             if (!value) {
-                const newEndpoint = workflows[0].apiUrl;
-                form.setValue("viewcomfyEndpoint", newEndpoint, {
-                    shouldDirty: true,
-                    shouldValidate: true
-                });
-                handleSaveSubmit({
-                    ...form.getValues(),
-                    viewcomfyEndpoint: newEndpoint
-                });
-            } else {
-                const found = workflows.some(w => w.apiUrl === value);
-                if (!found) {
-                    form.setError("viewcomfyEndpoint", { type: "custom", message: "The API endpoint URL belongs to another team, you can switch the team in the bottom left or pick a new endpoint" }, { shouldFocus: true })
-                }
+                // No cloud workflows available in local mode; leave empty
+                return;
+            }
+            // Validate the existing endpoint value
+            if (!validateViewComfyEndpoint(value)) {
+                form.setError("viewcomfyEndpoint", { type: "custom", message: "The API endpoint URL is invalid" }, { shouldFocus: true })
             }
         }
-    }, [workflows, form]);
+    }, [form]);
 
 
     // Compute deleted inputs from form data for display
@@ -296,11 +279,6 @@ export function ViewComfyForm(args: {
         handleSaveSubmit(form.getValues());
     };
 
-    const getDefaultValue = () => {
-        if (workflows) {
-            return workflows[0].apiUrl
-        }
-    }
     return (
         <>
             <EditFieldDialog showEditDialog={editDialogInput} setShowEditDialog={setShowEditDialogInput} form={form} />
@@ -343,9 +321,8 @@ export function ViewComfyForm(args: {
                                                     control={form.control}
                                                     name="viewcomfyEndpoint"
                                                     rules={{
-                                                        required: settingsService.getIsRunningInViewComfy() ? "Please pick a workflow to connect to the App" : false,
                                                         validate: {
-                                                            endpoint: (value) => (validateViewComfyEndpoint(value, workflows)) || "The API endpoint URL belongs to another team, you can switch the team in the bottom left or pick a new endpoint",
+                                                            endpoint: (value) => !value || validateViewComfyEndpoint(value) || "The API endpoint URL is invalid",
                                                         }
                                                     }}
                                                     render={({ field }) => (
@@ -377,24 +354,7 @@ export function ViewComfyForm(args: {
                                                             </FormLabel>
                                                             <FormControl
                                                             >
-                                                                {settingsService.getIsRunningInViewComfy() ? (
-                                                                    <Select
-                                                                        onValueChange={field.onChange}
-                                                                        value={field.value || getDefaultValue()}
-                                                                    >
-                                                                        <SelectTrigger>
-                                                                            <SelectValue />
-                                                                        </SelectTrigger>
-                                                                        <SelectContent className={"max-h-[300px]"}>
-                                                                            {workflows?.map((workflow) => {
-                                                                                return <SelectItem key={workflow.id} value={workflow.apiUrl}>{workflow.name}</SelectItem>
-                                                                            })}
-                                                                        </SelectContent>
-                                                                    </Select>
-
-                                                                ) : (
-                                                                    <Input placeholder="ViewComfy endpoint" {...field} />
-                                                                )}
+                                                                <Input placeholder="ViewComfy endpoint (optional)" {...field} />
                                                             </FormControl>
                                                             <FormMessage />
                                                         </FormItem>
@@ -599,19 +559,16 @@ export function ViewComfyForm(args: {
                             </ScrollArea>
                         )}
                     </div>
-                    {editMode && (
-                        <div className={cn("sticky bottom-0 p-4 bg-background w-full flex flex-row gap-x-4 items-end rounded-md")}>
-                            <Button type="submit" className="w-full" onClick={form.handleSubmit(handleSaveSubmit)}>
-                                Save Changes
-                            </Button>
-                            <div className="flex flex-col gap-y-2 w-full">
-                                {settingsService.getIsRunningInViewComfy() && (
-                                    <DeployAppDialog viewComfyState={viewComfyState}/>
-                                )}
-                                {downloadViewComfyJSON && (
-                                    <Button type="button" variant="secondary" className="w-full" onClick={form.handleSubmit(downloadViewComfyJSON)}>
-                                        Download as ViewComfy JSON
-                                    </Button>
+                        {editMode && (
+                            <div className={cn("sticky bottom-0 p-4 bg-background w-full flex flex-row gap-x-4 items-end rounded-md")}>
+                                <Button type="submit" className="w-full" onClick={form.handleSubmit(handleSaveSubmit)}>
+                                    Save Changes
+                                </Button>
+                                <div className="flex flex-col gap-y-2 w-full">
+                                    {downloadViewComfyJSON && (
+                                        <Button type="button" variant="secondary" className="w-full" onClick={form.handleSubmit(downloadViewComfyJSON)}>
+                                            Download as ViewComfy JSON
+                                        </Button>
                                 )}
                             </div>
                         </div>
