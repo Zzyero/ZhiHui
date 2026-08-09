@@ -361,6 +361,9 @@ const inferLocalComfy = async (params: IPlaygroundParams & { onSuccess: (params:
         body: formData,
     });
 
+    // Real ComfyUI prompt_id (or viewcomfy endpoint id) comes back via response header
+    const realPromptId = response.headers.get('x-prompt-id') || uuidv4();
+
     if (!response.ok) {
         if (response.status === 504) {
             const error = new ResponseError({
@@ -430,8 +433,8 @@ const inferLocalComfy = async (params: IPlaygroundParams & { onSuccess: (params:
     }
 
     if (output.length > 0) {
-        onSuccess({ promptId: uuidv4(), outputs: output });
+        onSuccess({ promptId: realPromptId, outputs: output });
     } else {
-        onSuccess({ promptId: uuidv4(), outputs: [] });
+        onSuccess({ promptId: realPromptId, outputs: [] });
     }
 }

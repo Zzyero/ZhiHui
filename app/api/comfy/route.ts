@@ -31,12 +31,13 @@ export async function POST(request: NextRequest) {
 
     try {
         const comfyUIService = new ComfyUIService();
-        const stream = await comfyUIService.runWorkflow({ workflow, viewComfy });
+        const { stream, promptId } = await comfyUIService.runWorkflow({ workflow, viewComfy });
 
         return new NextResponse<ReadableStream<Uint8Array>>(stream, {
             headers: {
                 'Content-Type': 'application/octet-stream',
-                'Content-Disposition': 'attachment; filename="generated_images.bin"'
+                'Content-Disposition': 'attachment; filename="generated_images.bin"',
+                'x-prompt-id': promptId ?? '',
             }
         });
         // biome-ignore lint/suspicious/noExplicitAny: <explanation>

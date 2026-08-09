@@ -1,5 +1,3 @@
-import { IWorkflowHistoryFileModel } from "@/app/interfaces/workflow-history";
-
 /**
  * Represents the output file data from a prompt execution
  */
@@ -121,7 +119,7 @@ export class PromptResult {
 }
 
 export interface ISetResults {
-    outputs: S3FilesData[] | File[] | IWorkflowHistoryFileModel[],
+    outputs: S3FilesData[] | File[],
     promptId: string,
     status?: string | undefined;
     errorData?: string | undefined;

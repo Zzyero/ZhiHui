@@ -3,44 +3,25 @@ import "./globals.css";
 import { SettingsService } from '@/app/services/settings-service';
 import { TopNav } from '@/components/top-nav';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider } from '@/components/ui/sidebar';
-import { useEffect } from 'react';
 import { Toaster } from 'sonner';
 import { FileJson, SquareTerminal } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from "next/navigation";
-import { Suspense } from "react";
+import { Suspense, useEffect } from "react";
 
 const settingsService = new SettingsService();
 
-const validUrls = ["/playground", "/sso"];
-
-const showSidebar = !(settingsService.getIsRunningInViewComfy() && settingsService.getIsViewMode());
+const showSidebar = !settingsService.getIsViewMode();
 
 export default function ClientRootLayout({ children }: { children: React.ReactNode }) {
-  const appId: string | null | undefined = null;
   const pathname = usePathname();
   const router = useRouter();
 
   useEffect(() => {
-    if (settingsService.getIsRunningInViewComfy()) {
-      if (settingsService.getIsViewMode()) {
-        if (appId) {
-          router.push(`/playground?appId=${appId}`);
-        } else if (!validUrls.some(url => pathname.startsWith(url))) {
-          router.push("/apps");
-        }
-      } else {
-        if (pathname === "/" || pathname === "/apps") {
-          router.push("/editor");
-        }
-      }
-    } else {
-      if (pathname === "/") {
-        router.push("/editor");
-      }
+    if (pathname === "/") {
+      router.push(settingsService.getIsViewMode() ? "/playground" : "/editor");
     }
-  }, [pathname, router, appId]);
-
+  }, [pathname, router]);
 
   const content = (
     <Suspense>
@@ -63,41 +44,23 @@ export default function ClientRootLayout({ children }: { children: React.ReactNo
 }
 
 export function AppSidebar() {
-  const items = [];
   const pathname = usePathname();
-  const isPlaygroundRouteEnabled = settingsService.getIsRunningInViewComfy() && settingsService.getIsViewMode();
   if (!showSidebar) {
     return <></>
   }
-  if (settingsService.getIsRunningInViewComfy()) {
-    if (settingsService.getIsViewMode()) {
-      items.push({
-        title: "应用",
-        url: "/apps",
-        icon: FileJson,
-      });
-    } else {
-      items.push({
-        title: "编辑器",
-        url: "/editor",
-        icon: FileJson,
-      });
-    }
-  } else {
-    if (!settingsService.getIsViewMode()) {
-      items.push({
-        title: "编辑器",
-        url: "/editor",
-        icon: FileJson,
-      });
-    }
-  };
 
-  items.push({
-    title: "试运行",
-    url: isPlaygroundRouteEnabled ? "" : "/playground",
-    icon: SquareTerminal,
-  });
+  const items = [
+    ...(settingsService.getIsViewMode() ? [] : [{
+      title: "编辑器",
+      url: "/editor",
+      icon: FileJson,
+    }]),
+    {
+      title: "试运行",
+      url: "/playground",
+      icon: SquareTerminal,
+    },
+  ];
 
   return (
     <Sidebar className={"mt-2"}>

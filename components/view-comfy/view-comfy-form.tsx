@@ -77,13 +77,6 @@ interface IDeletedInputDisplay {
 }
 
 const settingsService = new SettingsService();
-const validateViewComfyEndpoint = (endpoint: string | undefined) => {
-    if (!settingsService.getIsRunningInViewComfy()) {
-        return true;
-    }
-
-    return endpoint && endpoint.startsWith("https://viewcomfy");
-}
 
 export function ViewComfyForm(args: {
 
@@ -101,18 +94,7 @@ export function ViewComfyForm(args: {
     const { form, onSubmit, inputFieldArray, advancedFieldArray, editMode = false, isLoading = false, downloadViewComfyJSON } = args;
     const [editDialogInput, setShowEditDialogInput] = useState<IEditFieldDialog | undefined>(undefined);
     const { viewComfyState, viewComfyStateDispatcher } = useViewComfy();
-    const viewcomfyEndpointRef = useRef<HTMLDivElement>(null);
-    const hasInitializedEndpoint = useRef(false);
     const { errors } = form.formState;
-    const viewcomfyEndpointError = errors.viewcomfyEndpoint;
-
-    useEffect(() => {
-        if (viewcomfyEndpointError && viewcomfyEndpointRef.current) {
-            viewcomfyEndpointRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-    }, [viewcomfyEndpointError]);
-
-
 
     const handleSaveSubmit = (data: IViewComfyBase) => {
         try {
@@ -138,24 +120,6 @@ export function ViewComfyForm(args: {
             console.error(e);
         }
     };
-
-    useEffect(() => {
-        if (hasInitializedEndpoint.current) {
-            return;
-        }
-        const value = form.getValues("viewcomfyEndpoint");
-        if (settingsService.getIsRunningInViewComfy()) {
-            hasInitializedEndpoint.current = true;
-            if (!value) {
-                // No cloud workflows available in local mode; leave empty
-                return;
-            }
-            // Validate the existing endpoint value
-            if (!validateViewComfyEndpoint(value)) {
-                form.setError("viewcomfyEndpoint", { type: "custom", message: "API 端点 URL 无效" }, { shouldFocus: true })
-            }
-        }
-    }, [form]);
 
 
     // Compute deleted inputs from form data for display
@@ -312,49 +276,6 @@ export function ViewComfyForm(args: {
                                                             <FormLabel>描述</FormLabel>
                                                             <FormControl>
                                                                 <Textarea placeholder="工作流描述" {...field} />
-                                                            </FormControl>
-                                                            <FormMessage />
-                                                        </FormItem>
-                                                    )}
-                                                />
-                                                <FormField
-                                                    control={form.control}
-                                                    name="viewcomfyEndpoint"
-                                                    rules={{
-                                                        validate: {
-                                                            endpoint: (value) => !value || validateViewComfyEndpoint(value) || "API 端点 URL 无效",
-                                                        }
-                                                    }}
-                                                    render={({ field }) => (
-                                                        <FormItem key="viewcomfyEndpoint" className="m-1" ref={viewcomfyEndpointRef}>
-                                                            <FormLabel>
-                                                                ViewComfy 端点 {!settingsService.getIsRunningInViewComfy() && <span>（可选）</span>}
-                                                                <Tooltip>
-                                                                    <TooltipTrigger asChild>
-                                                                        <Button
-                                                                            type="button"
-                                                                            size="icon"
-                                                                            variant="ghost"
-                                                                            className="text-muted-foreground"
-                                                                            onClick={(e) => {
-                                                                                e.preventDefault();
-                                                                                e.stopPropagation();
-                                                                            }}
-                                                                        >
-                                                                            <Info className="size-5" />
-                                                                        </Button>
-                                                                    </TooltipTrigger>
-                                                                    <TooltipContent className="max-w-[300px]">
-                                                                        <p>
-                                                                            你可以先将工作流部署到 ViewComfy，从而在云端 GPU 上运行。
-                                                                            开始之前，请在左侧菜单中选择「部署」。
-                                                                        </p>
-                                                                    </TooltipContent>
-                                                                </Tooltip>
-                                                            </FormLabel>
-                                                            <FormControl
-                                                            >
-                                                                <Input placeholder="ViewComfy 端点（可选）" {...field} />
                                                             </FormControl>
                                                             <FormMessage />
                                                         </FormItem>

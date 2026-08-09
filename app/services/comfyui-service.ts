@@ -32,9 +32,9 @@ export class ComfyUIService {
         await comfyWorkflow.setViewComfy(args.viewComfy.inputs, this.comfyUIAPIService);
 
         try {
-
             const promptData = await this.comfyUIAPIService.queuePrompt(workflow);
             const outputFiles = promptData.outputFiles;
+            const promptId = promptData.promptId;
             const comfyUIAPIService = this.comfyUIAPIService;
             const getFileFromComfyOutputDirectory = this.getFileFromComfyOutputDirectory;
 
@@ -88,7 +88,7 @@ export class ComfyUIService {
                     controller.close();
                 },
             });
-            return stream;
+            return { stream, promptId };
 
             // biome-ignore lint/suspicious/noExplicitAny: <explanation>
         } catch (error: unknown) {

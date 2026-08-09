@@ -26,7 +26,6 @@ import { createMediaDragHandler } from "@/lib/drag-utils";
 import WorkflowSwitcher from "@/components/workflow-switchter";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { PreviewOutputsImageGallery } from "@/components/images-preview"
-import { useRouter, useSearchParams } from 'next/navigation';
 import {
     Dialog,
     DialogContent,
@@ -35,17 +34,6 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog"
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-    AlertDialogTrigger,
-} from "@/components/ui/alert-dialog"
 import { toast } from "sonner"
 import { IUsePostPlayground } from "@/hooks/playground/interfaces";
 import * as constants from "@/app/constants";
@@ -57,8 +45,6 @@ import {
     TransformWrapper,
     TransformComponent,
 } from "react-zoom-pan-pinch";
-import { IWorkflowHistoryModel, IWorkflowResult } from "@/app/interfaces/workflow-history";
-import { useWorkflowData } from "@/app/providers/workflows-data-provider";
 
 export interface IOutput {
     file: File | S3FilesData,
@@ -82,13 +68,6 @@ interface IPlaygroundPageContent {
     doPost: (params: IUsePostPlayground) => void;
     loading: boolean;
     setLoading: (loading: boolean) => void;
-    runningWorkflows: IWorkflowHistoryModel[];
-    workflowsCompleted: IWorkflowResult[];
-    cancellingWorkflows: string[];
-    setCancellingWorkflow: (promptId: string) => void;
-    removeRunningWorkflow: (promptId: string) => void;
-    removeCancellingWorkflow: (promptId: string) => void;
-    cancelJob?: (promptId: string) => Promise<unknown>;
 }
 
 const getOutputFileName = (output: { file: File | S3FilesData, url: string }): string => {
@@ -107,77 +86,20 @@ const getOutputContentType = (output: IOutput): string => {
     }
 }
 
-function PlaygroundPageContent({ doPost, loading, setLoading, runningWorkflows, workflowsCompleted, cancellingWorkflows, setCancellingWorkflow, removeRunningWorkflow, removeCancellingWorkflow, cancelJob }: IPlaygroundPageContent) {
+function PlaygroundPageContent({ doPost, loading, setLoading }: IPlaygroundPageContent) {
     const [results, setResults] = useState<IResults>({});
     const { viewComfyState, viewComfyStateDispatcher } = useViewComfy();
     const viewMode = process.env.NEXT_PUBLIC_VIEW_MODE === "true";
     const [errorAlertDialog, setErrorAlertDialog] = useState<{ open: boolean, errorTitle: string | undefined, errorDescription: React.JSX.Element, onClose: () => void }>({ open: false, errorTitle: undefined, errorDescription: <></>, onClose: () => { } });
-    const searchParams = useSearchParams();
-    const router = useRouter();
-    const appIdParam = searchParams?.get("appId");
-    const appId = appIdParam ?? null;
     const [textOutputEnabled, setTextOutputEnabled] = useState(false);
     const [showOutputFileName, setShowOutputFileName] = useState(false);
-    const [permission, setPermission] = useState<"default" | "granted" | "denied">("default");
-    const [isRequesting, setIsRequesting] = useState(false);
-    const isNotificationAvailable = typeof window !== 'undefined' && 'Notification' in window;
-
-    const requestPermission = useCallback(async () => {
-        if (!isNotificationAvailable) {
-            return;
-        }
-        if (permission === 'default' && !isRequesting) {
-            setIsRequesting(true);
-            try {
-                const result = await Notification.requestPermission();
-                setPermission(result);
-                setPermission(Notification.permission);
-            } catch (error) {
-                console.error('Error requesting notification permission:', error);
-                setPermission(Notification.permission);
-            } finally {
-                setIsRequesting(false);
-            }
-        }
-    }, [permission, isRequesting, isNotificationAvailable]);
-
-    const sendNotification = useCallback(async () => {
-        if (!isNotificationAvailable) {
-            return;
-        }
-        if (permission === 'granted') {
-            new Notification('ViewComfy 生成完成！', {
-                body: '你的图像生成已完成。',
-                icon: '/view_comfy_logo.svg',
-            });
-        } else if (permission === 'default') {
-            await requestPermission();
-        }
-    }, [permission, requestPermission, isNotificationAvailable]);
-
-    const handleCancelWorkflow = useCallback(async (promptId: string) => {
-        if (!cancelJob) {
-            return;
-        }
-        setCancellingWorkflow(promptId);
-        try {
-            await cancelJob(promptId);
-            removeRunningWorkflow(promptId);
-        } catch (error) {
-            removeCancellingWorkflow(promptId);
-            toast.error("取消生成失败", {
-                description: "请重试或等待生成完成。"
-            });
-        }
-    }, [cancelJob, setCancellingWorkflow, removeRunningWorkflow, removeCancellingWorkflow]);
 
     useEffect(() => {
         if (!viewMode) return;
 
         const fetchViewComfy = async () => {
             try {
-                const apiUrl = appId ? `/api/playground?appId=${appId}` : "/api/playground";
-                const response = await fetch(apiUrl, {
+                const response = await fetch("/api/playground", {
                     headers: {
                         "accept": "application/json"
                     }
@@ -186,11 +108,7 @@ function PlaygroundPageContent({ doPost, loading, setLoading, runningWorkflows, 
                     const text = await response.text()
                     const data = text ? JSON.parse(text) : {};
                     if (data) {
-                        const responseError: ResponseError = data;
-                        if (responseError.errorType === "ViewModeMissingAppIdError") {
-                            return router.push("/apps")
-                        }
-                        throw responseError;
+                        throw data;
                     } else {
                         const err = new ResponseError(data);
                         throw err;
@@ -221,7 +139,7 @@ function PlaygroundPageContent({ doPost, loading, setLoading, runningWorkflows, 
             }
         };
         fetchViewComfy();
-    }, [viewMode, viewComfyStateDispatcher, appId, router]);
+    }, [viewMode, viewComfyStateDispatcher]);
 
     const onSetResults = useCallback(async (params: ISetResults) => {
         const { promptId, status, errorData } = params;
@@ -243,7 +161,7 @@ function PlaygroundPageContent({ doPost, loading, setLoading, runningWorkflows, 
                 }
                 resultOutputs.push({ file: output, url });
             } else {
-                // IWorkflowHistoryFileModel or S3FilesData
+                // S3FilesData: 走 filepath URL
                 url = output.filepath;
                 const s3File = new S3FilesData({
                     filename: output.filename,
@@ -273,23 +191,7 @@ function PlaygroundPageContent({ doPost, loading, setLoading, runningWorkflows, 
             };
         });
         setLoading(false);
-        await sendNotification();
-    }, [setLoading, sendNotification]);
-
-    useEffect(() => {
-        if (workflowsCompleted.length === 0) {
-            return;
-        }
-        const addWorkflows = async () => {
-            for (const w of workflowsCompleted) {
-                const outputs = w.outputs || [];
-                await onSetResults({ promptId: w.promptId, outputs, errorData: w.errorData, status: w.status });
-            };
-        }
-        addWorkflows();
-
-    }, [workflowsCompleted, onSetResults]);
-
+    }, [setLoading]);
 
     function onSubmit(data: IViewComfyWorkflow) {
         const inputs: { key: string, value: unknown }[] = [];
@@ -329,7 +231,6 @@ function PlaygroundPageContent({ doPost, loading, setLoading, runningWorkflows, 
         const doPostParams = {
             viewComfy: generationData,
             workflow: viewComfyState.currentViewComfy?.workflowApiJSON,
-            viewcomfyEndpoint: viewComfyState.currentViewComfy?.viewComfyJSON.viewcomfyEndpoint ?? "",
             onSuccess: (params: { promptId: string, outputs: File[] }) => {
                 onSetResults({ ...params });
 
@@ -433,25 +334,22 @@ function PlaygroundPageContent({ doPost, loading, setLoading, runningWorkflows, 
                     </div>
                     <div className="relative flex h-full min-h-[50vh] w-full rounded-r-xl bg-muted/50 lg:col-span-2">
                         <ScrollArea className="relative flex h-full w-full flex-1 flex-col">
-                            {(Object.keys(results).length === 0) && runningWorkflows.length === 0 && !loading && viewComfyState.currentViewComfy && (
+                            <div className="absolute right-3 top-14 z-10 flex gap-2">
+                                {(Object.keys(results).length > 0) ? (
+                                    <Badge variant="outline">输出结果</Badge>
+                                ) : !loading && viewComfyState.currentViewComfy ? (
+                                    <Badge variant="outline">输出预览</Badge>
+                                ) : null}
+                            </div>
+                            {(Object.keys(results).length === 0) && !loading && viewComfyState.currentViewComfy && (
                                 <>  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full">
                                     <PreviewOutputsImageGallery viewComfyJSON={viewComfyState.currentViewComfy.viewComfyJSON} />
                                 </div>
-                                    <Badge variant="outline" className="absolute right-3 top-14">
-                                        输出预览
-                                    </Badge>
                                 </>
-                            )}
-                            {(Object.keys(results).length > 0) && (
-                                <div className="absolute right-3 top-14 flex gap-2">
-                                    <Badge variant="outline">
-                                        输出结果
-                                    </Badge>
-                                </div>
                             )}
                             <div className="flex-1 h-full p-4 flex overflow-y-auto">
                                 <div className="flex flex-col w-full h-full">
-                                    <Generating loading={loading} runningWorkflows={runningWorkflows} cancellingWorkflows={cancellingWorkflows} onCancelWorkflow={handleCancelWorkflow} />
+                                    <Generating loading={loading} />
                                     {Object.entries(results).map(([promptId, generation], index, array) => (
                                         <div className="flex flex-col gap-4 w-full h-full" key={promptId}>
                                             <div className="flex flex-wrap w-full h-full gap-4 pt-4" key={promptId}>
@@ -493,19 +391,11 @@ function PlaygroundPageContent({ doPost, loading, setLoading, runningWorkflows, 
 
 export default function PlaygroundPage() {
     const params = usePostPlayground();
-    const { runningWorkflows, workflowsCompleted, cancellingWorkflows, setCancellingWorkflow, removeRunningWorkflow, removeCancellingWorkflow } = useWorkflowData();
     return (
         <PlaygroundPageContent
             doPost={params.doPost}
             loading={params.loading}
             setLoading={params.setLoading}
-            runningWorkflows={runningWorkflows}
-            workflowsCompleted={workflowsCompleted}
-            cancellingWorkflows={cancellingWorkflows}
-            setCancellingWorkflow={setCancellingWorkflow}
-            removeRunningWorkflow={removeRunningWorkflow}
-            removeCancellingWorkflow={removeCancellingWorkflow}
-            cancelJob={undefined}
         />
     );
 }
@@ -867,88 +757,15 @@ const IndeterminateLoadingBarStyles = () => {
 };
 
 const Generating = (props: {
-    runningWorkflows: IWorkflowHistoryModel[],
-    cancellingWorkflows: string[],
     loading: boolean,
-    onCancelWorkflow: (promptId: string) => void,
 }) => {
-    const { runningWorkflows, cancellingWorkflows, loading, onCancelWorkflow } = props;
+    const { loading } = props;
 
     const generatingDetails = (
         <div className="flex flex-col gap-2">
             <IndeterminateLoadingBar />
         </div>
     );
-
-    if (runningWorkflows.length > 0) {
-        return (
-            <>
-                <IndeterminateLoadingBarStyles />
-                {runningWorkflows.map((w) => {
-                    const isCancelling = cancellingWorkflows.includes(w.promptId);
-
-                    return (
-                        <div key={w.promptId} className="flex flex-col gap-4 w-full">
-                            <div className="flex flex-wrap w-full gap-4 pt-4">
-                                <div key={`loading-placeholder-${w.promptId}`} className="flex flex-col gap-2 sm:w-[calc(50%-2rem)] lg:w-[calc(33.333%-2rem)]">
-                                    <AlertDialog>
-                                        <BlurFade delay={0.25} inView className="flex items-center justify-center w-full h-full">
-                                            <AlertDialogTrigger asChild disabled={isCancelling}>
-                                                <button
-                                                    type="button"
-                                                    disabled={isCancelling}
-                                                    className={cn(
-                                                        "w-full h-64 rounded-md flex items-center justify-center transition-all",
-                                                        isCancelling
-                                                            ? "bg-muted/50"
-                                                            : "bg-muted animate-pulse cursor-pointer hover:ring-2 hover:ring-primary/50"
-                                                    )}
-                                                >
-                                                    <div className="flex flex-col items-center gap-2">
-                                                        <div className={cn(
-                                                            "w-8 h-8 rounded-full",
-                                                            isCancelling
-                                                                ? "bg-muted-foreground/10"
-                                                                : "bg-muted-foreground/20 animate-pulse"
-                                                        )}></div>
-                                <span className={cn(
-                                    "text-sm text-muted-foreground",
-                                    !isCancelling && "animate-pulse"
-                                )}>
-                                    {isCancelling ? "正在取消..." : "正在生成..."}
-                                </span>
-                                                    </div>
-                                                </button>
-                                            </AlertDialogTrigger>
-                                        </BlurFade>
-                                        <AlertDialogContent>
-                                            <AlertDialogHeader>
-                                                <AlertDialogTitle>取消生成？</AlertDialogTitle>
-                                                <AlertDialogDescription>
-                                                    确定要取消这次生成吗？此操作无法撤销。
-                                                </AlertDialogDescription>
-                                            </AlertDialogHeader>
-                                            <AlertDialogFooter>
-                                                <AlertDialogCancel>继续生成</AlertDialogCancel>
-                                                <AlertDialogAction
-                                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                                    onClick={() => onCancelWorkflow(w.promptId)}
-                                                >
-                                                    取消生成
-                                                </AlertDialogAction>
-                                            </AlertDialogFooter>
-                                        </AlertDialogContent>
-                                    </AlertDialog>
-                                    {generatingDetails}
-                                </div>
-                            </div>
-                            <hr className="w-full py-4 border-gray-300" />
-                        </div>
-                    );
-                })}
-            </>
-        );
-    }
 
     if (loading) {
         return (

@@ -24,7 +24,6 @@
 - 图片比较 Provider
 - 全局部署弹窗
 - Clerk 认证包装器
-- Workflow 执行状态 Provider
 - API App 执行状态 Provider
 - Socket Provider
 
@@ -95,12 +94,8 @@
 - 根据 URL `appId` 加载 ViewComfy App 或 API App
 - 动态渲染输入表单
 - 提交生成请求
-- 接收 WebSocket 与轮询结果
 - 展示图片、视频、音频、文本与文件输出
-- 取消正在执行的 Workflow
-- 打开历史面板
 - 选择两张图片对比
-- 请求浏览器通知并提示完成
 
 App 类型：
 
@@ -122,11 +117,6 @@ App 类型：
 | `Generate` / `Generating...` | `PlaygroundForm` 与 `ApiAppPlaygroundForm` | 提交 Workflow 或 API App，loading 时禁用 |
 | `Compare` / `Cancel` | `ComparisonButton` | 进入/退出 Compare Mode |
 | 图片对比 Checkbox | `ComparisonCheckbox` | 最多选两张，选满自动打开对比弹窗 |
-| `History` | 顶部 | 打开右侧 `HistorySidebar` |
-| 生成中卡片按钮 | 生成中状态 | 打开取消确认弹窗 |
-| `Continue generating` | 取消弹窗 | 关闭弹窗继续生成 |
-| `Cancel generation` | 取消弹窗 | 调用 `cancelJob(promptId)` |
-| `Show Error` | 生成中状态 | 打开 `ErrorAlertDialog` |
 | 图片输出点击 | 输出卡片 | 打开大图 Dialog，支持缩放/平移/拖回输入 |
 | `Download` | 图片 Dialog | 下载当前图片 |
 | 视频输出点击 | 输出卡片 | 打开大尺寸 Dialog |
@@ -447,49 +437,7 @@ Provider 状态：
 
 ---
 
-## 十二、History Sidebar
-
-文件：`ViewComfy/components/history-sidebar.tsx`
-
-仅在 `NEXT_PUBLIC_USER_MANAGEMENT=true` 时启用。
-
-头部按钮：
-
-| 按钮 | 图标 | 行为 |
-| --- | --- | --- |
-| 关闭 | `ChevronRight` | 关闭侧栏 |
-| `Filters` | `Filter` | 展开/折叠过滤区 |
-
-过滤区：
-
-- ViewComfy 模式：WorkflowSwitcher + DatePickerWithRange
-- API App 模式：显示 App 名
-- `Images per page` Select：5 / 10 / 20
-
-历史项按钮：
-
-| 按钮 | 图标 | 行为 |
-| --- | --- | --- |
-| `Copy prompt` | `Copy` | 复制 Workflow prompt JSON |
-| `Copy input data` | `Copy` | 复制 API App 输入数据 |
-| `Show Error` | 无 | 打开 `ErrorAlertDialog` |
-| `Previous` | `ChevronLeft` | 上一页 |
-| `Next` | `ChevronRight` | 下一页 |
-| `Go back` | `ChevronLeft` | 无更多内容时回退 |
-
-预览控件：
-
-- 图片点击打开缩放 Dialog
-- 视频点击打开带 controls 的 Dialog
-- 音频显示 `Play` 图标
-- PSD 显示 `File`
-- 文本显示 `FileType`
-- 多结果时左右切换图标 `ChevronLeft` / `ChevronRight`
-- `Download` 按钮下载当前结果
-
----
-
-## 十三、上传区域（通用 Dropzone）
+## 十二、上传区域（通用 Dropzone）
 
 文件：`ViewComfy/components/ui/dropzone.tsx`
 
@@ -582,14 +530,6 @@ CRUD 接口：
 - `isCRUDViewComfyAppLoading`
 - `isCRUDViewComfyAppError`
 
-### Workflow Data Provider
-
-文件：`ViewComfy/app/providers/workflows-data-provider.tsx`
-
-状态：
-
-- `runningWorkflows` / `cancellingWorkflows` / `workflowsCompleted`
-
 ### API App Execution Provider
 
 文件：`ViewComfy/app/providers/api-app-execution-provider.tsx`
@@ -616,7 +556,7 @@ CRUD 接口：
 - 初始化 OpenAPI 客户端认证
 - 根据用户与 `appId` 解析 Team
 - 加载 Team Workflows
-- 包裹 WorkflowDataProvider / ApiAppExecutionProvider / SocketProvider
+- 包裹 ApiAppExecutionProvider / SocketProvider
 
 ---
 
@@ -632,9 +572,6 @@ Hook 清单：
 
 | Hook | 端点 | 刷新频率 |
 | --- | --- | --- |
-| `useWorkflowHistory` | `team/workflow-history/playground/<endpoint>` | 按需 |
-| `useRunningWorkflow` | `workflow/infer/running` | 按需 |
-| `useWorkflowByPromptIds` | `workflow/infer/?prompt_ids=...` | 按需 |
 | `useViewComfyApps` | `viewcomfy-app/playground/apps/<teamId>` | 5 秒 |
 | `useUser` | `user/playground/me` | 60 秒 |
 | `useWorkflows` | `viewcomfy-app/playground/workflows?team_id=<teamId>` | 15 秒 |
@@ -647,11 +584,6 @@ API App 轮询：
 - 文件：`ViewComfy/hooks/use-api-app-executions.tsx`
 - 端点：`AppsService.getExecutionsApiAppsAppIdHistoryRunningGet`
 - 每 2 秒轮询
-
-API App 历史：
-
-- 文件：`ViewComfy/hooks/use-api-app-history.tsx`
-- 端点：`AppsService.listExecutionsApiAppsAppIdHistoryGet`
 
 ViewComfy 提交：
 
@@ -686,7 +618,6 @@ ViewComfy 提交：
 - `infer_error_message` / `infer_result_message`
 - `reconnect_attempt`
 
-收到结果后写入 `workflowsCompleted`。
 
 ---
 
@@ -723,7 +654,6 @@ ViewComfy 提交：
 
 - `PlaygroundForm` / `ApiAppPlaygroundForm`
 - `PreviewOutputsImageGallery`
-- `HistorySidebar`
 - `SelectableImage`
 - `TextOutput`
 - 生成中状态卡片
@@ -739,7 +669,6 @@ ViewComfy 提交：
 - `DeployAppDialog` / `DeployDialog`
 - `MaskEditor`
 - `ErrorAlertDialog` / `ApiErrorDialog`
-- 取消生成 AlertDialog
 - 各类媒体预览 Dialog
 
 ### 基础 UI
