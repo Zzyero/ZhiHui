@@ -13,9 +13,15 @@
     },
     {
       "name": "智能修图",
-      "workflows": [
-        "我的工作流 1"
-      ]
+      "workflows": []
+    },
+    {
+      "name": "视频生成",
+      "workflows": []
+    },
+    {
+      "name": "音频克隆",
+      "workflows": []
     }
   ],
   "workflows": [

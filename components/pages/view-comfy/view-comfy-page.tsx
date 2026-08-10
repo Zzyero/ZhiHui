@@ -18,7 +18,7 @@ class WorkflowJSONError extends Error {
     }
 }
 
-const DEFAULT_SECTIONS = ['智能生图', '智能修图'];
+const DEFAULT_SECTIONS = ['智能生图', '智能修图', '视频生成', '音频克隆'];
 
 
 
