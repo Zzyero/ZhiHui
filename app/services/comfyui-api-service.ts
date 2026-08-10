@@ -1,5 +1,6 @@
 import { ComfyWorkflowError } from '@/app/models/errors';
 import { ComfyUIConnRefusedError } from '@/app/constants';
+import { EventEmitter } from 'node:events';
 import mime from 'mime-types';
 
 type ComfyUIWSEventType = "status" | "executing" | "execution_cached" | "progress" | "executed" | "execution_error" | "execution_success";
@@ -7,6 +8,18 @@ type ComfyUIWSEventType = "status" | "executing" | "execution_cached" | "progres
 interface IComfyUIWSEventData {
     type: ComfyUIWSEventType;
     data: { [key: string]: unknown };
+}
+
+export interface IComfyProgressEvent {
+    type: ComfyUIWSEventType;
+    promptId: string;
+    /** progress 事件带 { value, max } */
+    value?: number;
+    max?: number;
+    /** executing / executed 事件带 node 字符串 */
+    node?: string;
+    /** execution_error 事件带错误信息 */
+    errorMessage?: string;
 }
 
 export interface IComfyUINodeError {
@@ -42,12 +55,15 @@ export class ComfyUIAPIService {
     private httpBaseUrl: string;
     private wsBaseUrl: string;
     private outputFiles: Array<{ [key: string]: string }>;
-     
     private comfyExecutionError: { [key: string]: any } | undefined;
     private workflowCompletionPromise: {
         resolve: (value: unknown) => void;
         reject: (reason?: unknown) => void;
     } | undefined;
+    /** 进度事件 emitter：监听 'progress' 事件拿到所有 ComfyUI WS 事件 */
+    private progressEmitter: EventEmitter;
+    /** 当前 prompt 开始时间，用于计算总耗时 */
+    private currentPromptStartedAt: number | undefined;
 
     constructor(clientId: string) {
         this.secure = process.env.COMFYUI_SECURE === "true";
@@ -66,6 +82,7 @@ export class ComfyUIAPIService {
         this.isPromptRunning = false;
         this.workflowStatus = undefined;
         this.outputFiles = [];
+        this.progressEmitter = new EventEmitter();
     }
 
     private getUrl(protocol: "http" | "ws") {
@@ -107,62 +124,135 @@ export class ComfyUIAPIService {
             return true;
         }
 
-        switch (event.type) {
-            case "status":
-                // console.log("Status:", event.data);
-                this.workflowStatus = event.type;
-                break;
-            case "executing":
-                // console.log("Executing:", event.data);
-                this.workflowStatus = event.type;
-                break;
-            case "execution_cached":
-                // console.log("Execution cached:", event.data);
-                this.workflowStatus = event.type;
-                break;
-            case "progress":
-                // console.log("Progress:", event.data);
-                this.workflowStatus = event.type;
-                break;
-            case "executed":
-                console.log("Executed:", event.data);
-                this.parseOutputFiles(event.data);
-                this.workflowStatus = event.type;
-                break;
-            case "execution_error":
-                // data error shape
-                // data = {
-                //     exception_message: "",
-                //     exception_type: "",
-                //     node_type: "",
-                //     prompt_id: ""
-                // }
-                // console.log("Execution error:", event.data);
-                this.isPromptRunning = false;
-                this.workflowStatus = event.type;
-                this.comfyExecutionError = event.data;
-                if (this.workflowCompletionPromise) {
-                    this.workflowCompletionPromise.resolve(true);
-                    this.workflowCompletionPromise = undefined;
-                }
-                break;
-            case "execution_success":
-                // console.log("Execution success:", event.data);
-                this.isPromptRunning = false;
-                this.workflowStatus = event.type;
-                if (this.workflowCompletionPromise) {
-                    this.workflowCompletionPromise.resolve(true);
-                    this.workflowCompletionPromise = undefined;
-                }
-                break;
-            default:
-                // console.log("Unknown event type:", event.type);
-                this.workflowStatus = event.type;
-                break;
+        // 准备要 emit 的事件 payload（没有 promptId 时不 emit，避免噪音）
+        if (this.promptId) {
+            const emit = (payload: Partial<IComfyProgressEvent>) => {
+                const fullEvent = {
+                    type: event!.type,
+                    promptId: this.promptId!,
+                    ...payload,
+                };
+                appendProgressEvent(fullEvent);
+                this.progressEmitter.emit("progress", fullEvent);
+            };
+
+            switch (event.type) {
+                case "executing":
+                    this.workflowStatus = event.type;
+                    emit({ node: event.data?.node as string | undefined });
+                    break;
+                case "progress":
+                    this.workflowStatus = event.type;
+                    emit({
+                        value: event.data?.value as number | undefined,
+                        max: event.data?.max as number | undefined,
+                    });
+                    break;
+                case "executed":
+                    console.log("Executed:", event.data);
+                    this.parseOutputFiles(event.data);
+                    this.workflowStatus = event.type;
+                    emit({ node: event.data?.node as string | undefined });
+                    break;
+                case "execution_error":
+                    this.isPromptRunning = false;
+                    this.workflowStatus = event.type;
+                    this.comfyExecutionError = event.data;
+                    emit({
+                        errorMessage: event.data?.exception_message as string | undefined,
+                    });
+                    if (this.workflowCompletionPromise) {
+                        this.workflowCompletionPromise.resolve(true);
+                        this.workflowCompletionPromise = undefined;
+                    }
+                    break;
+                case "execution_success":
+                    this.isPromptRunning = false;
+                    this.workflowStatus = event.type;
+                    if (this.workflowCompletionPromise) {
+                        this.workflowCompletionPromise.resolve(true);
+                        this.workflowCompletionPromise = undefined;
+                    }
+                    emit({});
+                    break;
+                default:
+                    this.workflowStatus = event.type;
+                    break;
+            }
+        } else {
+            // 没有提示 promptId 时的原本逻辑（保留以兼容）
+            switch (event.type) {
+                case "status":
+                    this.workflowStatus = event.type;
+                    break;
+                case "executing":
+                    this.workflowStatus = event.type;
+                    break;
+                case "execution_cached":
+                    this.workflowStatus = event.type;
+                    break;
+                case "progress":
+                    this.workflowStatus = event.type;
+                    break;
+                case "executed":
+                    console.log("Executed:", event.data);
+                    this.parseOutputFiles(event.data);
+                    this.workflowStatus = event.type;
+                    break;
+                case "execution_error":
+                    this.isPromptRunning = false;
+                    this.workflowStatus = event.type;
+                    this.comfyExecutionError = event.data;
+                    if (this.workflowCompletionPromise) {
+                        this.workflowCompletionPromise.resolve(true);
+                        this.workflowCompletionPromise = undefined;
+                    }
+                    break;
+                case "execution_success":
+                    this.isPromptRunning = false;
+                    this.workflowStatus = event.type;
+                    if (this.workflowCompletionPromise) {
+                        this.workflowCompletionPromise.resolve(true);
+                        this.workflowCompletionPromise = undefined;
+                    }
+                    break;
+                default:
+                    this.workflowStatus = event.type;
+                    break;
+            }
         }
     }
 
+    /** 订阅进度事件（ComfyUI 推送，promptId 已过滤） */
+    public onProgress(listener: (event: IComfyProgressEvent) => void) {
+        this.progressEmitter.on("progress", listener);
+    }
+
+    /** 取消订阅 */
+    public offProgress(listener: (event: IComfyProgressEvent) => void) {
+        this.progressEmitter.off("progress", listener);
+    }
+
+    /** 当前 prompt 启动时间（ms） */
+    public getCurrentPromptStartedAt(): number | undefined {
+        return this.currentPromptStartedAt;
+    }
+
+    /** 当前 promptId */
+    public getCurrentPromptId(): string | undefined {
+        return this.promptId;
+    }
+
+    /** 计算当前 prompt 已耗时（ms） */
+    public getCurrentPromptElapsedMs(): number | undefined {
+        if (this.currentPromptStartedAt === undefined) return undefined;
+        return Date.now() - this.currentPromptStartedAt;
+    }
+
+
     public async queuePrompt(workflow: object) {
+        // 记录开始时间（用于外层计算总耗时）
+        this.currentPromptStartedAt = Date.now();
         const data = {
             "prompt": workflow,
             "client_id": this.clientId,
@@ -221,6 +311,7 @@ export class ComfyUIAPIService {
             this.isPromptRunning = true;
             this.comfyExecutionError = undefined; // Reset error before new prompt
             this.workflowStatus = undefined;     // Reset status before new prompt
+            this.outputFiles = [];               // Reset output files
 
             // Create a new promise and store its resolve/reject methods
             const completionPromise = new Promise((resolve, reject) => {
@@ -230,8 +321,7 @@ export class ComfyUIAPIService {
             await completionPromise; // Wait for the workflow to complete
 
             if (this.workflowStatus === "execution_error") {
-                const errorMessage =
-                    (this.comfyExecutionError && "exception_message" in this.comfyExecutionError)
+                const errorMessage =                    (this.comfyExecutionError && "exception_message" in this.comfyExecutionError)
                         ? (this.comfyExecutionError as { exception_message?: string }).exception_message
                         : undefined;
                 const nodeType =
@@ -265,6 +355,108 @@ export class ComfyUIAPIService {
             }
             throw error;
         }
+    }
+
+    /**
+     * 启动一个 prompt：发送 /prompt 请求并立即返回 promptId（不等 execution 完成）。
+     * 完成监听通过 emitter；调用方后续可用 waitForCompletion 阻塞直到结束。
+     */
+    public async startQueuePrompt(workflow: object): Promise<string> {
+        this.currentPromptStartedAt = Date.now();
+        const data = {
+            "prompt": workflow,
+            "client_id": this.clientId,
+        };
+        try {
+            const response = await fetch(`${this.getUrl("http")}/prompt`, {
+                method: 'POST',
+                body: JSON.stringify(data),
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            });
+            if (!response.ok) {
+                let resError: IComfyUIError | string;
+                try {
+                    const responseError = await response.json();
+                    if (responseError.error?.message) {
+                        resError = {
+                            message: responseError.error.message,
+                            node_errors: responseError.node_errors || [],
+                        };
+                    } else {
+                        resError = responseError;
+                    }
+                } catch (error) {
+                    console.error("cannot parse response", error);
+                    throw error;
+                }
+                console.error(resError);
+                throw resError;
+            }
+
+            if (!response.body) {
+                throw new Error("No response body");
+            }
+
+            const responseData = await response.json();
+            if (responseData.hasOwnProperty("node_errors") && Object.keys(responseData.node_errors).length > 0) {
+                const resError: IComfyUIError = {
+                    message: "Something went wrong executing your workflow",
+                    node_errors: responseData.node_errors,
+                };
+                throw resError;
+            }
+
+            this.promptId = responseData.prompt_id;
+            if (this.promptId === undefined) {
+                throw new Error("Prompt ID is undefined");
+            }
+
+            this.isPromptRunning = true;
+            this.comfyExecutionError = undefined;
+            this.workflowStatus = undefined;
+            // 重置单例的 outputs 数组，避免上次残留
+            this.outputFiles = [];
+            // 创建一个真实可 await 的 completionPromise（即使没人 await，也会 resolve 避免报错）
+            this.workflowCompletionPromise = {
+                resolve: () => {},
+                reject: () => {},
+            };
+            new Promise<void>((resolve) => {
+                // 保留 closure 内部 resolve 给 handler 用
+                this.workflowCompletionPromise = {
+                    resolve: () => resolve(),
+                    reject: () => {},
+                };
+            });
+
+            return this.promptId;
+        } catch (error: any) {
+            console.error(error);
+            if (error?.cause?.code === "ECONNREFUSED") {
+                throw new ComfyWorkflowError({
+                    message: "Cannot connect to ComfyUI",
+                    errors: [ComfyUIConnRefusedError(this.getUrl("http"))]
+                });
+            }
+            throw error;
+        }
+    }
+
+    /**
+     * 等待当前 prompt 完成（promise 在 execution_success/error 时 resolve）。
+     * 返回 { outputFiles, status }。
+     */
+    public async waitForCompletion(): Promise<{ outputFiles: Array<{ [key: string]: string }>; status: ComfyUIWSEventType | undefined }> {
+        const completionPromise = new Promise<ComfyUIWSEventType | undefined>((resolve) => {
+            this.workflowCompletionPromise = {
+                resolve: () => resolve(this.workflowStatus),
+                reject: () => {},
+            };
+        });
+        await completionPromise;
+        return { outputFiles: this.outputFiles, status: this.workflowStatus };
     }
 
     public async getOutputFiles({ file }: { file: { [key: string]: string } }) {
@@ -420,5 +612,39 @@ export class ComfyUIAPIService {
         return await response.json();
 
     }
+}
 
+// 进程级单例：所有路由共用同一个 ComfyUIAPIService（共用 WS 订阅）
+let _instance: ComfyUIAPIService | undefined;
+export function getComfyUIAPIService(): ComfyUIAPIService {
+    if (!_instance) {
+        _instance = new ComfyUIAPIService(crypto.randomUUID());
+    }
+    return _instance;
+}
+
+/** 进程级 progress 事件历史：promptId 启动时清空，事件来了 push。 */
+const progressLog = new Map<string, IComfyProgressEvent[]>();
+
+/** 记录一个 prompt 的启动（清空历史） */
+export function startProgressLog(promptId: string) {
+    progressLog.set(promptId, []);
+}
+
+/** 推一条 progress 事件到历史（由 ComfyUIAPIService.emit 调用） */
+export function appendProgressEvent(event: IComfyProgressEvent) {
+    const list = progressLog.get(event.promptId);
+    if (list) {
+        list.push(event);
+    }
+}
+
+/** 读取一个 prompt 的历史（只读拷贝） */
+export function getProgressLog(promptId: string): IComfyProgressEvent[] {
+    return [...(progressLog.get(promptId) ?? [])];
+}
+
+/** 清理一个 prompt 的历史（可选，避免无限增长） */
+export function clearProgressLog(promptId: string) {
+    progressLog.delete(promptId);
 }

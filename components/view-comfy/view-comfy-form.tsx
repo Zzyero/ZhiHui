@@ -860,15 +860,9 @@ function InputFieldToUI(args: {
         )
     }
 
-    if (input.valueType === "video" || input.valueType === "image" || input.valueType === "audio") {
+    if (input.valueType === "video" || input.valueType === "image" || input.valueType === "audio" || input.valueType === "image-mask") {
         return (
             <FormMediaInput input={input} field={field} editMode={editMode} remove={remove} toggleVisibility={toggleVisibility} index={index} setShowEditDialog={setShowEditDialog} />
-        )
-    }
-
-    if (input.valueType === "image-mask") {
-        return (
-            <FormMaskInput input={input} field={field} editMode={editMode} remove={remove} toggleVisibility={toggleVisibility} index={index} setShowEditDialog={setShowEditDialog} />
         )
     }
 
@@ -989,9 +983,11 @@ function FormMediaInput(args: { input: IInputForm, field: any, editMode?: boolea
         src: "",
         name: "",
     });
+    const [maskFile, setMaskFile] = useState<File | undefined>(undefined);
+    const [showMaskEditor, setShowMaskEditor] = useState(false);
 
     let fileExtensions: string[] = []
-    if (input.valueType === "image") {
+    if (input.valueType === "image" || input.valueType === "image-mask") {
         fileExtensions = ['png', 'jpg', 'jpeg']
     } else if (input.valueType === "video") {
         fileExtensions = ['mp4', 'avi', 'webm', 'mkv', 'gif']
@@ -999,13 +995,32 @@ function FormMediaInput(args: { input: IInputForm, field: any, editMode?: boolea
         fileExtensions = ['mp3', 'wav', 'm4b', 'm4p', 'wma', 'webm']
     }
 
+    const isImageInput = input.valueType === "image" || input.valueType === "image-mask";
+
+    const getImageFile = (value: any): File | null => {
+        if (value instanceof ImageMasked) {
+            return value.image;
+        }
+        if (value instanceof File) {
+            return value;
+        }
+        return null;
+    }
+
     useEffect(() => {
-        if (field.value && field.value instanceof File) {
+        if (field.value instanceof ImageMasked) {
+            setMaskFile(field.value.mask);
+        } else {
+            setMaskFile(undefined);
+        }
+
+        const imageFile = getImageFile(field.value);
+        if (imageFile) {
             const reader = new FileReader();
             reader.onload = (e) => {
                 try {
                     const content = e.target?.result as string;
-                    const name = field.value.name
+                    const name = imageFile.name
                     setMedia({
                         src: content,
                         name: name
@@ -1018,7 +1033,7 @@ function FormMediaInput(args: { input: IInputForm, field: any, editMode?: boolea
                     });
                 }
             };
-            reader.readAsDataURL(field.value);
+            reader.readAsDataURL(imageFile);
         }
     }, [field.value]);
 
@@ -1028,7 +1043,56 @@ function FormMediaInput(args: { input: IInputForm, field: any, editMode?: boolea
             src: "",
             name: ""
         });
+        setMaskFile(undefined);
     }
+
+    const onSaveMask = (mask: File | undefined) => {
+        setMaskFile(mask);
+        setShowMaskEditor(false);
+        const imageFile = getImageFile(field.value);
+        if (mask && imageFile) {
+            field.onChange(new ImageMasked({
+                image: imageFile,
+                mask: mask,
+            }));
+        } else if (imageFile) {
+            field.onChange(imageFile);
+        }
+    }
+
+    const handleMaskEditorCancel = () => {
+        setShowMaskEditor(false);
+    }
+
+    const [maskPreviewSrc, setMaskPreviewSrc] = useState<string>("");
+
+    useEffect(() => {
+        if (maskFile && maskFile instanceof File) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const src = e.target?.result as string;
+                const maskImg = new Image();
+                maskImg.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = maskImg.width;
+                    canvas.height = maskImg.height;
+                    const ctx = canvas.getContext('2d');
+                    if (!ctx) return;
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    ctx.drawImage(maskImg, 0, 0);
+                    setMaskPreviewSrc(canvas.toDataURL());
+                };
+                maskImg.src = src;
+            };
+            reader.readAsDataURL(maskFile);
+        } else {
+            setMaskPreviewSrc("");
+        }
+    }, [maskFile]);
+
+    const displayImageSrc = maskPreviewSrc || media.src;
+    const hasMask = !!maskFile && maskFile instanceof File;
 
     return (
         <FormItem key={input.id}>
@@ -1054,28 +1118,41 @@ function FormMediaInput(args: { input: IInputForm, field: any, editMode?: boolea
             <FormControl>
                 {media.src ? (
                     <div key={input.id} className="flex flex-col items-center gap-2">
-                        {(input.valueType === "image") && (
+                        {isImageInput && (
                             <>
-                                <SelectableImage imageUrl={media.src} className="max-w-full h-48 flex items-center justify-center overflow-hidden border rounded-md relative">
+                                <SelectableImage imageUrl={displayImageSrc} className="max-w-full h-48 flex items-center justify-center overflow-hidden border rounded-md relative">
                                     <img
-                                        src={media.src}
+                                        src={displayImageSrc}
                                         alt={media.name}
                                         className="max-w-full max-h-full object-contain"
                                     />
+                                    {hasMask && (
+                                        <span className="absolute top-2 left-2 text-xs font-medium px-2 py-0.5 rounded bg-background/90 border text-muted-foreground">
+                                            蒙版已应用
+                                        </span>
+                                    )}
                                 </SelectableImage>
                                 <div className="flex flex-row items-center gap-2">
                                     <Button
                                         type="button"
                                         variant="secondary"
                                         className="border-2 text-muted-foreground"
+                                        onClick={() => setShowMaskEditor(true)}
+                                    >
+                                        <Brush className="size-5 mr-2" /> 编辑蒙版
+                                    </Button>
+                                    <Button
+                                        type="button"
+                                        variant="secondary"
+                                        className="border-2 text-muted-foreground"
                                         onClick={onDelete}
                                     >
-                                        <Trash2 className="size-5 mr-2" /> 移除 {input.valueType}
+                                        <Trash2 className="size-5 mr-2" /> 移除图片
                                     </Button>
                                 </div>
                             </>
                         )}
-                        {(input.valueType !== "image") && (
+                        {(input.valueType !== "image" && input.valueType !== "image-mask") && (
                             <>
                                 <div className="max-w-full h-48 flex items-center justify-center overflow-hidden border rounded-md relative">
                                     {(input.valueType === "video") && (
@@ -1105,7 +1182,10 @@ function FormMediaInput(args: { input: IInputForm, field: any, editMode?: boolea
                 ) : (
                     <Dropzone
                         key={input.id}
-                        onChange={field.onChange}
+                        onChange={(file) => {
+                            setMaskFile(undefined);
+                            field.onChange(file);
+                        }}
                         fileExtensions={fileExtensions}
                         className="form-dropzone"
                         inputPlaceholder={field.value?.name}
@@ -1113,212 +1193,24 @@ function FormMediaInput(args: { input: IInputForm, field: any, editMode?: boolea
                 )}
             </FormControl>
             <FormMessage />
+            {!editMode && showMaskEditor && isImageInput && (
+                <Dialog open={showMaskEditor}
+                    onOpenChange={setShowMaskEditor}
+                >
+                    <DialogContent className="w-[calc(80vw-1rem)] h-[calc(80vh-1rem)] max-w-none border bg-background rounded-lg p-0">
+                        <MaskEditor
+                            imageUrl={media.src}
+                            existingMask={maskFile}
+                            onSave={onSaveMask}
+                            onCancel={handleMaskEditorCancel}
+                        />
+                    </DialogContent>
+                </Dialog>
+            )}
         </FormItem>
     )
 }
 
-
-function FormMaskInput(args: { input: IInputForm, field: any, editMode?: boolean, remove?: (index: number) => void, toggleVisibility?: (index: number) => void, index: number, setShowEditDialog: (value: IEditFieldDialog | undefined) => void }) {
-    const { input, field, editMode, remove, toggleVisibility, index, setShowEditDialog } = args;
-    const [media, setMedia] = useState({
-        src: "",
-        name: "",
-    });
-
-    const [maskFile, setMaskFile] = useState<File | undefined>(undefined);
-    const fileExtensions: string[] = ['png', 'jpg', 'jpeg'];
-    const [showMaskEditor, setShowMaskEditor] = useState(false);
-    const [fileInput, setFileInput] = useState<File | null>(null);
-    const [maskImg, setMaskImg] = useState({
-        src: "",
-        name: "",
-    });
-
-    const onSaveMask = (mask: File | undefined) => {
-        setMaskFile(mask);
-        setShowMaskEditor(false);
-    }
-
-    const handleMaskEditorCancel = () => {
-        setShowMaskEditor(false);
-    };
-
-    const setFieldValue = () => {
-
-        if (fileInput && fileInput instanceof File) {
-            if (maskFile && maskFile instanceof File) {
-                field.onChange(new ImageMasked({
-                    image: fileInput,
-                    mask: maskFile,
-                }));
-                return;
-            } else {
-                field.onChange(fileInput);
-            }
-        }
-        else {
-            field.onChange(null);
-        }
-    }
-
-    useEffect(() => {
-        if (maskFile && maskFile instanceof File) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                try {
-                    const content = e.target?.result as string;
-                    const name = maskFile.name
-                    setMaskImg({
-                        src: content,
-                        name: name
-                    });
-                } catch (error) {
-                    console.error('Error parsing JSON:', error);
-                    setMaskImg({
-                        src: "",
-                        name: ""
-                    });
-                }
-            };
-            reader.readAsDataURL(maskFile);
-        } else {
-            setMaskImg({
-                src: "",
-                name: ""
-            });
-        }
-        setFieldValue();
-    }, [maskFile]);
-
-
-    useEffect(() => {
-        if (!fileInput) {
-            setMedia({
-                src: "",
-                name: ""
-            });
-            field.onChange(null);
-            setMaskImg({
-                src: "",
-                name: ""
-            });
-            return;
-        }
-
-        if (fileInput && fileInput instanceof File) {
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                try {
-                    const content = e.target?.result as string;
-                    const name = fileInput.name
-                    setMedia({
-                        src: content,
-                        name: name
-                    });
-                    field.onChange(fileInput);
-                    setMaskFile(undefined);
-                } catch (error) {
-                    console.error('Error parsing JSON:', error);
-                    setMedia({
-                        src: "",
-                        name: ""
-                    });
-                }
-            };
-            reader.readAsDataURL(fileInput);
-        }
-    }, [fileInput]);
-
-    const onDelete = () => {
-        setFileInput(null);
-    };
-
-    const getDisplayImg = () => {
-        return maskImg.src || media.src;
-    }
-
-    return (
-        <>
-            <FormItem key={input.id}>
-                <FormLabel className={FORM_STYLE.label}>{input.title}
-                    {input.tooltip && (
-                        <Tooltip>
-                            <TooltipTrigger className="">
-                                <Info className="h-4 w-4" onClick={(e) => {
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                }} />
-                            </TooltipTrigger>
-                            <TooltipContent className="text-center whitespace-pre-wrap">
-                                <p>
-                                    {input.tooltip}
-                                </p>
-                            </TooltipContent>
-                        </Tooltip>)}
-                    {editMode && (
-                        <FieldActionButtons remove={remove} toggleVisibility={toggleVisibility} index={index} setShowEditDialog={setShowEditDialog} input={input} field={field} />
-                    )}
-                </FormLabel>
-                <FormControl>
-                    {media.src ? (
-                        <div key={input.id} className="flex flex-col items-center gap-2">
-                            <SelectableImage imageUrl={getDisplayImg()} className="max-w-full h-48 flex items-center justify-center overflow-hidden border rounded-md relative">
-                                <img
-                                    src={getDisplayImg()}
-                                    alt={media.name}
-                                    className="max-w-full max-h-full object-contain"
-                                />
-                            </SelectableImage>
-                            <div className="flex flex-row items-center gap-2">
-                                <Button
-                                    type="button"
-                                    variant="secondary"
-                                    className="border-2 text-muted-foreground"
-                                    onClick={() => setShowMaskEditor(true)}
-                                >
-                                    <Brush className="size-5 mr-2" /> 编辑蒙版
-                                </Button>
-                                <Button
-                                    type="button"
-                                    variant="secondary"
-                                    className="border-2 text-muted-foreground"
-                                    onClick={onDelete}
-                                >
-                                    <Trash2 className="size-5 mr-2" /> 移除图片
-                                </Button>
-                            </div>
-                        </div>
-                    ) : (
-                        <Dropzone
-                            key={input.id}
-                            onChange={setFileInput}
-                            fileExtensions={fileExtensions}
-                            className="form-dropzone"
-                            inputPlaceholder={fileInput?.name}
-                        />
-                    )}
-                </FormControl>
-                <FormMessage />
-            </FormItem>
-            {!editMode && showMaskEditor &&
-                (
-                    <Dialog open={showMaskEditor}
-                        onOpenChange={setShowMaskEditor}
-                    >
-                        <DialogContent className="w-[calc(80vw-1rem)] h-[calc(80vh-1rem)] max-w-none border bg-background rounded-lg p-0">
-                            <MaskEditor
-                                imageUrl={media.src}
-                                existingMask={maskFile}
-                                onSave={onSaveMask}
-                                onCancel={handleMaskEditorCancel}
-                            />
-                        </DialogContent>
-                    </Dialog>
-                )
-            }
-        </>
-    )
-}
 
 function FormTextAreaInput(args: {
     input: IInputForm,
@@ -1863,7 +1755,6 @@ function EditFieldDialog(props: {
         { label: "文本", value: "string" },
         { label: "长文本", value: "long-text" },
         { label: "图片", value: "image" },
-        { label: "带蒙版编辑器的图片", value: "image-mask" },
         { label: "视频", value: "video" },
         { label: "音频", value: "audio" },
         { label: "下拉选择", value: "select" },
@@ -1960,7 +1851,6 @@ function EditFieldDialog(props: {
                 break;
             }
             case "image":
-            case "image-mask":
             case "video":
             case "audio": {
                 break;
@@ -2033,7 +1923,6 @@ function EditFieldDialog(props: {
                 break;
             }
             case "image":
-            case "image-mask":
             case "video":
             case "audio": {
                 computedDefault = null;

@@ -1,9 +1,11 @@
 import { ComfyUIService } from '@/app/services/comfyui-service';
+import { getComfyUIAPIService } from '@/app/services/comfyui-api-service';
 import { type NextRequest, NextResponse } from 'next/server';
 import { ErrorResponseFactory } from '@/app/models/errors';
 import { IViewComfy } from '@/app/interfaces/comfy-input';
 
 const errorResponseFactory = new ErrorResponseFactory();
+const comfyUIService = new ComfyUIService(getComfyUIAPIService());
 
 export async function POST(request: NextRequest) {
     const formData = await request.formData();
@@ -30,13 +32,13 @@ export async function POST(request: NextRequest) {
     }
 
     try {
-        const comfyUIService = new ComfyUIService();
         const { stream, promptId } = await comfyUIService.runWorkflow({ workflow, viewComfy });
 
         return new NextResponse<ReadableStream<Uint8Array>>(stream, {
             headers: {
-                'Content-Type': 'application/octet-stream',
-                'Content-Disposition': 'attachment; filename="generated_images.bin"',
+                'Content-Type': 'text/event-stream',
+                'Cache-Control': 'no-cache, no-transform',
+                'Connection': 'keep-alive',
                 'x-prompt-id': promptId ?? '',
             }
         });

@@ -13,7 +13,7 @@ import {
     DrawerContent,
     DrawerTrigger,
 } from "@/components/ui/drawer"
-import { Fragment, useEffect, useState, useCallback, useMemo } from "react";
+import { Fragment, useEffect, useState, useCallback, useMemo, useRef } from "react";
 import PlaygroundForm from "./playground-form";
 import { usePostPlayground } from "@/hooks/playground/use-post-playground";
 import { ActionType, type IViewComfy, type IViewComfyWorkflow, useViewComfy } from "@/app/providers/view-comfy-provider";
@@ -61,6 +61,8 @@ interface IGeneration {
     status?: string | undefined;
     outputs: IOutput[],
     errorData?: string | undefined;
+    /** 总耗时（毫秒） */
+    totalElapsedMs?: number;
 }
 
 
@@ -103,10 +105,44 @@ function PlaygroundPageContent({ doPost, sectionName }: IPlaygroundPageContent) 
         });
     }, [sectionName, viewComfyStateDispatcher]);
 
+    // 本次生成的稳定启动时间戳（不随 progress 事件重置，用于"已用时间"显示）与服务器真 promptId
+    const generationStartedAtRef = useRef<number>(0);
+    const realPromptIdRef = useRef<string | undefined>(undefined);
+
+    // node id -> 友好标题 映射（从 workflow_api 的 _meta.title 读取，用于进度条上方显示当前节点）
+    const nodeTitleMap = useMemo(() => {
+        const map: Record<string, string> = {};
+        const wf = viewComfyState.currentViewComfy?.workflowApiJSON as Record<string, { class_type?: string; _meta?: { title?: string } }> | undefined;
+        if (wf) {
+            for (const id in wf) {
+                const title = wf[id]?._meta?.title || wf[id]?.class_type;
+                if (title) {
+                    map[id] = title;
+                }
+            }
+        }
+        return map;
+    }, [viewComfyState.currentViewComfy]);
+
     // 当前页（section）的结果集 —— 切页面也保留（升到 Provider）
     const results: IResults = useMemo(() => {
         return (sectionName && viewComfyState.resultsBySection[sectionName]) || {};
     }, [sectionName, viewComfyState.resultsBySection]);
+
+    // 找正在运行的 prompt 的 progress（取 status==='running' 的最新一条）
+    const runningProgress = useMemo(() => {
+        const all = viewComfyState.progressByPrompt;
+        let candidate: { value: number; max: number; currentNode?: string; startedAt: number } | undefined;
+        let latestStartedAt = -1;
+        for (const pid in all) {
+            const p = all[pid];
+            if (p.status === "running" && p.startedAt > latestStartedAt) {
+                latestStartedAt = p.startedAt;
+                candidate = p;
+            }
+        }
+        return candidate;
+    }, [viewComfyState.progressByPrompt]);
 
     // 按 section 过滤工作流（按标题匹配）
     const filteredViewComfys = useMemo(() => {
@@ -179,7 +215,7 @@ function PlaygroundPageContent({ doPost, sectionName }: IPlaygroundPageContent) 
     }, [viewMode, viewComfyStateDispatcher]);
 
     const onSetResults = useCallback(async (params: ISetResults) => {
-        const { promptId, status, errorData } = params;
+        const { promptId, status, errorData, localPromptId, totalElapsedMs } = params;
         const outputs = params.outputs || [];
         const resultOutputs: IOutput[] = [];
 
@@ -224,7 +260,18 @@ function PlaygroundPageContent({ doPost, sectionName }: IPlaygroundPageContent) 
                         status,
                         outputs: resultOutputs,
                         errorData,
+                        totalElapsedMs,
                     },
+                },
+            });
+
+            // 标记该 prompt 的进度为 success，并写入总耗时
+            viewComfyStateDispatcher({
+                type: ActionType.SET_PROGRESS_DONE,
+                payload: {
+                    promptId,
+                    totalElapsedMs: totalElapsedMs ?? 0,
+                    status: status === "error" ? "error" : "success",
                 },
             });
         }
@@ -234,6 +281,7 @@ function PlaygroundPageContent({ doPost, sectionName }: IPlaygroundPageContent) 
                 status: status,
                 outputs: resultOutputs,
                 errorData,
+                totalElapsedMs,
             }
         };
 
@@ -278,13 +326,42 @@ function PlaygroundPageContent({ doPost, sectionName }: IPlaygroundPageContent) 
         // 立刻把当前 section 的 loading 翻 true（提升到 Provider，跨页面持续）
         setSectionLoading(true);
 
+        // 记录本次生成的稳定起点（供"已用时间"与错误耗时使用）
+        generationStartedAtRef.current = Date.now();
+        realPromptIdRef.current = undefined;
+
+        // 本次 promptId 先占位（server 第一个 SSE started 事件会带真值）
+        const localPromptId = crypto.randomUUID();
+        viewComfyStateDispatcher({
+            type: ActionType.SET_PROGRESS,
+            payload: {
+                promptId: localPromptId,
+                progress: {
+                    value: 0,
+                    max: 0,
+                    startedAt: generationStartedAtRef.current,
+                    status: "running",
+                },
+            },
+        });
+
         const doPostParams = {
             viewComfy: generationData,
             workflow: viewComfyState.currentViewComfy?.workflowApiJSON,
-            onSuccess: (params: { promptId: string, outputs: File[] }) => {
-                onSetResults({ ...params });
-
+            onSuccess: (params: { promptId: string, outputs: File[], totalElapsedMs?: number }) => {
+                onSetResults({ ...params, localPromptId, totalElapsedMs: params.totalElapsedMs });
+                setSectionLoading(false);
             }, onError: (error: any) => {
+                // 错误时也要把 progress 标为 error
+                viewComfyStateDispatcher({
+                    type: ActionType.SET_PROGRESS_DONE,
+                    payload: {
+                        promptId: realPromptIdRef.current || localPromptId,
+                        totalElapsedMs: Date.now() - generationStartedAtRef.current,
+                        status: "error",
+                    },
+                });
+                setSectionLoading(false);
                 const errorDialog = apiErrorHandler.apiErrorToDialog(error);
                 setErrorAlertDialog({
                     open: true,
@@ -294,7 +371,71 @@ function PlaygroundPageContent({ doPost, sectionName }: IPlaygroundPageContent) 
                         setErrorAlertDialog({ open: false, errorTitle: undefined, errorDescription: <></>, onClose: () => { } });
                     }
                 });
-            }
+            },
+            onProgress: (event: { type: string, value?: number, max?: number, currentNode?: string, promptId?: string, errorMessage?: string }) => {
+                // 把 server SSE started 拿到的真 promptId 切换到 provider（可能跟 localPromptId 不同）
+                const realPromptId = event.promptId || localPromptId;
+                realPromptIdRef.current = realPromptId;
+                // node id -> 友好标题；无映射时回退原始值
+                const toNodeLabel = (raw?: string) => (raw ? nodeTitleMap[raw] || raw : undefined);
+
+                if (event.type === "started") {
+                    // 移除本地占位，迁移到真 promptId，沿用稳定起点
+                    viewComfyStateDispatcher({
+                        type: ActionType.REMOVE_PROGRESS,
+                        payload: { promptId: localPromptId },
+                    });
+                    viewComfyStateDispatcher({
+                        type: ActionType.SET_PROGRESS,
+                        payload: {
+                            promptId: realPromptId,
+                            progress: {
+                                value: 0,
+                                max: 0,
+                                startedAt: generationStartedAtRef.current,
+                                status: "running",
+                            },
+                        },
+                    });
+                    return;
+                }
+                if (event.type === "progress") {
+                    // 只更新 value/max；currentNode 由 executing 事件提供，保留不覆盖
+                    viewComfyStateDispatcher({
+                        type: ActionType.SET_PROGRESS,
+                        payload: {
+                            promptId: realPromptId,
+                            progress: {
+                                value: event.value ?? 0,
+                                max: event.max ?? 0,
+                                startedAt: generationStartedAtRef.current,
+                                status: "running",
+                            },
+                        },
+                    });
+                } else if (event.type === "executing" || event.type === "executed") {
+                    // 只更新当前节点名；不清空 value/max，避免进度条来回跳
+                    viewComfyStateDispatcher({
+                        type: ActionType.SET_PROGRESS,
+                        payload: {
+                            promptId: realPromptId,
+                            progress: {
+                                currentNode: toNodeLabel(event.currentNode),
+                                status: "running",
+                            },
+                        },
+                    });
+                } else if (event.type === "error") {
+                    viewComfyStateDispatcher({
+                        type: ActionType.SET_PROGRESS_DONE,
+                        payload: {
+                            promptId: realPromptId,
+                            totalElapsedMs: 0,
+                            status: "error",
+                        },
+                    });
+                }
+            },
         }
 
         doPost(doPostParams);
@@ -374,13 +515,6 @@ function PlaygroundPageContent({ doPost, sectionName }: IPlaygroundPageContent) 
                     </div>
                     <div className="relative flex h-full min-h-[50vh] w-full rounded-r-xl bg-muted/50 lg:col-span-2">
                         <ScrollArea className="relative flex h-full w-full flex-1 flex-col">
-                            <div className="absolute right-3 top-14 z-10 flex gap-2">
-                                {(Object.keys(results).length > 0) ? (
-                                    <Badge variant="outline">输出结果</Badge>
-                                ) : !loading && viewComfyState.currentViewComfy ? (
-                                    <Badge variant="outline">输出预览</Badge>
-                                ) : null}
-                            </div>
                             {(Object.keys(results).length === 0) && !loading && viewComfyState.currentViewComfy && (
                                 <>  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full">
                                     <PreviewOutputsImageGallery viewComfyJSON={viewComfyState.currentViewComfy.viewComfyJSON} />
@@ -389,9 +523,9 @@ function PlaygroundPageContent({ doPost, sectionName }: IPlaygroundPageContent) 
                             )}
                             <div className="flex-1 h-full p-4 flex overflow-y-auto">
                                 <div className="flex flex-col w-full h-full">
-                                    <Generating loading={loading} />
+                                    <Generating loading={loading} progress={runningProgress} />
                                     {Object.entries(results).map(([promptId, generation], index, array) => (
-                                        <div className="flex flex-col gap-4 w-full h-full" key={promptId}>
+                                        <div className="flex flex-col gap-2 w-full h-full" key={promptId}>
                                             <div className="flex flex-wrap w-full h-full gap-4 pt-4" key={promptId}>
                                                 {generation.status && generation.status === "error" &&
                                                     <GenerationError
@@ -410,6 +544,11 @@ function PlaygroundPageContent({ doPost, sectionName }: IPlaygroundPageContent) 
                                                     </Fragment>
                                                 ))}
                                             </div>
+                                            {typeof generation.totalElapsedMs === "number" && generation.totalElapsedMs > 0 && (
+                                                <div className="self-end text-xs text-muted-foreground tabular-nums pr-1">
+                                                    {(generation.totalElapsedMs / 1000).toFixed(2)}s
+                                                </div>
+                                            )}
                                             <hr className={
                                                 `w-full py-4
                                             ${index !== array.length - 1 ? 'border-gray-300' : 'border-transparent'}
@@ -765,14 +904,42 @@ function parseFileName(filename: string): string {
     }
 }
 
-const IndeterminateLoadingBar = () => {
+const IndeterminateLoadingBar = ({ value, max, currentNode, elapsedMs }: { value?: number; max?: number; currentNode?: string; elapsedMs?: number }) => {
+    // 当 max > 0 时显示真实进度；否则 indeterminate
+    const hasRealProgress = typeof value === "number" && typeof max === "number" && max > 0;
+    const percent = hasRealProgress ? Math.min(100, Math.max(0, (value / max) * 100)) : 0;
+    const elapsedSec = typeof elapsedMs === "number" ? (elapsedMs / 1000) : undefined;
+    const elapsedLabel = elapsedSec !== undefined ? `${elapsedSec.toFixed(1)}s` : "";
+
     return (
-        <div
-            role="progressbar"
-            aria-label="正在生成"
-            className="relative h-1.5 w-full overflow-hidden rounded-full bg-muted-foreground/10"
-        >
-            <div className="vc-indeterminate absolute inset-y-0 w-1/3 rounded-full bg-muted-foreground/40" />
+        <div className="flex flex-col gap-1 w-full">
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span className="truncate">
+                    {currentNode ? currentNode : (hasRealProgress ? "生成中" : "准备中...")}
+                </span>
+                <span className="tabular-nums">
+                    {hasRealProgress
+                        ? `${value}/${max}${elapsedLabel ? ` · ${elapsedLabel}` : ""}`
+                        : (elapsedLabel || "")}
+                </span>
+            </div>
+            <div
+                role="progressbar"
+                aria-label="正在生成"
+                aria-valuenow={hasRealProgress ? value : undefined}
+                aria-valuemin={0}
+                aria-valuemax={hasRealProgress ? max : undefined}
+                className="relative h-1.5 w-full overflow-hidden rounded-full bg-muted-foreground/10"
+            >
+                {hasRealProgress ? (
+                    <div
+                        className="absolute inset-y-0 left-0 rounded-full bg-primary transition-[width] duration-200 ease-out"
+                        style={{ width: `${percent}%` }}
+                    />
+                ) : (
+                    <div className="vc-indeterminate absolute inset-y-0 w-1/3 rounded-full bg-muted-foreground/40" />
+                )}
+            </div>
         </div>
     );
 };
@@ -799,12 +966,26 @@ const IndeterminateLoadingBarStyles = () => {
 
 const Generating = (props: {
     loading: boolean,
+    progress?: { value: number; max: number; currentNode?: string; startedAt: number } | undefined,
 }) => {
-    const { loading } = props;
+    const { loading, progress } = props;
+    // 自增 elapsedMs 让 UI 看起来"活"的（即使没有 progress 事件也走秒表）
+    const [now, setNow] = useState(() => Date.now());
+    useEffect(() => {
+        if (!loading || !progress) return;
+        const id = setInterval(() => setNow(Date.now()), 100);
+        return () => clearInterval(id);
+    }, [loading, progress?.startedAt]);
+    const elapsedMs = progress ? now - progress.startedAt : 0;
 
     const generatingDetails = (
         <div className="flex flex-col gap-2">
-            <IndeterminateLoadingBar />
+            <IndeterminateLoadingBar
+                value={progress?.value}
+                max={progress?.max}
+                currentNode={progress?.currentNode}
+                elapsedMs={elapsedMs}
+            />
         </div>
     );
 

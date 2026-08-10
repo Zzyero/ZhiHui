@@ -123,4 +123,8 @@ export interface ISetResults {
     promptId: string,
     status?: string | undefined;
     errorData?: string | undefined;
+    /** 提交时本地预生成的 promptId（用于把 server 真 promptId 关联上） */
+    localPromptId?: string;
+    /** 总耗时（毫秒），由 server 通过 SSE done 帧提供 */
+    totalElapsedMs?: number;
 }

@@ -4,7 +4,7 @@ import { ComfyWorkflow } from "@/app/models/comfy-workflow";
 import fs from "node:fs/promises";
 import { ComfyErrorHandler } from "@/app/helpers/comfy-error-handler";
 import { ComfyError, ComfyWorkflowError } from "@/app/models/errors";
-import { ComfyUIAPIService } from "@/app/services/comfyui-api-service";
+import { ComfyUIAPIService, type IComfyProgressEvent } from "@/app/services/comfyui-api-service";
 import { missingViewComfyFileError, viewComfyFileName } from "@/app/constants";
 import { SettingsService } from "@/app/services/settings-service";
 import mime from 'mime-types';
@@ -13,15 +13,13 @@ const settingsService = new SettingsService();
 export class ComfyUIService {
     private comfyErrorHandler: ComfyErrorHandler;
     private comfyUIAPIService: ComfyUIAPIService;
-    private clientId: string;
 
-    constructor() {
-        this.clientId = crypto.randomUUID();
+    constructor(comfyUIAPIService: ComfyUIAPIService) {
         this.comfyErrorHandler = new ComfyErrorHandler();
-        this.comfyUIAPIService = new ComfyUIAPIService(this.clientId);
+        this.comfyUIAPIService = comfyUIAPIService;
     }
 
-    async runWorkflow(args: IComfyInput) {
+    async runWorkflow(args: IComfyInput): Promise<{ stream: ReadableStream<Uint8Array>; promptId: string; totalElapsedMs: number }> {
         let workflow = args.workflow;
 
         if (!workflow) {
@@ -32,65 +30,112 @@ export class ComfyUIService {
         await comfyWorkflow.setViewComfy(args.viewComfy.inputs, this.comfyUIAPIService);
 
         try {
-            const promptData = await this.comfyUIAPIService.queuePrompt(workflow);
-            const outputFiles = promptData.outputFiles;
-            const promptId = promptData.promptId;
-            const comfyUIAPIService = this.comfyUIAPIService;
-            const getFileFromComfyOutputDirectory = this.getFileFromComfyOutputDirectory;
+            // 1. 启动 prompt（不等完成），拿到 promptId
+            const promptId = await this.comfyUIAPIService.startQueuePrompt(workflow);
+            const startedAt = Date.now();
 
-            if (outputFiles.length === 0) {
-                throw new ComfyWorkflowError({
-                    message: "No output files found",
-                    errors: ['Make sure your workflow contains at least one node that saves an output to the ComfyUI output folder. eg. "Save Image" or "Video Combine" from comfyui-videohelpersuite'],
-                });
-            }
+            // 2. 创建 SSE 流（用 ReadableStream 模拟 SSE 协议）
+            const encoder = new TextEncoder();
+            const send = (controller: ReadableStreamDefaultController<Uint8Array>, event: string, data: unknown) => {
+                const dataStr = typeof data === "string" ? data : JSON.stringify(data);
+                controller.enqueue(encoder.encode(`event: ${event}\ndata: ${dataStr}\n\n`));
+            };
+            const apiService = this.comfyUIAPIService;
+            const getFileFromComfyOutputDirectory = this.getFileFromComfyOutputDirectory.bind(this);
 
             const stream = new ReadableStream<Uint8Array>({
                 async start(controller) {
-                    for (const file of outputFiles) {
-                        try {
-                            let outputBuffer: File;
-                            if (typeof file === "string") {
-                                try {
-                                    const dict = JSON.parse(file);
-                                    if (typeof dict === "object" && dict?.type === "output") {
-                                        const filename = dict?.filename || "";
-                                        if (filename) {
-                                            outputBuffer = await getFileFromComfyOutputDirectory({ fileName: filename });
-                                        } else {
-                                            throw new Error("Does not have a filename");
-                                        }
-                                    } else {
-                                        throw new Error(`Output has a wrong shape: ${file}`);
-                                    }
-                                } catch (error) {
-                                    console.error(error);
-                                    continue;
-                                }
-                            }
-                            else {
-                                outputBuffer = await comfyUIAPIService.getOutputFiles({ file });
-                            }
+                    send(controller, "started", { promptId, startedAt });
 
-                            const mimeType = outputBuffer.type;
-                            const mimeInfo = `Content-Type: ${mimeType}\r\n\r\n`;
-                            const fileName = outputBuffer.name;
-                            const fileNameInfo = `Content-Disposition: attachment; filename="${fileName}"\r\n\r\n`;
-                            controller.enqueue(new TextEncoder().encode(mimeInfo));
-                            controller.enqueue(new TextEncoder().encode(fileNameInfo));
-                            controller.enqueue(new Uint8Array(await outputBuffer.arrayBuffer()));
-                            controller.enqueue(new TextEncoder().encode("\r\n--BLOB_SEPARATOR--\r\n"));
-                        } catch (error) {
-                            console.error("Failed to get output file");
-                            console.error(error);
+                    // 监听 progress
+                    const onProgress = (event: IComfyProgressEvent) => {
+                        if (event.promptId !== promptId) return;
+                        if (event.type === "progress") {
+                            send(controller, "progress", { value: event.value, max: event.max, currentNode: event.node });
+                        } else if (event.type === "executing") {
+                            send(controller, "executing", { currentNode: event.node });
+                        } else if (event.type === "executed") {
+                            send(controller, "executed", { currentNode: event.node });
+                        } else if (event.type === "execution_error") {
+                            send(controller, "error", { message: event.errorMessage });
                         }
+                    };
+                    apiService.onProgress(onProgress);
+
+                    try {
+                        // 等到完成
+                        const result = await apiService.waitForCompletion();
+                        const outputFiles = result.outputFiles;
+                        const runStatus = result.status;
+
+                        if (outputFiles.length === 0) {
+                            throw new ComfyWorkflowError({
+                                message: "No output files found",
+                                errors: ['Make sure your workflow contains at least one node that saves an output to the ComfyUI output folder. eg. "Save Image" or "Video Combine" from comfyui-videohelpersuite'],
+                            });
+                        }
+
+                        if (runStatus === "execution_error") {
+                            throw new ComfyWorkflowError({
+                                message: "ComfyUI workflow execution error",
+                                errors: ["Something went wrong while your workflow was executing"],
+                            });
+                        }
+
+                        // 推 image 帧
+                        for (const file of outputFiles) {
+                            try {
+                                let outputBuffer: File;
+                                if (typeof file === "string") {
+                                    try {
+                                        const dict = JSON.parse(file);
+                                        if (typeof dict === "object" && dict?.type === "output") {
+                                            const filename = dict?.filename || "";
+                                            if (filename) {
+                                                outputBuffer = await getFileFromComfyOutputDirectory({ fileName: filename });
+                                            } else {
+                                                throw new Error("Does not have a filename");
+                                            }
+                                        } else {
+                                            throw new Error(`Output has a wrong shape: ${file}`);
+                                        }
+                                    } catch (error) {
+                                        console.error(error);
+                                        continue;
+                                    }
+                                }
+                                else {
+                                    outputBuffer = await apiService.getOutputFiles({ file });
+                                }
+
+                                const mimeType = outputBuffer.type;
+                                const fileName = outputBuffer.name;
+                                // 推 image 帧（base64 编码的二进制）
+                                send(controller, "image", {
+                                    filename: fileName,
+                                    mimeType,
+                                    data: Buffer.from(await outputBuffer.arrayBuffer()).toString("base64"),
+                                });
+                            } catch (error) {
+                                console.error("Failed to get output file");
+                                console.error(error);
+                            }
+                        }
+
+                        const totalElapsedMs = Date.now() - startedAt;
+                        send(controller, "done", { totalElapsedMs, promptId });
+                        controller.close();
+                    } catch (err) {
+                        const msg = err instanceof Error ? err.message : "Internal error";
+                        send(controller, "error", { message: msg });
+                        controller.close();
+                    } finally {
+                        apiService.offProgress(onProgress);
                     }
-                    controller.close();
                 },
             });
-            return { stream, promptId };
 
-            // biome-ignore lint/suspicious/noExplicitAny: <explanation>
+            return { stream, promptId, totalElapsedMs: 0 };
         } catch (error: unknown) {
             console.error("Failed to run the workflow");
             console.error({ error });

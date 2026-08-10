@@ -56,6 +56,23 @@ export interface IViewComfyState {
     resultsBySection: Record<string, Record<string, IGenerationResult>>;
     /** 各 section 当前的 loading 状态，便于跨页面持续显示生成动画 */
     loadingBySection: Record<string, boolean>;
+    /** 按 promptId 跟踪每个 prompt 的生成进度（value/max、当前节点、总耗时） */
+    progressByPrompt: Record<string, IPromptProgress>;
+}
+
+export interface IPromptProgress {
+    /** 当前进度值（如 KSampler 第几 step） */
+    value: number;
+    /** 总进度上限 */
+    max: number;
+    /** 当前正在执行的节点 title/class，开场事件为空 */
+    currentNode?: string;
+    /** 启动时间戳（ms）；用于前端自增显示"已用时间" */
+    startedAt: number;
+    /** 完成时的总耗时（ms）；只设置一次 */
+    totalElapsedMs?: number;
+    /** 进度终态：success / error */
+    status?: "running" | "success" | "error";
 }
 
 export interface IGenerationOutput {
@@ -74,6 +91,8 @@ export interface IGenerationResult {
     status?: string;
     outputs: IGenerationOutput[];
     errorData?: string;
+    /** 生成总耗时（毫秒） */
+    totalElapsedMs?: number;
 }
 
 // Define action types as an enum
@@ -90,7 +109,10 @@ export enum ActionType {
     SET_SECTIONS = "SET_SECTIONS",
     SET_RESULT = "SET_RESULT",
     CLEAR_RESULT = "CLEAR_RESULT",
-    SET_SECTION_LOADING = "SET_SECTION_LOADING"
+    SET_SECTION_LOADING = "SET_SECTION_LOADING",
+    SET_PROGRESS = "SET_PROGRESS",
+    SET_PROGRESS_DONE = "SET_PROGRESS_DONE",
+    REMOVE_PROGRESS = "REMOVE_PROGRESS"
 }
 
 // Update the Action type to use the enum
@@ -108,6 +130,9 @@ export type Action =
     | { type: ActionType.SET_RESULT; payload: { sectionName: string, promptId: string, result: IGenerationResult } }
     | { type: ActionType.CLEAR_RESULT; payload: { sectionName: string, promptId: string } }
     | { type: ActionType.SET_SECTION_LOADING; payload: { sectionName: string, loading: boolean } }
+    | { type: ActionType.SET_PROGRESS; payload: { promptId: string, progress: Partial<IPromptProgress> } }
+    | { type: ActionType.SET_PROGRESS_DONE; payload: { promptId: string, totalElapsedMs: number, status: "success" | "error" } }
+    | { type: ActionType.REMOVE_PROGRESS; payload: { promptId: string } }
 
 function viewComfyReducer(state: IViewComfyState, action: Action): IViewComfyState {
     switch (action.type) {
@@ -194,7 +219,7 @@ function viewComfyReducer(state: IViewComfyState, action: Action): IViewComfySta
                 return state;
             }
             return {
-                appTitle: action.payload.appTitle ?? "ViewComfy",
+                appTitle: action.payload.appTitle ?? "智绘·先锋",
                 appImg: action.payload.appImg ?? "",
                 viewComfys: [...action.payload.workflows.map((workflow) => ({
                     viewComfyJSON: workflow.viewComfyJSON,
@@ -205,12 +230,13 @@ function viewComfyReducer(state: IViewComfyState, action: Action): IViewComfySta
                 sections: action.payload.sections ?? [],
                 resultsBySection: {},
                 loadingBySection: {},
+                progressByPrompt: {},
             };
         }
         case ActionType.SET_APP_TITLE:
             return {
                 ...state,
-                appTitle: action.payload || "ViewComfy"
+                appTitle: action.payload || "智绘·先锋"
             };
         case ActionType.SET_APP_IMG:
             return {
@@ -266,6 +292,54 @@ function viewComfyReducer(state: IViewComfyState, action: Action): IViewComfySta
                     [action.payload.sectionName]: action.payload.loading,
                 },
             };
+        case ActionType.SET_PROGRESS: {
+            const existing = state.progressByPrompt[action.payload.promptId];
+            return {
+                ...state,
+                progressByPrompt: {
+                    ...state.progressByPrompt,
+                    [action.payload.promptId]: {
+                        ...(existing ?? { value: 0, max: 0, startedAt: Date.now() }),
+                        ...action.payload.progress,
+                    },
+                },
+            };
+        }
+        case ActionType.REMOVE_PROGRESS: {
+            const next = { ...state.progressByPrompt };
+            delete next[action.payload.promptId];
+            return { ...state, progressByPrompt: next };
+        }
+        case ActionType.SET_PROGRESS_DONE: {
+            const existing = state.progressByPrompt[action.payload.promptId];
+            if (!existing) {
+                // 没有初始进度（极少情况，比如 SSE 错过 initial 帧），补一个 minimal
+                return {
+                    ...state,
+                    progressByPrompt: {
+                        ...state.progressByPrompt,
+                        [action.payload.promptId]: {
+                            value: 0,
+                            max: 0,
+                            startedAt: Date.now(),
+                            totalElapsedMs: action.payload.totalElapsedMs,
+                            status: action.payload.status,
+                        },
+                    },
+                };
+            }
+            return {
+                ...state,
+                progressByPrompt: {
+                    ...state.progressByPrompt,
+                    [action.payload.promptId]: {
+                        ...existing,
+                        totalElapsedMs: action.payload.totalElapsedMs,
+                        status: action.payload.status,
+                    },
+                },
+            };
+        }
         default:
             return state;
     }
@@ -279,7 +353,7 @@ interface ViewComfyContextType {
 const ViewComfyContext = createContext<ViewComfyContextType | undefined>(undefined);
 
 export function ViewComfyProvider({ children }: { children: ReactNode }) {
-    const [viewComfyState, dispatch] = useReducer(viewComfyReducer, { viewComfys: [], viewComfyDraft: undefined, currentViewComfy: undefined, sections: [], resultsBySection: {}, loadingBySection: {} });
+    const [viewComfyState, dispatch] = useReducer(viewComfyReducer, { viewComfys: [], viewComfyDraft: undefined, currentViewComfy: undefined, sections: [], resultsBySection: {}, loadingBySection: {}, progressByPrompt: {} });
 
     return (
         <ViewComfyContext.Provider value={{ viewComfyState, viewComfyStateDispatcher: dispatch }}>

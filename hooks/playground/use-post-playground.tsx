@@ -8,8 +8,8 @@ import { v4 as uuidv4 } from 'uuid';
 export const usePostPlayground = () => {
     const [loading, setLoading] = useState(false);
 
-    const doPost = useCallback(async ({ viewComfy, workflow, viewcomfyEndpoint, onSuccess, onError }: IUsePostPlayground) => {
-        const params = { viewComfy, workflow, viewcomfyEndpoint, onSuccess, onError };
+    const doPost = useCallback(async ({ viewComfy, workflow, viewcomfyEndpoint, onSuccess, onError, onProgress }: IUsePostPlayground) => {
+        const params = { viewComfy, workflow, viewcomfyEndpoint, onSuccess, onError, onProgress };
         setLoading(true);
         try {
             await inferLocalComfy(params)
@@ -329,9 +329,12 @@ class Secret {
     }
 }
 
-const inferLocalComfy = async (params: IPlaygroundParams & { onSuccess: (params: { promptId: string, outputs: File[] }) => void }) => {
+const inferLocalComfy = async (params: IPlaygroundParams & {
+    onSuccess: (params: { promptId: string, outputs: File[], totalElapsedMs?: number }) => void,
+    onProgress?: (event: { type: string, value?: number, max?: number, currentNode?: string, promptId?: string, errorMessage?: string }) => void
+}) => {
 
-    const { viewComfy, workflow, viewcomfyEndpoint, onSuccess } = params;
+    const { viewComfy, workflow, viewcomfyEndpoint, onSuccess, onProgress } = params;
 
     const url = viewcomfyEndpoint ? "/api/viewcomfy" : "/api/comfy";
 
@@ -361,8 +364,9 @@ const inferLocalComfy = async (params: IPlaygroundParams & { onSuccess: (params:
         body: formData,
     });
 
-    // Real ComfyUI prompt_id (or viewcomfy endpoint id) comes back via response header
-    const realPromptId = response.headers.get('x-prompt-id') || uuidv4();
+    // Real ComfyUI prompt_id (or viewcomfy endpoint id) is in first SSE 'started' event;
+    // 也可以从 response header 兜底（viewcomfy endpoint）。
+    let realPromptId: string | undefined = response.headers.get('x-prompt-id') || undefined;
 
     if (!response.ok) {
         if (response.status === 504) {
@@ -381,60 +385,64 @@ const inferLocalComfy = async (params: IPlaygroundParams & { onSuccess: (params:
         throw new Error("No response body");
     }
 
+    // SSE 解析
     const reader = response.body.getReader();
-    let buffer: Uint8Array = new Uint8Array(0);
+    const decoder = new TextDecoder();
+    let buffer = "";
     const output: File[] = [];
-    const separator = new TextEncoder().encode('--BLOB_SEPARATOR--');
+    let totalElapsedMs: number | undefined;
 
     while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
-        buffer = concatUint8Arrays(buffer, value);
+        buffer += decoder.decode(value, { stream: true });
 
-        let separatorIndex: number;
-        // biome-ignore lint/suspicious/noAssignInExpressions: <explanation>
-        while ((separatorIndex = findSubarray(buffer, separator)) !== -1) {
-            const outputPart = buffer.slice(0, separatorIndex);
-            // Skip the separator and the newline characters around it
-            const endOfSeparator = separatorIndex + separator.length + 2; // +2 for trailing \r\n
-            if (buffer[separatorIndex - 2] === 13 && buffer[separatorIndex - 1] === 10) { // leading \r\n
-                buffer = buffer.slice(endOfSeparator - 2);
-            } else {
-                buffer = buffer.slice(endOfSeparator);
+        // 按事件边界（\n\n）切分；最后一段不完整留 buffer
+        const events = buffer.split("\n\n");
+        buffer = events.pop() || "";
+
+        for (const eventText of events) {
+            let currentEvent = "message";
+            let currentData = "";
+            for (const raw of eventText.split("\n")) {
+                const line = raw.trimEnd();
+                if (line.startsWith("event:")) {
+                    currentEvent = line.substring(6).trim();
+                } else if (line.startsWith("data:")) {
+                    currentData += (currentData ? "\n" : "") + line.substring(5).trim();
+                }
             }
+            if (!currentData) continue;
 
-            // Find Content-Type header
-            const mimeEndIndex = findSubarray(outputPart, new TextEncoder().encode('\r\n\r\n'));
-            if (mimeEndIndex === -1) {
-                continue;
+            try {
+                if (currentEvent === "started") {
+                    const obj = JSON.parse(currentData);
+                    realPromptId = obj.promptId;
+                    onProgress?.({ type: "started", promptId: obj.promptId });
+                } else if (currentEvent === "progress" || currentEvent === "executing" || currentEvent === "executed") {
+                    const obj = JSON.parse(currentData);
+                    onProgress?.({ type: currentEvent, ...obj });
+                } else if (currentEvent === "error") {
+                    const obj = JSON.parse(currentData);
+                    onProgress?.({ type: "error", errorMessage: obj.message });
+                } else if (currentEvent === "image") {
+                    const obj = JSON.parse(currentData);
+                    const binary = atob(obj.data);
+                    const bytes = new Uint8Array(binary.length);
+                    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+                    const file = new File([bytes], obj.filename, { type: obj.mimeType });
+                    output.push(file);
+                } else if (currentEvent === "done") {
+                    const obj = JSON.parse(currentData);
+                    totalElapsedMs = obj.totalElapsedMs;
+                    if (!realPromptId) realPromptId = obj.promptId;
+                }
+            } catch (e) {
+                console.error("SSE event parse error", currentEvent, e);
             }
-
-            const mimeHeader = new TextDecoder().decode(outputPart.slice(0, mimeEndIndex));
-            const mimeType = mimeHeader.split(': ')[1] || 'application/octet-stream';
-
-            const afterMimeHeader = outputPart.slice(mimeEndIndex + 4);
-
-            // Find Content-Disposition header
-            const dispositionEndIndex = findSubarray(afterMimeHeader, new TextEncoder().encode('\r\n\r\n'));
-            if (dispositionEndIndex === -1) {
-                continue;
-            }
-
-            const dispositionHeader = new TextDecoder().decode(afterMimeHeader.slice(0, dispositionEndIndex));
-            const filenameMatch = /filename="([^"]+)"/.exec(dispositionHeader);
-            const filename = filenameMatch ? filenameMatch[1] : 'file';
-
-            const outputData = afterMimeHeader.slice(dispositionEndIndex + 4);
-
-            const file = new File([outputData], filename, { type: mimeType });
-            output.push(file);
         }
     }
 
-    if (output.length > 0) {
-        onSuccess({ promptId: realPromptId, outputs: output });
-    } else {
-        onSuccess({ promptId: realPromptId, outputs: [] });
-    }
+    onSuccess({ promptId: realPromptId || uuidv4(), outputs: output, totalElapsedMs });
 }

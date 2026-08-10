@@ -242,7 +242,7 @@ export default function ViewComfyPage() {
                                             <div className="w-full flex gap-4">
                                                 <div className="grid w-1/2 items-center gap-1.5">
                                                     <Label htmlFor="appTitle">应用标题</Label>
-                                                    <Input id="appTitle" placeholder="ViewComfy" value={appTitle} onBlur={() => handleOnBlur("appTitle")} onChange={(e) => setAppTitle(e.target.value)} />
+                                                    <Input id="appTitle" placeholder="智绘·先锋" value={appTitle} onBlur={() => handleOnBlur("appTitle")} onChange={(e) => setAppTitle(e.target.value)} />
                                                 </div>
 
                                                 <div className="grid w-full items-center gap-1.5 pr-4">
