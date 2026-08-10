@@ -6,11 +6,11 @@ import { useEffect, useState } from "react";
 
 export function TopNav() {
     const { viewComfyState } = useViewComfy();
-    const [appTitle, setAppTitle] = useState("ViewComfy");
+    const [appTitle, setAppTitle] = useState("智绘·先锋");
     const [appImg, setAppImg] = useState("");
 
     useEffect(() => {
-        setAppTitle(viewComfyState.appTitle || "ViewComfy");
+        setAppTitle(viewComfyState.appTitle || "智绘·先锋");
         setAppImg(viewComfyState.appImg || "");
     }, [viewComfyState]);
 
