@@ -47,8 +47,14 @@ import {
 } from "react-zoom-pan-pinch";
 
 export interface IOutput {
-    file: File | S3FilesData,
-    url: string
+    /** 文件名（来自 File.name 或 S3FilesData.filename） */
+    filename: string;
+    /** MIME（来自 File.type 或 S3FilesData.contentType） */
+    contentType: string;
+    url: string;
+    /** 本地 File 对象（仅当上传/本地生成时存在；S3 场景下为 undefined） */
+    file?: File | S3FilesData;
+    size: number;
 }
 
 interface IGeneration {
@@ -71,29 +77,36 @@ interface IPlaygroundPageContent {
     sectionName?: string;
 }
 
-const getOutputFileName = (output: { file: File | S3FilesData, url: string }): string => {
-    if ("filename" in output.file) {
-        return output.file.filename;
-    } else {
-        return output.file.name;
-    }
-}
+const getOutputFileName = (output: { filename: string }): string => output.filename;
 
-const getOutputContentType = (output: IOutput): string => {
-    if ("contentType" in output.file) {
-        return output.file.contentType;
-    } else {
-        return output.file.type;
-    }
-}
+const getOutputContentType = (output: { contentType: string }): string => output.contentType;
 
-function PlaygroundPageContent({ doPost, loading, setLoading, sectionName }: IPlaygroundPageContent) {
-    const [results, setResults] = useState<IResults>({});
+function PlaygroundPageContent({ doPost, sectionName }: IPlaygroundPageContent) {
     const { viewComfyState, viewComfyStateDispatcher } = useViewComfy();
     const viewMode = process.env.NEXT_PUBLIC_VIEW_MODE === "true";
     const [errorAlertDialog, setErrorAlertDialog] = useState<{ open: boolean, errorTitle: string | undefined, errorDescription: React.JSX.Element, onClose: () => void }>({ open: false, errorTitle: undefined, errorDescription: <></>, onClose: () => { } });
     const [textOutputEnabled, setTextOutputEnabled] = useState(false);
     const [showOutputFileName, setShowOutputFileName] = useState(false);
+
+    // 当前 section 的 loading 状态（从 provider 读取，跨页面持续）
+    const loading = useMemo(() => {
+        if (sectionName) return !!viewComfyState.loadingBySection[sectionName];
+        return false;
+    }, [sectionName, viewComfyState.loadingBySection]);
+
+    // 写入当前 section 的 loading 状态
+    const setSectionLoading = useCallback((next: boolean) => {
+        if (!sectionName) return;
+        viewComfyStateDispatcher({
+            type: ActionType.SET_SECTION_LOADING,
+            payload: { sectionName, loading: next },
+        });
+    }, [sectionName, viewComfyStateDispatcher]);
+
+    // 当前页（section）的结果集 —— 切页面也保留（升到 Provider）
+    const results: IResults = useMemo(() => {
+        return (sectionName && viewComfyState.resultsBySection[sectionName]) || {};
+    }, [sectionName, viewComfyState.resultsBySection]);
 
     // 按 section 过滤工作流（按标题匹配）
     const filteredViewComfys = useMemo(() => {
@@ -168,13 +181,12 @@ function PlaygroundPageContent({ doPost, loading, setLoading, sectionName }: IPl
     const onSetResults = useCallback(async (params: ISetResults) => {
         const { promptId, status, errorData } = params;
         const outputs = params.outputs || [];
-        const resultOutputs: {
-            file: File | S3FilesData,
-            url: string
-        }[] = [];
+        const resultOutputs: IOutput[] = [];
 
         for (const output of outputs) {
             let url: string;
+            let filename = "";
+            let contentType = "";
             if (output instanceof File) {
                 try {
                     url = URL.createObjectURL(output);
@@ -183,18 +195,38 @@ function PlaygroundPageContent({ doPost, loading, setLoading, sectionName }: IPl
                     console.log({ output });
                     url = "";
                 }
-                resultOutputs.push({ file: output, url });
+                filename = output.name;
+                contentType = output.type;
+                resultOutputs.push({ filename, contentType, url, size: output.size, file: output });
             } else {
                 // S3FilesData: 走 filepath URL
                 url = output.filepath;
+                filename = output.filename;
+                contentType = output.contentType;
                 const s3File = new S3FilesData({
                     filename: output.filename,
                     contentType: output.contentType,
                     filepath: output.filepath,
                     size: output.size ?? 0,
                 });
-                resultOutputs.push({ file: s3File, url });
+                resultOutputs.push({ filename, contentType, url, size: output.size ?? 0, file: s3File });
             }
+        }
+
+        // 同步存一份到 provider（按当前 section 隔离），切页面不会丢
+        if (sectionName) {
+            viewComfyStateDispatcher({
+                type: ActionType.SET_RESULT,
+                payload: {
+                    sectionName,
+                    promptId,
+                    result: {
+                        status,
+                        outputs: resultOutputs,
+                        errorData,
+                    },
+                },
+            });
         }
 
         const newGeneration: IResults = {
@@ -205,17 +237,8 @@ function PlaygroundPageContent({ doPost, loading, setLoading, sectionName }: IPl
             }
         };
 
-        setResults((prevResults) => {
-            if (prevResults[promptId]) {
-                return prevResults;
-            }
-            return {
-                ...newGeneration,
-                ...prevResults,
-            };
-        });
-        setLoading(false);
-    }, [setLoading]);
+        setSectionLoading(false);
+    }, [setSectionLoading, sectionName, viewComfyStateDispatcher]);
 
     function onSubmit(data: IViewComfyWorkflow) {
         const inputs: { key: string, value: unknown }[] = [];
@@ -252,6 +275,9 @@ function PlaygroundPageContent({ doPost, loading, setLoading, sectionName }: IPl
         setTextOutputEnabled(data.textOutputEnabled ?? false);
         setShowOutputFileName(data.showOutputFileName ?? false);
 
+        // 立刻把当前 section 的 loading 翻 true（提升到 Provider，跨页面持续）
+        setSectionLoading(true);
+
         const doPostParams = {
             viewComfy: generationData,
             workflow: viewComfyState.currentViewComfy?.workflowApiJSON,
@@ -273,16 +299,6 @@ function PlaygroundPageContent({ doPost, loading, setLoading, sectionName }: IPl
 
         doPost(doPostParams);
     }
-
-    useEffect(() => {
-        return () => {
-            for (const generation of Object.values(results)) {
-                for (const output of generation.outputs) {
-                    URL.revokeObjectURL(output.url);
-                }
-            }
-        };
-    }, []);
 
     const onSelectChange = (data: IViewComfy) => {
         return viewComfyStateDispatcher({
@@ -425,7 +441,7 @@ export default function PlaygroundPage({ sectionName }: { sectionName?: string }
     );
 }
 
-export function ImageDialog({ output, showOutputFileName }: { output: { file: File | S3FilesData, url: string }, showOutputFileName: boolean }) {
+export function ImageDialog({ output, showOutputFileName }: { output: IOutput, showOutputFileName: boolean }) {
     const backgroundColor = "black";
     const scaleUp = false;
     const zoomFactor = 8;

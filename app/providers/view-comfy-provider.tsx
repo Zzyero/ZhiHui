@@ -1,6 +1,7 @@
 "use client"
 import type { IMultiValueInput } from '@/lib/workflow-api-parser';
 import { createContext, useContext, useReducer, type ReactNode, type Dispatch } from 'react';
+import type { S3FilesData } from '@/app/models/prompt-result';
 
 export interface IViewComfyBase {
     title: string;
@@ -51,6 +52,28 @@ export interface IViewComfyState {
     viewComfyDraft: IViewComfyDraft | undefined;
     currentViewComfy: IViewComfy | undefined;
     sections: IViewComfySection[];
+    /** 生图结果，按 section 分桶。sectionName -> promptId -> 结果 */
+    resultsBySection: Record<string, Record<string, IGenerationResult>>;
+    /** 各 section 当前的 loading 状态，便于跨页面持续显示生成动画 */
+    loadingBySection: Record<string, boolean>;
+}
+
+export interface IGenerationOutput {
+    filename: string;
+    contentType: string;
+    /** 服务端 S3 路径或本地 object URL */
+    url: string;
+    size: number;
+    /** 是否本地 File object（true 时 url 是 objectURL，刷新会失效） */
+    isLocal?: boolean;
+    /** 本地 File 对象（File 或 S3FilesData 兼容旧类型） */
+    file?: File | S3FilesData;
+}
+
+export interface IGenerationResult {
+    status?: string;
+    outputs: IGenerationOutput[];
+    errorData?: string;
 }
 
 // Define action types as an enum
@@ -64,7 +87,10 @@ export enum ActionType {
     INIT_VIEW_COMFY = "INIT_VIEW_COMFY",
     SET_APP_TITLE = "SET_APP_TITLE",
     SET_APP_IMG = "SET_APP_IMG",
-    SET_SECTIONS = "SET_SECTIONS"
+    SET_SECTIONS = "SET_SECTIONS",
+    SET_RESULT = "SET_RESULT",
+    CLEAR_RESULT = "CLEAR_RESULT",
+    SET_SECTION_LOADING = "SET_SECTION_LOADING"
 }
 
 // Update the Action type to use the enum
@@ -79,6 +105,9 @@ export type Action =
     | { type: ActionType.SET_APP_TITLE; payload: string }
     | { type: ActionType.SET_APP_IMG; payload: string }
     | { type: ActionType.SET_SECTIONS; payload: IViewComfySection[] }
+    | { type: ActionType.SET_RESULT; payload: { sectionName: string, promptId: string, result: IGenerationResult } }
+    | { type: ActionType.CLEAR_RESULT; payload: { sectionName: string, promptId: string } }
+    | { type: ActionType.SET_SECTION_LOADING; payload: { sectionName: string, loading: boolean } }
 
 function viewComfyReducer(state: IViewComfyState, action: Action): IViewComfyState {
     switch (action.type) {
@@ -174,6 +203,8 @@ function viewComfyReducer(state: IViewComfyState, action: Action): IViewComfySta
                 currentViewComfy: { viewComfyJSON: action.payload.workflows[0].viewComfyJSON, workflowApiJSON: action.payload.workflows[0].workflowApiJSON },
                 viewComfyDraft: { viewComfyJSON: action.payload.workflows[0].viewComfyJSON, workflowApiJSON: action.payload.workflows[0].workflowApiJSON },
                 sections: action.payload.sections ?? [],
+                resultsBySection: {},
+                loadingBySection: {},
             };
         }
         case ActionType.SET_APP_TITLE:
@@ -191,6 +222,50 @@ function viewComfyReducer(state: IViewComfyState, action: Action): IViewComfySta
                 ...state,
                 sections: action.payload
             };
+        case ActionType.SET_RESULT: {
+            const { sectionName, promptId, result } = action.payload;
+            const sectionBucket = state.resultsBySection[sectionName] ?? {};
+            if (sectionBucket[promptId]) {
+                // 已有结果则不覆盖（保持单调追加）
+                return state;
+            }
+            return {
+                ...state,
+                resultsBySection: {
+                    ...state.resultsBySection,
+                    [sectionName]: {
+                        ...sectionBucket,
+                        [promptId]: result,
+                    },
+                },
+            };
+        }
+        case ActionType.CLEAR_RESULT: {
+            const { sectionName, promptId } = action.payload;
+            const sectionBucket = state.resultsBySection[sectionName];
+            if (!sectionBucket || !sectionBucket[promptId]) return state;
+            const nextSection = { ...sectionBucket };
+            delete nextSection[promptId];
+            return {
+                ...state,
+                resultsBySection: {
+                    ...state.resultsBySection,
+                    [sectionName]: nextSection,
+                },
+            };
+        }
+        case ActionType.SET_SECTION_LOADING:
+            if (action.payload.loading === false && !state.loadingBySection[action.payload.sectionName]) {
+                // 已经是 false，不再触发 setState（避免无谓重渲染）
+                return state;
+            }
+            return {
+                ...state,
+                loadingBySection: {
+                    ...state.loadingBySection,
+                    [action.payload.sectionName]: action.payload.loading,
+                },
+            };
         default:
             return state;
     }
@@ -204,7 +279,7 @@ interface ViewComfyContextType {
 const ViewComfyContext = createContext<ViewComfyContextType | undefined>(undefined);
 
 export function ViewComfyProvider({ children }: { children: ReactNode }) {
-    const [viewComfyState, dispatch] = useReducer(viewComfyReducer, { viewComfys: [], viewComfyDraft: undefined, currentViewComfy: undefined, sections: [] });
+    const [viewComfyState, dispatch] = useReducer(viewComfyReducer, { viewComfys: [], viewComfyDraft: undefined, currentViewComfy: undefined, sections: [], resultsBySection: {}, loadingBySection: {} });
 
     return (
         <ViewComfyContext.Provider value={{ viewComfyState, viewComfyStateDispatcher: dispatch }}>
