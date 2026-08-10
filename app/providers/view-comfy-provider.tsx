@@ -130,7 +130,7 @@ export type Action =
     | { type: ActionType.SET_RESULT; payload: { sectionName: string, promptId: string, result: IGenerationResult } }
     | { type: ActionType.CLEAR_RESULT; payload: { sectionName: string, promptId: string } }
     | { type: ActionType.SET_SECTION_LOADING; payload: { sectionName: string, loading: boolean } }
-    | { type: ActionType.SET_PROGRESS; payload: { promptId: string, progress: Partial<IPromptProgress> } }
+    | { type: ActionType.SET_PROGRESS; payload: { promptId: string, progress: IPromptProgress } }
     | { type: ActionType.SET_PROGRESS_DONE; payload: { promptId: string, totalElapsedMs: number, status: "success" | "error" } }
     | { type: ActionType.REMOVE_PROGRESS; payload: { promptId: string } }
 
@@ -292,19 +292,14 @@ function viewComfyReducer(state: IViewComfyState, action: Action): IViewComfySta
                     [action.payload.sectionName]: action.payload.loading,
                 },
             };
-        case ActionType.SET_PROGRESS: {
-            const existing = state.progressByPrompt[action.payload.promptId];
+        case ActionType.SET_PROGRESS:
             return {
                 ...state,
                 progressByPrompt: {
                     ...state.progressByPrompt,
-                    [action.payload.promptId]: {
-                        ...(existing ?? { value: 0, max: 0, startedAt: Date.now() }),
-                        ...action.payload.progress,
-                    },
+                    [action.payload.promptId]: action.payload.progress,
                 },
             };
-        }
         case ActionType.REMOVE_PROGRESS: {
             const next = { ...state.progressByPrompt };
             delete next[action.payload.promptId];

@@ -108,6 +108,10 @@ function PlaygroundPageContent({ doPost, sectionName }: IPlaygroundPageContent) 
     // 本次生成的稳定启动时间戳（不随 progress 事件重置，用于"已用时间"显示）与服务器真 promptId
     const generationStartedAtRef = useRef<number>(0);
     const realPromptIdRef = useRef<string | undefined>(undefined);
+    // 记录最近一次 progress 的 value/max 和 executing 的节点名，executing 事件用 replace 写入时保留
+    const lastProgressValueRef = useRef<number>(0);
+    const lastProgressMaxRef = useRef<number>(0);
+    const currentNodeRef = useRef<string | undefined>(undefined);
 
     // node id -> 友好标题 映射（从 workflow_api 的 _meta.title 读取，用于进度条上方显示当前节点）
     const nodeTitleMap = useMemo(() => {
@@ -329,6 +333,9 @@ function PlaygroundPageContent({ doPost, sectionName }: IPlaygroundPageContent) 
         // 记录本次生成的稳定起点（供"已用时间"与错误耗时使用）
         generationStartedAtRef.current = Date.now();
         realPromptIdRef.current = undefined;
+        lastProgressValueRef.current = 0;
+        lastProgressMaxRef.current = 0;
+        currentNodeRef.current = undefined;
 
         // 本次 promptId 先占位（server 第一个 SSE started 事件会带真值）
         const localPromptId = crypto.randomUUID();
@@ -373,67 +380,39 @@ function PlaygroundPageContent({ doPost, sectionName }: IPlaygroundPageContent) 
                 });
             },
             onProgress: (event: { type: string, value?: number, max?: number, currentNode?: string, promptId?: string, errorMessage?: string }) => {
-                // 把 server SSE started 拿到的真 promptId 切换到 provider（可能跟 localPromptId 不同）
-                const realPromptId = event.promptId || localPromptId;
+                // progress/executing/executed 事件不带 promptId，必须用 ref 里存的真值
+                const realPromptId = event.promptId || realPromptIdRef.current || localPromptId;
                 realPromptIdRef.current = realPromptId;
-                // node id -> 友好标题；无映射时回退原始值
                 const toNodeLabel = (raw?: string) => (raw ? nodeTitleMap[raw] || raw : undefined);
 
                 if (event.type === "started") {
-                    // 移除本地占位，迁移到真 promptId，沿用稳定起点
-                    viewComfyStateDispatcher({
-                        type: ActionType.REMOVE_PROGRESS,
-                        payload: { promptId: localPromptId },
-                    });
+                    viewComfyStateDispatcher({ type: ActionType.REMOVE_PROGRESS, payload: { promptId: localPromptId } });
                     viewComfyStateDispatcher({
                         type: ActionType.SET_PROGRESS,
-                        payload: {
-                            promptId: realPromptId,
-                            progress: {
-                                value: 0,
-                                max: 0,
-                                startedAt: generationStartedAtRef.current,
-                                status: "running",
-                            },
-                        },
+                        payload: { promptId: realPromptId, progress: { value: 0, max: 0, startedAt: generationStartedAtRef.current, currentNode: undefined, status: "running" } },
                     });
                     return;
                 }
                 if (event.type === "progress") {
-                    // 只更新 value/max；currentNode 由 executing 事件提供，保留不覆盖
+                    const v = event.value ?? 0;
+                    const m = event.max ?? 0;
+                    lastProgressValueRef.current = v;
+                    lastProgressMaxRef.current = m;
                     viewComfyStateDispatcher({
                         type: ActionType.SET_PROGRESS,
-                        payload: {
-                            promptId: realPromptId,
-                            progress: {
-                                value: event.value ?? 0,
-                                max: event.max ?? 0,
-                                startedAt: generationStartedAtRef.current,
-                                status: "running",
-                            },
-                        },
+                        payload: { promptId: realPromptId, progress: { value: v, max: m, startedAt: generationStartedAtRef.current, currentNode: currentNodeRef.current, status: "running" } },
                     });
                 } else if (event.type === "executing" || event.type === "executed") {
-                    // 只更新当前节点名；不清空 value/max，避免进度条来回跳
+                    const label = toNodeLabel(event.currentNode);
+                    if (typeof event.currentNode === "string") {
+                        currentNodeRef.current = label;
+                    }
                     viewComfyStateDispatcher({
                         type: ActionType.SET_PROGRESS,
-                        payload: {
-                            promptId: realPromptId,
-                            progress: {
-                                currentNode: toNodeLabel(event.currentNode),
-                                status: "running",
-                            },
-                        },
+                        payload: { promptId: realPromptId, progress: { value: lastProgressValueRef.current, max: lastProgressMaxRef.current, startedAt: generationStartedAtRef.current, currentNode: label, status: "running" } },
                     });
                 } else if (event.type === "error") {
-                    viewComfyStateDispatcher({
-                        type: ActionType.SET_PROGRESS_DONE,
-                        payload: {
-                            promptId: realPromptId,
-                            totalElapsedMs: 0,
-                            status: "error",
-                        },
-                    });
+                    viewComfyStateDispatcher({ type: ActionType.SET_PROGRESS_DONE, payload: { promptId: realPromptId, totalElapsedMs: 0, status: "error" } });
                 }
             },
         }
