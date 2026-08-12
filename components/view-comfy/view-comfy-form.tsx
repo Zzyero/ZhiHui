@@ -88,10 +88,12 @@ export function ViewComfyForm(args: {
     editMode?: boolean,
     downloadViewComfyJSON?: (data: IViewComfyBase) => void,
     children?: React.ReactNode,
-    isLoading?: boolean
+    isLoading?: boolean,
+    initialAdvancedInputsOpen?: boolean,
+    onAdvancedInputsOpenChange?: (isOpen: boolean) => void;
 
 }) {
-    const { form, onSubmit, inputFieldArray, advancedFieldArray, editMode = false, isLoading = false, downloadViewComfyJSON } = args;
+    const { form, onSubmit, inputFieldArray, advancedFieldArray, editMode = false, isLoading = false, downloadViewComfyJSON, initialAdvancedInputsOpen, onAdvancedInputsOpenChange } = args;
     const [editDialogInput, setShowEditDialogInput] = useState<IEditFieldDialog | undefined>(undefined);
     const { viewComfyState, viewComfyStateDispatcher } = useViewComfy();
     const { errors } = form.formState;
@@ -101,20 +103,24 @@ export function ViewComfyForm(args: {
             if (onSubmit) {
                 onSubmit(data);
             }
-            const current = viewComfyState.currentViewComfy;
-            if (current) {
-                const id = current.viewComfyJSON.id;
-                viewComfyStateDispatcher({
-                    type: ActionType.UPDATE_VIEW_COMFY,
-                    payload: {
-                        id,
-                        viewComfy: {
-                            viewComfyJSON: { ...data, id },
-                            file: viewComfyState.viewComfyDraft?.file,
-                            workflowApiJSON: viewComfyState.viewComfyDraft?.workflowApiJSON,
+            // Only update viewComfys in editMode (not in Playground mode)
+            // In Playground mode, form data is saved separately via formDataByWorkflow
+            if (editMode) {
+                const current = viewComfyState.currentViewComfy;
+                if (current) {
+                    const id = current.viewComfyJSON.id;
+                    viewComfyStateDispatcher({
+                        type: ActionType.UPDATE_VIEW_COMFY,
+                        payload: {
+                            id,
+                            viewComfy: {
+                                viewComfyJSON: { ...data, id },
+                                file: viewComfyState.viewComfyDraft?.file,
+                                workflowApiJSON: viewComfyState.viewComfyDraft?.workflowApiJSON,
+                            }
                         }
-                    }
-                });
+                    });
+                }
             }
         } catch (e) {
             console.error(e);
@@ -456,7 +462,7 @@ export function ViewComfyForm(args: {
                                             }) ?? [];
                                             return activeInputs.length > 0;
                                         }) && (
-                                                <AdvancedInputSection advancedFieldArray={advancedFieldArray} form={form} editMode={editMode} isLoading={isLoading} setShowEditDialog={setShowEditDialogInput} handleRemoveAdvanced={handleRemoveAdvanced} handleToggleVisibilityAdvanced={handleToggleVisibilityAdvanced} handleSaveSubmit={handleSaveSubmit} />
+                                                <AdvancedInputSection advancedFieldArray={advancedFieldArray} form={form} editMode={editMode} isLoading={isLoading} setShowEditDialog={setShowEditDialogInput} handleRemoveAdvanced={handleRemoveAdvanced} handleToggleVisibilityAdvanced={handleToggleVisibilityAdvanced} handleSaveSubmit={handleSaveSubmit} initialIsOpen={initialAdvancedInputsOpen} onIsOpenChange={onAdvancedInputsOpenChange} />
                                             )}
                                         {editMode && (args.children)}
                                     </div>
@@ -623,13 +629,21 @@ function AdvancedInputSection(args: {
     handleRemoveAdvanced: (params: { groupIndex: number, inputIndex?: number }) => void,
     handleToggleVisibilityAdvanced: (params: { groupIndex: number, inputIndex: number }) => void,
     handleSaveSubmit: (data: IViewComfyBase) => void,
+    initialIsOpen?: boolean;
+    onIsOpenChange?: (isOpen: boolean) => void;
 }) {
-    const { advancedFieldArray, form, editMode, isLoading, setShowEditDialog, handleRemoveAdvanced, handleToggleVisibilityAdvanced, handleSaveSubmit } = args;
-    const [isOpen, setIsOpen] = useState(editMode);
+    const { advancedFieldArray, form, editMode, isLoading, setShowEditDialog, handleRemoveAdvanced, handleToggleVisibilityAdvanced, handleSaveSubmit, initialIsOpen, onIsOpenChange } = args;
+    const [isOpen, setIsOpen] = useState(initialIsOpen ?? editMode);
+
+    const handleOpenChange = (newIsOpen: boolean) => {
+        setIsOpen(newIsOpen);
+        onIsOpenChange?.(newIsOpen);
+    };
+
     return (<>
         <Collapsible
             open={isOpen}
-            onOpenChange={setIsOpen}
+            onOpenChange={handleOpenChange}
             className="space-y-2 mb-2"
         >
             {!editMode && (<div className="flex items-center space-x-4 px-4">

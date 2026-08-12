@@ -12,6 +12,8 @@ export interface IViewComfyBase {
     previewImages: string[];
     inputs: IMultiValueInput[];
     advancedInputs: IMultiValueInput[];
+    /** Track advanced inputs accordion open state */
+    advancedInputsOpen?: boolean;
 }
 
 export interface IViewComfyDraft {
@@ -50,6 +52,9 @@ export interface IViewComfyState {
     appImg?: string;
     viewComfys: IViewComfy[];
     viewComfyDraft: IViewComfyDraft | undefined;
+    /** 当前选中的工作流（按 section 分隔，每个 section 独立跟踪） */
+    currentViewComfyBySection: Record<string, IViewComfy>;
+    /** @deprecated 兼容旧代码，当前 section 的工作流（请使用 currentViewComfyBySection） */
     currentViewComfy: IViewComfy | undefined;
     sections: IViewComfySection[];
     /** 生图结果，按 section 分桶。sectionName -> promptId -> 结果 */
@@ -58,6 +63,10 @@ export interface IViewComfyState {
     loadingBySection: Record<string, boolean>;
     /** 按 promptId 跟踪每个 prompt 的生成进度（value/max、当前节点、总耗时） */
     progressByPrompt: Record<string, IPromptProgress>;
+    /** 每个工作流的高级设置展开/收起状态 */
+    advancedInputsOpenByWorkflow: Record<string, boolean>;
+    /** 每个工作流的表单填写数据（inputs 和 advancedInputs） */
+    formDataByWorkflow: Record<string, { inputs: IMultiValueInput[], advancedInputs: IMultiValueInput[] }>;
 }
 
 export interface IPromptProgress {
@@ -112,7 +121,9 @@ export enum ActionType {
     SET_SECTION_LOADING = "SET_SECTION_LOADING",
     SET_PROGRESS = "SET_PROGRESS",
     SET_PROGRESS_DONE = "SET_PROGRESS_DONE",
-    REMOVE_PROGRESS = "REMOVE_PROGRESS"
+    REMOVE_PROGRESS = "REMOVE_PROGRESS",
+    SET_ADVANCED_INPUTS_OPEN = "SET_ADVANCED_INPUTS_OPEN",
+    SET_FORM_DATA = "SET_FORM_DATA"
 }
 
 // Update the Action type to use the enum
@@ -121,7 +132,7 @@ export type Action =
     | { type: ActionType.SET_VIEW_COMFY_DRAFT; payload: IViewComfyDraft | undefined }
     | { type: ActionType.UPDATE_VIEW_COMFY; payload: { viewComfy: IViewComfy, id: string } }
     | { type: ActionType.REMOVE_VIEW_COMFY; payload: IViewComfy }
-    | { type: ActionType.UPDATE_CURRENT_VIEW_COMFY; payload: IViewComfy }
+    | { type: ActionType.UPDATE_CURRENT_VIEW_COMFY; payload: { viewComfy: IViewComfy, sectionName?: string } }
     | { type: ActionType.RESET_CURRENT_AND_DRAFT_VIEW_COMFY; payload: undefined }
     | { type: ActionType.INIT_VIEW_COMFY; payload: IViewComfyJSON }
     | { type: ActionType.SET_APP_TITLE; payload: string }
@@ -133,6 +144,8 @@ export type Action =
     | { type: ActionType.SET_PROGRESS; payload: { promptId: string, progress: IPromptProgress } }
     | { type: ActionType.SET_PROGRESS_DONE; payload: { promptId: string, totalElapsedMs: number, status: "success" | "error" } }
     | { type: ActionType.REMOVE_PROGRESS; payload: { promptId: string } }
+    | { type: ActionType.SET_ADVANCED_INPUTS_OPEN; payload: { workflowId: string, isOpen: boolean } }
+    | { type: ActionType.SET_FORM_DATA; payload: { workflowId: string, inputs: IMultiValueInput[], advancedInputs: IMultiValueInput[] } }
 
 function viewComfyReducer(state: IViewComfyState, action: Action): IViewComfyState {
     switch (action.type) {
@@ -163,25 +176,27 @@ function viewComfyReducer(state: IViewComfyState, action: Action): IViewComfySta
                 ...state,
                 viewComfyDraft: action.payload ? { ...action.payload } : undefined
             };
-        case ActionType.UPDATE_VIEW_COMFY:
+        case ActionType.UPDATE_VIEW_COMFY: {
+            const updatedViewComfys = state.viewComfys.map((item) =>
+                item.viewComfyJSON.id === action.payload.id
+                    ? { ...action.payload.viewComfy }
+                    : item
+            );
+            // Also update in currentViewComfyBySection if present
+            const updatedCurrentBySection = { ...state.currentViewComfyBySection };
+            for (const sectionName of Object.keys(updatedCurrentBySection)) {
+                if (updatedCurrentBySection[sectionName].viewComfyJSON.id === action.payload.id) {
+                    updatedCurrentBySection[sectionName] = action.payload.viewComfy;
+                }
+            }
             return {
                 ...state,
-                viewComfys: state.viewComfys.map((item) =>
-                    item.viewComfyJSON.id === action.payload.id
-                        ? { ...action.payload.viewComfy }
-                        : item
-                ),
-                currentViewComfy: {
-                    viewComfyJSON: action.payload.viewComfy.viewComfyJSON,
-                    workflowApiJSON: action.payload.viewComfy.workflowApiJSON,
-                    file: action.payload.viewComfy.file
-                },
-                viewComfyDraft: {
-                    viewComfyJSON: action.payload.viewComfy.viewComfyJSON,
-                    workflowApiJSON: action.payload.viewComfy.workflowApiJSON,
-                    file: action.payload.viewComfy.file
-                }
+                viewComfys: updatedViewComfys,
+                currentViewComfy: action.payload.viewComfy,
+                currentViewComfyBySection: updatedCurrentBySection,
+                viewComfyDraft: action.payload.viewComfy
             };
+        }
         case ActionType.REMOVE_VIEW_COMFY: {
             const data = {
                 ...state,
@@ -202,35 +217,68 @@ function viewComfyReducer(state: IViewComfyState, action: Action): IViewComfySta
 
             return data;
         }
-        case ActionType.UPDATE_CURRENT_VIEW_COMFY:
+        case ActionType.UPDATE_CURRENT_VIEW_COMFY: {
+            const { viewComfy, sectionName } = action.payload;
+            if (sectionName) {
+                // Update section-specific current workflow
+                return {
+                    ...state,
+                    currentViewComfyBySection: {
+                        ...state.currentViewComfyBySection,
+                        [sectionName]: viewComfy
+                    },
+                    currentViewComfy: viewComfy,
+                    viewComfyDraft: viewComfy
+                };
+            }
             return {
                 ...state,
-                currentViewComfy: action.payload,
-                viewComfyDraft: action.payload
-            }
+                currentViewComfy: viewComfy,
+                viewComfyDraft: viewComfy
+            };
+        }
         case ActionType.RESET_CURRENT_AND_DRAFT_VIEW_COMFY:
             return {
                 ...state,
                 currentViewComfy: undefined,
+                currentViewComfyBySection: {},
                 viewComfyDraft: undefined
             }
         case ActionType.INIT_VIEW_COMFY: {
             if (action.payload.workflows.length === 0) {
                 return state;
             }
+            // Initialize currentViewComfyBySection for each section
+            const initialSectionWorkflows: Record<string, IViewComfy> = {};
+            const sections = action.payload.sections ?? [];
+            for (const section of sections) {
+                // Find first workflow that belongs to this section
+                const sectionWorkflow = action.payload.workflows.find((w: any) =>
+                    section.workflows.includes(w.viewComfyJSON.title)
+                );
+                if (sectionWorkflow) {
+                    initialSectionWorkflows[section.name] = {
+                        viewComfyJSON: sectionWorkflow.viewComfyJSON,
+                        workflowApiJSON: sectionWorkflow.workflowApiJSON
+                    };
+                }
+            }
             return {
                 appTitle: action.payload.appTitle ?? "智绘·先锋",
                 appImg: action.payload.appImg ?? "",
-                viewComfys: [...action.payload.workflows.map((workflow) => ({
+                viewComfys: [...action.payload.workflows.map((workflow: any) => ({
                     viewComfyJSON: workflow.viewComfyJSON,
                     workflowApiJSON: workflow.workflowApiJSON,
                 }))],
                 currentViewComfy: { viewComfyJSON: action.payload.workflows[0].viewComfyJSON, workflowApiJSON: action.payload.workflows[0].workflowApiJSON },
+                currentViewComfyBySection: initialSectionWorkflows,
                 viewComfyDraft: { viewComfyJSON: action.payload.workflows[0].viewComfyJSON, workflowApiJSON: action.payload.workflows[0].workflowApiJSON },
                 sections: action.payload.sections ?? [],
                 resultsBySection: {},
                 loadingBySection: {},
                 progressByPrompt: {},
+                advancedInputsOpenByWorkflow: {},
+                formDataByWorkflow: {},
             };
         }
         case ActionType.SET_APP_TITLE:
@@ -335,6 +383,25 @@ function viewComfyReducer(state: IViewComfyState, action: Action): IViewComfySta
                 },
             };
         }
+        case ActionType.SET_ADVANCED_INPUTS_OPEN:
+            return {
+                ...state,
+                advancedInputsOpenByWorkflow: {
+                    ...state.advancedInputsOpenByWorkflow,
+                    [action.payload.workflowId]: action.payload.isOpen,
+                },
+            };
+        case ActionType.SET_FORM_DATA:
+            return {
+                ...state,
+                formDataByWorkflow: {
+                    ...state.formDataByWorkflow,
+                    [action.payload.workflowId]: {
+                        inputs: action.payload.inputs,
+                        advancedInputs: action.payload.advancedInputs,
+                    },
+                },
+            };
         default:
             return state;
     }
@@ -348,7 +415,18 @@ interface ViewComfyContextType {
 const ViewComfyContext = createContext<ViewComfyContextType | undefined>(undefined);
 
 export function ViewComfyProvider({ children }: { children: ReactNode }) {
-    const [viewComfyState, dispatch] = useReducer(viewComfyReducer, { viewComfys: [], viewComfyDraft: undefined, currentViewComfy: undefined, sections: [], resultsBySection: {}, loadingBySection: {}, progressByPrompt: {} });
+    const [viewComfyState, dispatch] = useReducer(viewComfyReducer, {
+        viewComfys: [],
+        viewComfyDraft: undefined,
+        currentViewComfy: undefined,
+        currentViewComfyBySection: {},
+        sections: [],
+        resultsBySection: {},
+        loadingBySection: {},
+        progressByPrompt: {},
+        advancedInputsOpenByWorkflow: {},
+        formDataByWorkflow: {}
+    });
 
     return (
         <ViewComfyContext.Provider value={{ viewComfyState, viewComfyStateDispatcher: dispatch }}>

@@ -129,10 +129,15 @@ function PlaygroundPageContent({ doPost, sectionName }: IPlaygroundPageContent) 
     const lastProgressMaxRef = useRef<number>(0);
     const currentNodeRef = useRef<string | undefined>(undefined);
 
+    // 当前 section 使用的 workflow（优先使用 section-specific 的，否则用全局的）
+    const currentWorkflow = sectionName
+        ? viewComfyState.currentViewComfyBySection[sectionName] ?? viewComfyState.currentViewComfy
+        : viewComfyState.currentViewComfy;
+
     // node id -> 友好标题 映射（从 workflow_api 的 _meta.title 读取，用于进度条上方显示当前节点）
     const nodeTitleMap = useMemo(() => {
         const map: Record<string, string> = {};
-        const wf = viewComfyState.currentViewComfy?.workflowApiJSON as Record<string, { class_type?: string; _meta?: { title?: string } }> | undefined;
+        const wf = currentWorkflow?.workflowApiJSON as Record<string, { class_type?: string; _meta?: { title?: string } }> | undefined;
         if (wf) {
             for (const id in wf) {
                 const title = wf[id]?._meta?.title || wf[id]?.class_type;
@@ -142,7 +147,7 @@ function PlaygroundPageContent({ doPost, sectionName }: IPlaygroundPageContent) 
             }
         }
         return map;
-    }, [viewComfyState.currentViewComfy]);
+    }, [currentWorkflow]);
 
     // 当前页（section）的结果集 —— 切页面也保留（升到 Provider）
     const results: IResults = useMemo(() => {
@@ -173,19 +178,19 @@ function PlaygroundPageContent({ doPost, sectionName }: IPlaygroundPageContent) 
         return viewComfyState.viewComfys.filter((vc) => titles.has(vc.viewComfyJSON.title));
     }, [sectionName, viewComfyState.viewComfys, viewComfyState.sections]);
 
-    // 如果当前选中的工作流不在过滤集合内，自动选第一个
+    // 如果当前 section 选中的工作流不在过滤集合内，自动选第一个
     useEffect(() => {
         if (!sectionName) return;
         if (filteredViewComfys.length === 0) return;
-        const current = viewComfyState.currentViewComfy;
+        const current = currentWorkflow;
         const stillVisible = current && filteredViewComfys.some((vc) => vc.viewComfyJSON.id === current.viewComfyJSON.id);
         if (!stillVisible) {
             viewComfyStateDispatcher({
                 type: "UPDATE_CURRENT_VIEW_COMFY" as any,
-                payload: filteredViewComfys[0],
+                payload: { viewComfy: filteredViewComfys[0], sectionName },
             });
         }
-    }, [sectionName, filteredViewComfys, viewComfyState.currentViewComfy, viewComfyStateDispatcher]);
+    }, [sectionName, filteredViewComfys, currentWorkflow, viewComfyStateDispatcher]);
 
     useEffect(() => {
         if (!viewMode) return;
@@ -370,7 +375,7 @@ function PlaygroundPageContent({ doPost, sectionName }: IPlaygroundPageContent) 
 
         const doPostParams = {
             viewComfy: generationData,
-            workflow: viewComfyState.currentViewComfy?.workflowApiJSON,
+            workflow: currentWorkflow?.workflowApiJSON,
             onSuccess: (params: { promptId: string, outputs: File[], totalElapsedMs?: number }) => {
                 onSetResults({ ...params, localPromptId, totalElapsedMs: params.totalElapsedMs });
                 setSectionLoading(false);
@@ -439,7 +444,7 @@ function PlaygroundPageContent({ doPost, sectionName }: IPlaygroundPageContent) 
     const onSelectChange = (data: IViewComfy) => {
         return viewComfyStateDispatcher({
             type: ActionType.UPDATE_CURRENT_VIEW_COMFY,
-            payload: { ...data }
+            payload: { viewComfy: data, sectionName }
         });
     }
 
@@ -455,7 +460,7 @@ function PlaygroundPageContent({ doPost, sectionName }: IPlaygroundPageContent) 
     }
 
     // Show loading/error state when no app is loaded yet
-    const hasViewComfyApp = viewComfyState.currentViewComfy !== undefined;
+    const hasViewComfyApp = currentWorkflow !== undefined;
 
     if (!hasViewComfyApp) {
         return <>
@@ -466,10 +471,10 @@ function PlaygroundPageContent({ doPost, sectionName }: IPlaygroundPageContent) 
     }
 
     const renderForm = () => {
-        if (viewComfyState.currentViewComfy) {
+        if (currentWorkflow) {
             return (
                 <PlaygroundForm
-                    viewComfyJSON={viewComfyState.currentViewComfy.viewComfyJSON}
+                    viewComfyJSON={currentWorkflow.viewComfyJSON}
                     onSubmit={onSubmit}
                     loading={loading}
                 />
@@ -482,8 +487,8 @@ function PlaygroundPageContent({ doPost, sectionName }: IPlaygroundPageContent) 
         <>
             <div className="flex flex-col h-[calc(100vh-var(--top-nav-height))]">
                 <div className="md:hidden w-full flex pl-4 gap-x-2">
-                    {viewComfyState.currentViewComfy && (
-                        <WorkflowSwitcher viewComfys={filteredViewComfys} currentViewComfy={viewComfyState.currentViewComfy} onSelectChange={onSelectChange} />
+                    {currentWorkflow && (
+                        <WorkflowSwitcher viewComfys={filteredViewComfys} currentViewComfy={currentWorkflow} onSelectChange={onSelectChange} />
                     )}
                     <Drawer>
                         <DrawerTrigger asChild>
@@ -500,9 +505,9 @@ function PlaygroundPageContent({ doPost, sectionName }: IPlaygroundPageContent) 
                 <main className="flex overflow-hidden flex-1 gap-0">
                     <div className="relative hidden flex-col w-full max-w-[450px] items-start md:flex flex-shrink-0 overflow-hidden rounded-l-xl bg-muted/50 p-4">
                         <div className="flex flex-col w-full h-full min-h-0 min-w-0 bg-background rounded-xl overflow-hidden border shadow-md">
-                            {filteredViewComfys.length > 0 && viewComfyState.currentViewComfy && (
+                            {filteredViewComfys.length > 0 && currentWorkflow && (
                                 <div className="px-2 pt-4 w-full">
-                                    <WorkflowSwitcher viewComfys={filteredViewComfys} currentViewComfy={viewComfyState.currentViewComfy} onSelectChange={onSelectChange} />
+                                    <WorkflowSwitcher viewComfys={filteredViewComfys} currentViewComfy={currentWorkflow} onSelectChange={onSelectChange} />
                                 </div>
                             )}
                             {renderForm()}
@@ -510,9 +515,9 @@ function PlaygroundPageContent({ doPost, sectionName }: IPlaygroundPageContent) 
                     </div>
                     <div className="relative flex h-full min-h-[50vh] w-full rounded-r-xl bg-muted/50 lg:col-span-2">
                         <ScrollArea className="relative flex h-full w-full flex-1 flex-col">
-                            {(Object.keys(results).length === 0) && !loading && viewComfyState.currentViewComfy && (
+                            {(Object.keys(results).length === 0) && !loading && currentWorkflow && (
                                 <>  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full">
-                                    <PreviewOutputsImageGallery viewComfyJSON={viewComfyState.currentViewComfy.viewComfyJSON} />
+                                    <PreviewOutputsImageGallery viewComfyJSON={currentWorkflow.viewComfyJSON} />
                                 </div>
                                 </>
                             )}
