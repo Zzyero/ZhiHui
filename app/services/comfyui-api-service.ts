@@ -47,8 +47,6 @@ export class ComfyImageOutputFile {
 
 /** 根据文件扩展名推断 MIME 类型 */
 export function getMimeType(fileName: string): string {
-    const lookedUp = mime.lookup(fileName);
-    if (lookedUp) return lookedUp;
     const ext = path.extname(fileName).toLowerCase();
     const extensionMap: Record<string, string> = {
         '.mp4': 'video/mp4', '.webm': 'video/webm', '.mkv': 'video/x-matroska',
@@ -57,7 +55,10 @@ export function getMimeType(fileName: string): string {
         '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
         '.gif': 'image/gif', '.webp': 'image/webp', '.bmp': 'image/bmp',
     };
-    return extensionMap[ext] || 'application/octet-stream';
+    if (extensionMap[ext]) return extensionMap[ext];
+    const lookedUp = mime.lookup(fileName);
+    if (lookedUp) return lookedUp;
+    return 'application/octet-stream';
 }
 
 export class ComfyUIAPIService {

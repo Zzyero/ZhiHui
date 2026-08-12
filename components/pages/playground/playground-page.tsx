@@ -3,7 +3,8 @@
 import {
     Settings,
     Download,
-    CircleX
+    CircleX,
+    Play
 } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
@@ -13,7 +14,7 @@ import {
     DrawerContent,
     DrawerTrigger,
 } from "@/components/ui/drawer"
-import { Fragment, useEffect, useState, useCallback, useMemo, useRef } from "react";
+import React, { Fragment, useEffect, useState, useCallback, useMemo, useRef } from "react";
 import PlaygroundForm from "./playground-form";
 import { usePostPlayground } from "@/hooks/playground/use-post-playground";
 import { ActionType, type IViewComfy, type IViewComfyWorkflow, useViewComfy } from "@/app/providers/view-comfy-provider";
@@ -81,7 +82,22 @@ interface IPlaygroundPageContent {
 
 const getOutputFileName = (output: { filename: string }): string => output.filename;
 
-const getOutputContentType = (output: { contentType: string }): string => output.contentType;
+const getCorrectMimeType = (filename: string): string => {
+    const ext = filename.toLowerCase().split('.').pop();
+    const mimeMap: Record<string, string> = {
+        'mp4': 'video/mp4', 'webm': 'video/webm', 'mkv': 'video/x-matroska',
+        'avi': 'video/x-msvideo', 'mov': 'video/quicktime', 'wmv': 'video/x-ms-wmv',
+        'mp3': 'audio/mpeg', 'wav': 'audio/wav', 'ogg': 'audio/ogg',
+        'png': 'image/png', 'jpg': 'image/jpeg', 'jpeg': 'image/jpeg',
+        'gif': 'image/gif', 'webp': 'image/webp', 'bmp': 'image/bmp',
+    };
+    return mimeMap[ext || ''] || '';
+};
+
+const getOutputContentType = (output: { contentType: string; filename: string }): string => {
+    const correctMime = getCorrectMimeType(output.filename);
+    return correctMime || output.contentType;
+};
 
 function PlaygroundPageContent({ doPost, sectionName }: IPlaygroundPageContent) {
     const { viewComfyState, viewComfyStateDispatcher } = useViewComfy();
@@ -695,41 +711,102 @@ export function ImageDialog({ output, showOutputFileName }: { output: IOutput, s
     );
 }
 
-export function VideoDialog({ output }: { output: IOutput }) {
+export function VideoDialog({ output, showOutputFileName }: { output: IOutput, showOutputFileName?: boolean }) {
+    const outputName = getOutputFileName(output);
+    const contentType = getOutputContentType(output);
+    const [videoLoaded, setVideoLoaded] = React.useState(false);
+    const [videoError, setVideoError] = React.useState(false);
+    const isVideo = contentType.startsWith('video/');
+
     return (
         <Dialog>
             <DialogTrigger asChild>
-                <div
-                    draggable="true"
-                    onDragStart={createMediaDragHandler({
-                        url: output.url,
-                        filename: getOutputFileName(output),
-                        contentType: getOutputContentType(output)
-                    })}
-                    className="w-full"
-                >
-                    <video
-                        key={output.url}
-                        className="w-full h-64 object-cover rounded-md hover:cursor-pointer"
-                        controls
-                    >
-                        <track default kind="captions" srcLang="en" src="SUBTITLE_PATH" />
-                        <source src={output.url} />
-                    </video>
+                <div className="relative w-full h-64 group overflow-hidden rounded-md bg-muted">
+                    {videoError || !isVideo ? (
+                        <div className="w-full h-full flex flex-col items-center justify-center gap-2">
+                            <Play className="h-8 w-8 text-muted-foreground" />
+                            <span className="text-muted-foreground text-xs">{isVideo ? "视频加载失败" : "视频预览"}</span>
+                        </div>
+                    ) : (
+                        <>
+                            <video
+                                key={output.url}
+                                className="w-full h-full object-contain transition-all group-hover:scale-105"
+                                muted
+                                preload="metadata"
+                                playsInline
+                                onLoadedData={() => setVideoLoaded(true)}
+                                onError={() => setVideoError(true)}
+                            >
+                                <source src={output.url} />
+                            </video>
+                            {!videoLoaded && (
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                    <div className="bg-black/50 rounded-full p-3">
+                                        <Play className="h-6 w-6 text-white" />
+                                    </div>
+                                </div>
+                            )}
+                            {videoLoaded && (
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/0 group-hover:bg-black/30 transition-all">
+                                    <div className="bg-white/90 rounded-full p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <Play className="h-8 w-8 text-black" />
+                                    </div>
+                                </div>
+                            )}
+                        </>
+                    )}
                 </div>
             </DialogTrigger>
+            {showOutputFileName && parseFileName(outputName)}
             <DialogContent className="max-w-fit max-h-[90vh] border-0 p-0 bg-transparent [&>button]:bg-background [&>button]:border [&>button]:border-border [&>button]:rounded-full [&>button]:p-1 [&>button]:shadow-md">
                 <DialogHeader className="sr-only">
                     <DialogTitle>视频预览</DialogTitle>
                 </DialogHeader>
-                <video
-                    key={output.url}
-                    className="max-h-[85vh] w-auto object-contain rounded-md"
-                    controls
-                >
-                    <track default kind="captions" srcLang="en" src="SUBTITLE_PATH" />
-                    <source src={output.url} />
-                </video>
+                {isVideo ? (
+                    <>
+                        <video
+                            key={`dialog-${output.url}`}
+                            className="max-h-[85vh] w-auto object-contain rounded-md"
+                            controls
+                            autoPlay
+                            onError={() => setVideoError(true)}
+                        >
+                            <source src={output.url} />
+                        </video>
+                        <DialogFooter className="bg-transparent">
+                            <Button className="w-full"
+                                onClick={() => {
+                                    const link = document.createElement('a');
+                                    link.href = output.url;
+                                    link.download = outputName;
+                                    link.click();
+                                }}
+                            >
+                                <Download className="h-4 w-4 mr-2" />
+                                下载
+                            </Button>
+                        </DialogFooter>
+                    </>
+                ) : (
+                    <DialogFooter className="bg-transparent">
+                        <p className="text-sm text-muted-foreground text-center py-4">
+                            当前文件类型: {contentType || "未知"}<br />
+                            可能无法直接在浏览器中预览
+                        </p>
+                        <Button className="w-full"
+                            onClick={() => {
+                                const link = document.createElement('a');
+                                link.href = output.url;
+                                link.download = outputName;
+                                link.click();
+                            }}
+                        >
+                            <Download className="h-4 w-4 mr-2" />
+                            下载
+                        </Button>
+                    </DialogFooter>
+                )}
             </DialogContent>
         </Dialog>
     )
@@ -825,9 +902,12 @@ function OutputRenderer({
         showOutputFileName: boolean,
     }) {
 
-
     const getOutputComponent = () => {
         const contentType = getOutputContentType(output);
+        const filename = getOutputFileName(output).toLowerCase();
+        const videoExtensions = ['.mp4', '.webm', '.mkv', '.avi', '.mov', '.wmv', '.flv', '.m4v'];
+        const isVideoByExtension = videoExtensions.some(ext => filename.endsWith(ext));
+        const isVideo = contentType.startsWith('video/') || isVideoByExtension;
 
         if (contentType.startsWith('image/') && contentType !== "image/vnd.adobe.photoshop") {
             return (
@@ -835,8 +915,12 @@ function OutputRenderer({
                     <ImageDialog output={output} showOutputFileName={showOutputFileName} />
                 </SelectableImage>
             );
-        } else if (contentType.startsWith('video/')) {
-            return <VideoDialog output={output} />
+        } else if (isVideo) {
+            return (
+                <SelectableImage imageUrl={output.url}>
+                    <VideoDialog output={output} showOutputFileName={showOutputFileName} />
+                </SelectableImage>
+            );
         } else if (contentType.startsWith('audio/')) {
             return <AudioDialog output={output} />
         } else if (contentType.startsWith('text/')) {
