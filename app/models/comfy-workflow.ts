@@ -1,12 +1,10 @@
 import path from "node:path";
-import fs from 'node:fs/promises';
 import crypto from 'node:crypto';
 import type { IInput } from "@/app/interfaces/input";
 import * as constants from "@/app/constants";
 import { getComfyUIRandomSeed } from "@/lib/utils";
 import { ComfyUIAPIService } from "../services/comfyui-api-service";
 
-const COMFY_INPUTS_DIR = path.join(process.cwd(), "comfy", "inputs");
 const COMFY_WORKFLOWS_DIR = path.join(process.cwd(), "comfy", "workflows");
 
 export class ComfyWorkflow {
@@ -44,8 +42,9 @@ export class ComfyWorkflow {
               viewComfy,
             })
           } else {
-            const filePath = await this.createFileFromInput(input.value);
-            obj[path[path.length - 1]] = filePath;
+            const fileName = `${this.getFileNamePrefix()}${input.value.name}`;
+            const uploadedName = await comfyUIService.uploadToInput(input.value, fileName);
+            obj[path[path.length - 1]] = uploadedName;
           }
         } else {
           obj[path[path.length - 1]] = input.value;
@@ -97,14 +96,6 @@ export class ComfyWorkflow {
     return getComfyUIRandomSeed();
   }
 
-  private async createFileFromInput(file: File) {
-    const fileName = `${this.getFileNamePrefix()}${file.name}`;
-    const filePath = path.join(COMFY_INPUTS_DIR, fileName);
-    const fileBuffer = await file.arrayBuffer();
-    await fs.writeFile(filePath, Buffer.from(fileBuffer));
-    return filePath;
-  }
-
   private async uploadMaskToComfy(params: {
     maskFile: File,
     maskKeyParam: string,
@@ -123,7 +114,7 @@ export class ComfyWorkflow {
       obj = obj[originalFilePathKeys[i]];
     }
     const unmaskedPath = obj[originalFilePathKeys[originalFilePathKeys.length - 1]];
-    const unmaskedFilename = unmaskedPath.slice(COMFY_INPUTS_DIR.length + 1);
+    const unmaskedFilename = path.basename(unmaskedPath);
     let viewComfyInput = undefined;
     for (const input of viewComfy) {
       if (input.key === originalFilePath) {

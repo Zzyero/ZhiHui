@@ -1,6 +1,7 @@
 import { ComfyWorkflowError } from '@/app/models/errors';
 import { ComfyUIConnRefusedError } from '@/app/constants';
 import { EventEmitter } from 'node:events';
+import path from 'node:path';
 import mime from 'mime-types';
 
 type ComfyUIWSEventType = "status" | "executing" | "execution_cached" | "progress" | "executed" | "execution_error" | "execution_success";
@@ -42,6 +43,21 @@ export class ComfyImageOutputFile {
         this.subFolder = subFolder;
         this.outputType = outputType;
     }
+}
+
+/** 根据文件扩展名推断 MIME 类型 */
+export function getMimeType(fileName: string): string {
+    const lookedUp = mime.lookup(fileName);
+    if (lookedUp) return lookedUp;
+    const ext = path.extname(fileName).toLowerCase();
+    const extensionMap: Record<string, string> = {
+        '.mp4': 'video/mp4', '.webm': 'video/webm', '.mkv': 'video/x-matroska',
+        '.avi': 'video/x-msvideo', '.mov': 'video/quicktime',
+        '.mp3': 'audio/mpeg', '.wav': 'audio/wav', '.ogg': 'audio/ogg',
+        '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg',
+        '.gif': 'image/gif', '.webp': 'image/webp', '.bmp': 'image/bmp',
+    };
+    return extensionMap[ext] || 'application/octet-stream';
 }
 
 export class ComfyUIAPIService {
@@ -478,7 +494,7 @@ export class ComfyUIAPIService {
             }
 
             const blob = await response.blob();
-            return new File([blob], file.filename, { type: mime.lookup(file.filename) || "application/octet-stream" });
+            return new File([blob], file.filename, { type: getMimeType(file.filename) });
 
              
         } catch (error: any) {
@@ -611,6 +627,22 @@ export class ComfyUIAPIService {
 
         return await response.json();
 
+    }
+
+    /** 上传文件到 ComfyUI 的 input 目录，返回文件名 */
+    public async uploadToInput(file: File, fileName: string): Promise<string> {
+        const formData = new FormData();
+        formData.append('image', file, fileName);
+        formData.append('type', 'input');
+        formData.append('subfolder', '');
+        formData.append('overwrite', 'true');
+
+        const response = await fetch(`${this.getUrl("http")}/upload/image`, {
+            method: 'POST', body: formData,
+        });
+        if (!response.ok) throw new Error(`ComfyUI 上传失败: ${response.status}`);
+        const result = await response.json();
+        return result.subfolder ? `${result.subfolder}/${result.name}` : result.name;
     }
 }
 

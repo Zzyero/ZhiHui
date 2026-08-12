@@ -4,10 +4,9 @@ import { ComfyWorkflow } from "@/app/models/comfy-workflow";
 import fs from "node:fs/promises";
 import { ComfyErrorHandler } from "@/app/helpers/comfy-error-handler";
 import { ComfyError, ComfyWorkflowError } from "@/app/models/errors";
-import { ComfyUIAPIService, type IComfyProgressEvent } from "@/app/services/comfyui-api-service";
+import { ComfyUIAPIService, type IComfyProgressEvent, getMimeType } from "@/app/services/comfyui-api-service";
 import { missingViewComfyFileError, viewComfyFileName } from "@/app/constants";
 import { SettingsService } from "@/app/services/settings-service";
-import mime from 'mime-types';
 
 const settingsService = new SettingsService();
 export class ComfyUIService {
@@ -197,8 +196,8 @@ export class ComfyUIService {
 
     async getFileFromComfyOutputDirectory({ fileName }: { fileName: string }): Promise<File> {
         const filePath = path.join(settingsService.getComfyOutputDirectory(), fileName);
-        const fileContent = await fs.readFile(filePath, "utf8");
-        return new File([fileContent], fileName, { type: mime.lookup(fileName) || "application/octet-stream" });
+        const fileContent = await fs.readFile(filePath);
+        return new File([fileContent], fileName, { type: getMimeType(fileName) });
     }
 
 }
