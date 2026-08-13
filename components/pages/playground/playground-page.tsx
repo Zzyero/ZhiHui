@@ -17,7 +17,7 @@ import {
 import React, { Fragment, useEffect, useState, useCallback, useMemo, useRef } from "react";
 import PlaygroundForm from "./playground-form";
 import { usePostPlayground } from "@/hooks/playground/use-post-playground";
-import { ActionType, type IViewComfy, type IViewComfyWorkflow, useViewComfy } from "@/app/providers/view-comfy-provider";
+import { ActionType, type IViewComfy, type IViewComfyWorkflow, useViewComfy, type IQueuedPrompt } from "@/app/providers/view-comfy-provider";
 import { ErrorAlertDialog } from "@/components/ui/error-alert-dialog";
 import { ApiErrorHandler } from "@/lib/api-error-handler";
 import { ResponseError } from "@/app/models/errors";
@@ -106,28 +106,14 @@ function PlaygroundPageContent({ doPost, sectionName }: IPlaygroundPageContent) 
     const [textOutputEnabled, setTextOutputEnabled] = useState(false);
     const [showOutputFileName, setShowOutputFileName] = useState(false);
 
-    // 当前 section 的 loading 状态（从 provider 读取，跨页面持续）
+    // 当前 section 的 loading 状态（保留字段，队列化后由逐任务卡片替代展示）
     const loading = useMemo(() => {
         if (sectionName) return !!viewComfyState.loadingBySection[sectionName];
         return false;
     }, [sectionName, viewComfyState.loadingBySection]);
 
-    // 写入当前 section 的 loading 状态
-    const setSectionLoading = useCallback((next: boolean) => {
-        if (!sectionName) return;
-        viewComfyStateDispatcher({
-            type: ActionType.SET_SECTION_LOADING,
-            payload: { sectionName, loading: next },
-        });
-    }, [sectionName, viewComfyStateDispatcher]);
-
-    // 本次生成的稳定启动时间戳（不随 progress 事件重置，用于"已用时间"显示）与服务器真 promptId
-    const generationStartedAtRef = useRef<number>(0);
-    const realPromptIdRef = useRef<string | undefined>(undefined);
-    // 记录最近一次 progress 的 value/max 和 executing 的节点名，executing 事件用 replace 写入时保留
-    const lastProgressValueRef = useRef<number>(0);
-    const lastProgressMaxRef = useRef<number>(0);
-    const currentNodeRef = useRef<string | undefined>(undefined);
+    // 每个任务的 AbortController（用于取消排队/运行中的请求）
+    const abortControllersRef = useRef<Map<string, AbortController>>(new Map());
 
     // 当前 section 使用的 workflow（优先使用 section-specific 的，否则用全局的）
     const currentWorkflow = sectionName
@@ -154,20 +140,11 @@ function PlaygroundPageContent({ doPost, sectionName }: IPlaygroundPageContent) 
         return (sectionName && viewComfyState.resultsBySection[sectionName]) || {};
     }, [sectionName, viewComfyState.resultsBySection]);
 
-    // 找正在运行的 prompt 的 progress（取 status==='running' 的最新一条）
-    const runningProgress = useMemo(() => {
-        const all = viewComfyState.progressByPrompt;
-        let candidate: { value: number; max: number; currentNode?: string; startedAt: number } | undefined;
-        let latestStartedAt = -1;
-        for (const pid in all) {
-            const p = all[pid];
-            if (p.status === "running" && p.startedAt > latestStartedAt) {
-                latestStartedAt = p.startedAt;
-                candidate = p;
-            }
-        }
-        return candidate;
-    }, [viewComfyState.progressByPrompt]);
+    // 当前 section 的任务队列（按排队时间降序，最新的在最上面）
+    const sectionQueue: IQueuedPrompt[] = useMemo(() => {
+        const list = viewComfyState.queueBySection[sectionName || "default"] || [];
+        return [...list].sort((a, b) => b.queuedAt - a.queuedAt);
+    }, [sectionName, viewComfyState.queueBySection]);
 
     // 按 section 过滤工作流（按标题匹配）
     const filteredViewComfys = useMemo(() => {
@@ -274,13 +251,14 @@ function PlaygroundPageContent({ doPost, sectionName }: IPlaygroundPageContent) 
             }
         }
 
-        // 同步存一份到 provider（按当前 section 隔离），切页面不会丢
+        // 同步存一份到 provider（按当前 section 隔离），key 用 localPromptId 便于逐任务展示
+        const resultKey = localPromptId ?? promptId;
         if (sectionName) {
             viewComfyStateDispatcher({
                 type: ActionType.SET_RESULT,
                 payload: {
                     sectionName,
-                    promptId,
+                    promptId: resultKey,
                     result: {
                         status,
                         outputs: resultOutputs,
@@ -290,7 +268,7 @@ function PlaygroundPageContent({ doPost, sectionName }: IPlaygroundPageContent) 
                 },
             });
 
-            // 标记该 prompt 的进度为 success，并写入总耗时
+            // 标记该 prompt 的进度为 success，并写入总耗时（进度按真实 promptId 记录）
             viewComfyStateDispatcher({
                 type: ActionType.SET_PROGRESS_DONE,
                 payload: {
@@ -300,18 +278,7 @@ function PlaygroundPageContent({ doPost, sectionName }: IPlaygroundPageContent) 
                 },
             });
         }
-
-        const newGeneration: IResults = {
-            [promptId]: {
-                status: status,
-                outputs: resultOutputs,
-                errorData,
-                totalElapsedMs,
-            }
-        };
-
-        setSectionLoading(false);
-    }, [setSectionLoading, sectionName, viewComfyStateDispatcher]);
+    }, [sectionName, viewComfyStateDispatcher]);
 
     function onSubmit(data: IViewComfyWorkflow) {
         const inputs: { key: string, value: unknown }[] = [];
@@ -348,48 +315,66 @@ function PlaygroundPageContent({ doPost, sectionName }: IPlaygroundPageContent) 
         setTextOutputEnabled(data.textOutputEnabled ?? false);
         setShowOutputFileName(data.showOutputFileName ?? false);
 
-        // 立刻把当前 section 的 loading 翻 true（提升到 Provider，跨页面持续）
-        setSectionLoading(true);
-
-        // 记录本次生成的稳定起点（供"已用时间"与错误耗时使用）
-        generationStartedAtRef.current = Date.now();
-        realPromptIdRef.current = undefined;
-        lastProgressValueRef.current = 0;
-        lastProgressMaxRef.current = 0;
-        currentNodeRef.current = undefined;
-
-        // 本次 promptId 先占位（server 第一个 SSE started 事件会带真值）
+        // 每个任务独立的本地 promptId 与启动时间（闭包内捕获，避免并发任务互相覆盖）
         const localPromptId = crypto.randomUUID();
+        const generationStartedAt = Date.now();
+
+        let realPromptId: string | undefined = undefined;
+        let lastProgressValue = 0;
+        let lastProgressMax = 0;
+        let currentNode: string | undefined = undefined;
+
+        // 本任务的 AbortController（取消时触发）
+        const controller = new AbortController();
+        abortControllersRef.current.set(localPromptId, controller);
+
+        // 加入队列（状态 queued）
+        const queuedPrompt: IQueuedPrompt = {
+            promptId: localPromptId,
+            sectionName: sectionName || "default",
+            workflowTitle: currentWorkflow?.viewComfyJSON.title || "Unknown",
+            status: 'queued',
+            queuedAt: generationStartedAt,
+        };
+        viewComfyStateDispatcher({
+            type: ActionType.ADD_TO_QUEUE,
+            payload: { sectionName: sectionName || "default", prompt: queuedPrompt },
+        });
+
+        // 进度占位（server started 事件后迁移到 realPromptId）
         viewComfyStateDispatcher({
             type: ActionType.SET_PROGRESS,
             payload: {
                 promptId: localPromptId,
-                progress: {
-                    value: 0,
-                    max: 0,
-                    startedAt: generationStartedAtRef.current,
-                    status: "running",
-                },
+                progress: { value: 0, max: 0, startedAt: generationStartedAt, status: "running" },
             },
         });
 
-        const doPostParams = {
+        const updateTask = (updates: Partial<IQueuedPrompt>) => {
+            viewComfyStateDispatcher({
+                type: ActionType.UPDATE_QUEUE_ITEM,
+                payload: { promptId: localPromptId, updates },
+            });
+        };
+
+        const doPostParams: IUsePostPlayground = {
             viewComfy: generationData,
             workflow: currentWorkflow?.workflowApiJSON,
+            clientPromptId: localPromptId,
+            signal: controller.signal,
             onSuccess: (params: { promptId: string, outputs: File[], totalElapsedMs?: number }) => {
                 onSetResults({ ...params, localPromptId, totalElapsedMs: params.totalElapsedMs });
-                setSectionLoading(false);
-            }, onError: (error: any) => {
-                // 错误时也要把 progress 标为 error
+                updateTask({ status: 'completed', realPromptId: params.promptId || realPromptId });
+                abortControllersRef.current.delete(localPromptId);
+            },
+            onError: (error: any) => {
                 viewComfyStateDispatcher({
                     type: ActionType.SET_PROGRESS_DONE,
-                    payload: {
-                        promptId: realPromptIdRef.current || localPromptId,
-                        totalElapsedMs: Date.now() - generationStartedAtRef.current,
-                        status: "error",
-                    },
+                    payload: { promptId: realPromptId || localPromptId, totalElapsedMs: Date.now() - generationStartedAt, status: "error" },
                 });
-                setSectionLoading(false);
+                updateTask({ status: 'error' });
+                abortControllersRef.current.delete(localPromptId);
+
                 const errorDialog = apiErrorHandler.apiErrorToDialog(error);
                 setErrorAlertDialog({
                     open: true,
@@ -400,43 +385,52 @@ function PlaygroundPageContent({ doPost, sectionName }: IPlaygroundPageContent) 
                     }
                 });
             },
+            onCancel: () => {
+                updateTask({ status: 'canceled' });
+                viewComfyStateDispatcher({
+                    type: ActionType.REMOVE_PROGRESS,
+                    payload: { promptId: realPromptId || localPromptId },
+                });
+                abortControllersRef.current.delete(localPromptId);
+            },
             onProgress: (event: { type: string, value?: number, max?: number, currentNode?: string, promptId?: string, errorMessage?: string }) => {
-                // progress/executing/executed 事件不带 promptId，必须用 ref 里存的真值
-                const realPromptId = event.promptId || realPromptIdRef.current || localPromptId;
-                realPromptIdRef.current = realPromptId;
+                const rp = event.promptId || realPromptId || localPromptId;
+                realPromptId = rp;
                 const toNodeLabel = (raw?: string) => (raw ? nodeTitleMap[raw] || raw : undefined);
 
                 if (event.type === "started") {
                     viewComfyStateDispatcher({ type: ActionType.REMOVE_PROGRESS, payload: { promptId: localPromptId } });
                     viewComfyStateDispatcher({
                         type: ActionType.SET_PROGRESS,
-                        payload: { promptId: realPromptId, progress: { value: 0, max: 0, startedAt: generationStartedAtRef.current, currentNode: undefined, status: "running" } },
+                        payload: { promptId: rp, progress: { value: 0, max: 0, startedAt: generationStartedAt, currentNode: undefined, status: "running" } },
                     });
+                    updateTask({ status: 'running', startedAt: Date.now(), realPromptId: rp });
                     return;
                 }
                 if (event.type === "progress") {
                     const v = event.value ?? 0;
                     const m = event.max ?? 0;
-                    lastProgressValueRef.current = v;
-                    lastProgressMaxRef.current = m;
+                    lastProgressValue = v;
+                    lastProgressMax = m;
                     viewComfyStateDispatcher({
                         type: ActionType.SET_PROGRESS,
-                        payload: { promptId: realPromptId, progress: { value: v, max: m, startedAt: generationStartedAtRef.current, currentNode: currentNodeRef.current, status: "running" } },
+                        payload: { promptId: rp, progress: { value: v, max: m, startedAt: generationStartedAt, currentNode, status: "running" } },
                     });
                 } else if (event.type === "executing" || event.type === "executed") {
                     const label = toNodeLabel(event.currentNode);
                     if (typeof event.currentNode === "string") {
-                        currentNodeRef.current = label;
+                        currentNode = label;
                     }
                     viewComfyStateDispatcher({
                         type: ActionType.SET_PROGRESS,
-                        payload: { promptId: realPromptId, progress: { value: lastProgressValueRef.current, max: lastProgressMaxRef.current, startedAt: generationStartedAtRef.current, currentNode: label, status: "running" } },
+                        payload: { promptId: rp, progress: { value: lastProgressValue, max: lastProgressMax, startedAt: generationStartedAt, currentNode: label, status: "running" } },
                     });
                 } else if (event.type === "error") {
-                    viewComfyStateDispatcher({ type: ActionType.SET_PROGRESS_DONE, payload: { promptId: realPromptId, totalElapsedMs: 0, status: "error" } });
+                    viewComfyStateDispatcher({ type: ActionType.SET_PROGRESS_DONE, payload: { promptId: rp, totalElapsedMs: 0, status: "error" } });
+                    updateTask({ status: 'error' });
                 }
             },
-        }
+        };
 
         doPost(doPostParams);
     }
@@ -515,7 +509,7 @@ function PlaygroundPageContent({ doPost, sectionName }: IPlaygroundPageContent) 
                     </div>
                     <div className="relative flex h-full min-h-[50vh] w-full rounded-r-xl bg-muted/50 lg:col-span-2">
                         <ScrollArea className="relative flex h-full w-full flex-1 flex-col">
-                            {(Object.keys(results).length === 0) && !loading && currentWorkflow && (
+                            {(sectionQueue.length === 0) && currentWorkflow && (
                                 <>  <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full">
                                     <PreviewOutputsImageGallery viewComfyJSON={currentWorkflow.viewComfyJSON} />
                                 </div>
@@ -523,39 +517,19 @@ function PlaygroundPageContent({ doPost, sectionName }: IPlaygroundPageContent) 
                             )}
                             <div className="flex-1 h-full p-4 flex overflow-y-auto">
                                 <div className="flex flex-col w-full h-full">
-                                    <Generating loading={loading} progress={runningProgress} />
-                                    {Object.entries(results).map(([promptId, generation], index, array) => (
-                                        <div className="flex flex-col gap-2 w-full h-full" key={promptId}>
-                                            <div className="flex flex-wrap w-full h-full gap-4 pt-4" key={promptId}>
-                                                {generation.status && generation.status === "error" &&
-                                                    <GenerationError
-                                                        generation={generation}
-                                                        onShowErrorDialog={onShowErrorDialog}
-                                                        promptId={promptId}
-                                                    />
-                                                }
-                                                {!(generation.status && generation.status === "error") && generation.outputs.map((output) => (
-                                                    <Fragment key={output.url}>
-                                                        <OutputRenderer
-                                                            output={output}
-                                                            showOutputFileName={showOutputFileName}
-                                                            textOutputEnabled={textOutputEnabled}
-                                                        />
-                                                    </Fragment>
-                                                ))}
-                                            </div>
-                                            {typeof generation.totalElapsedMs === "number" && generation.totalElapsedMs > 0 && (
-                                                <div className="self-end text-xs text-muted-foreground tabular-nums pr-1">
-                                                    {(generation.totalElapsedMs / 1000).toFixed(2)}s
-                                                </div>
-                                            )}
-                                            <hr className={
-                                                `w-full py-4
-                                            ${index !== array.length - 1 ? 'border-gray-300' : 'border-transparent'}
-                                            `
-                                            }
+                                    <IndeterminateLoadingBarStyles />
+                                    {sectionQueue.map((task, index) => (
+                                        <Fragment key={task.promptId}>
+                                            <TaskCard
+                                                task={task}
+                                                progress={task.realPromptId ? viewComfyState.progressByPrompt[task.realPromptId] : undefined}
+                                                result={results[task.promptId]}
+                                                onShowErrorDialog={onShowErrorDialog}
+                                                showOutputFileName={showOutputFileName}
+                                                textOutputEnabled={textOutputEnabled}
                                             />
-                                        </div>
+                                            {index !== sectionQueue.length - 1 && <hr className="w-full py-4 border-gray-300" />}
+                                        </Fragment>
                                     ))}
                                 </div>
                             </div>
@@ -1032,90 +1006,111 @@ const IndeterminateLoadingBarStyles = () => {
     );
 };
 
-const Generating = (props: {
-    loading: boolean,
-    progress?: { value: number; max: number; currentNode?: string; startedAt: number } | undefined,
-}) => {
-    const { loading, progress } = props;
+const TaskProgress = ({ progress }: { progress?: { value: number; max: number; currentNode?: string; startedAt: number } | undefined }) => {
     // 自增 elapsedMs 让 UI 看起来"活"的（即使没有 progress 事件也走秒表）
     const [now, setNow] = useState(() => Date.now());
     useEffect(() => {
-        if (!loading || !progress) return;
+        if (!progress) return;
         const id = setInterval(() => setNow(Date.now()), 100);
         return () => clearInterval(id);
-    }, [loading, progress?.startedAt]);
+    }, [progress?.startedAt]);
     const elapsedMs = progress ? now - progress.startedAt : 0;
 
-    const generatingDetails = (
-        <div className="flex flex-col gap-2">
-            <IndeterminateLoadingBar
-                value={progress?.value}
-                max={progress?.max}
-                currentNode={progress?.currentNode}
-                elapsedMs={elapsedMs}
-            />
-        </div>
+    return (
+        <IndeterminateLoadingBar
+            value={progress?.value}
+            max={progress?.max}
+            currentNode={progress?.currentNode}
+            elapsedMs={elapsedMs}
+        />
     );
-
-    if (loading) {
-        return (
-            <>
-                <IndeterminateLoadingBarStyles />
-                <div className="flex flex-col gap-4 w-full">
-                    <div className="flex flex-wrap w-full gap-4 pt-4">
-                        <div key={`loading-placeholder`} className="flex flex-col gap-2 sm:w-[calc(50%-2rem)] lg:w-[calc(33.333%-2rem)]">
-                            <BlurFade delay={0.25} inView className="flex items-center justify-center w-full h-full">
-                                <div className="w-full h-64 rounded-md bg-muted animate-pulse flex items-center justify-center">
-                                    <div className="flex flex-col items-center gap-2">
-                                        <div className="w-8 h-8 rounded-full bg-muted-foreground/20 animate-pulse"></div>
-                                        <span className="text-sm text-muted-foreground animate-pulse">正在生成...</span>
-                                    </div>
-                                </div>
-                            </BlurFade>
-                            {generatingDetails}
-                        </div>
-                    </div>
-                    <hr className="w-full py-4 border-gray-300" />
-                </div>
-            </>
-        );
-    }
-
-    return null;
 };
 
-const GenerationError = (params: {
-    generation: IGeneration,
-    promptId: string,
-    onShowErrorDialog: (error: string) => void,
-}) => {
-    const { generation, promptId, onShowErrorDialog } = params;
-
-    const getErrorMessage = (gen: IGeneration): string => {
-        return gen.errorData || "运行工作流时发生错误";
-    }
+function TaskCard({ task, progress, result, onShowErrorDialog, showOutputFileName, textOutputEnabled }: {
+    task: IQueuedPrompt;
+    progress?: { value: number; max: number; currentNode?: string; startedAt: number } | undefined;
+    result?: IGeneration | undefined;
+    onShowErrorDialog: (error: string) => void;
+    showOutputFileName: boolean;
+    textOutputEnabled: boolean;
+}) {
+    const statusLabel = {
+        queued: "排队中",
+        running: "运行中",
+        completed: "已完成",
+        error: "出错",
+        canceled: "已取消",
+    }[task.status] ?? task.status;
 
     return (
-        <div key={promptId} className="flex flex-col gap-4 w-full">
-            <div className="flex flex-wrap w-full gap-4 pt-4">
-                <div key={`${promptId}-loading-placeholder`} className="flex items-center justify-center sm:w-[calc(50%-2rem)] lg:w-[calc(33.333%-2rem)]">
-                    <BlurFade delay={0.25} inView className="flex items-center justify-center w-full h-full">
-                        <div className="w-full h-64 rounded-md bg-muted flex items-center justify-center">
-                            <div className="flex flex-col items-center gap-2">
-                                <CircleX color="#ff0000" />
-
-                                <span className="text-sm text-muted-foreground">
-                                    <Button
-                                        variant={"outline"}
-                                        onClick={() => onShowErrorDialog(getErrorMessage(generation))}>
-                                        查看错误
-                                    </Button>
-                                </span>
-                            </div>
-                        </div>
-                    </BlurFade>
+        <div className="flex flex-col gap-2 w-full pt-4">
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 min-w-0">
+                    <span className="text-sm font-medium truncate">{task.workflowTitle}</span>
+                    <span className={cn(
+                        "text-xs shrink-0",
+                        task.status === 'running' && "text-yellow-600",
+                        task.status === 'error' && "text-red-600",
+                        task.status === 'completed' && "text-green-600",
+                        task.status === 'queued' && "text-muted-foreground",
+                        task.status === 'canceled' && "text-muted-foreground",
+                    )}>
+                        {statusLabel}
+                    </span>
                 </div>
             </div>
+
+            {task.status === 'queued' && (
+                <div className="w-full h-64 rounded-md bg-muted animate-pulse flex items-center justify-center">
+                    <span className="text-sm text-muted-foreground">排队中...</span>
+                </div>
+            )}
+
+            {task.status === 'running' && (
+                <div className="w-full h-64 rounded-md bg-muted flex items-center justify-center px-4">
+                    <TaskProgress progress={progress} />
+                </div>
+            )}
+
+            {task.status === 'error' && (
+                <div className="w-full h-64 rounded-md bg-muted flex items-center justify-center">
+                    <div className="flex flex-col items-center gap-2">
+                        <CircleX color="#ff0000" />
+                        <span className="text-sm text-muted-foreground">
+                            <Button
+                                variant={"outline"}
+                                onClick={() => onShowErrorDialog(result?.errorData || "运行工作流时发生错误")}>
+                                查看错误
+                            </Button>
+                        </span>
+                    </div>
+                </div>
+            )}
+
+            {task.status === 'canceled' && (
+                <div className="w-full h-16 rounded-md bg-muted flex items-center justify-center">
+                    <span className="text-sm text-muted-foreground">已取消</span>
+                </div>
+            )}
+
+            {task.status === 'completed' && result && result.status !== "error" && (
+                <div className="flex flex-wrap w-full gap-4">
+                    {result.outputs.map((output) => (
+                        <Fragment key={output.url}>
+                            <OutputRenderer
+                                output={output}
+                                showOutputFileName={showOutputFileName}
+                                textOutputEnabled={textOutputEnabled}
+                            />
+                        </Fragment>
+                    ))}
+                    {typeof result.totalElapsedMs === "number" && result.totalElapsedMs > 0 && (
+                        <div className="self-end text-xs text-muted-foreground tabular-nums pr-1">
+                            {(result.totalElapsedMs / 1000).toFixed(2)}s
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     )
 }

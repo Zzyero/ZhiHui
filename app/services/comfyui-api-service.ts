@@ -4,7 +4,7 @@ import { EventEmitter } from 'node:events';
 import path from 'node:path';
 import mime from 'mime-types';
 
-type ComfyUIWSEventType = "status" | "executing" | "execution_cached" | "progress" | "executed" | "execution_error" | "execution_success";
+type ComfyUIWSEventType = "status" | "executing" | "execution_cached" | "progress" | "executed" | "execution_error" | "execution_success" | "execution_interrupted" | "execution_cancelled";
 
 interface IComfyUIWSEventData {
     type: ComfyUIWSEventType;
@@ -21,6 +21,13 @@ export interface IComfyProgressEvent {
     node?: string;
     /** execution_error 事件带错误信息 */
     errorMessage?: string;
+}
+
+/** 队列状态信息 */
+export interface IComfyQueueStatus {
+    queueRemaining: number;
+    /** 当前正在执行的任务数（通常为 0 或 1） */
+    currentlyRunning: number;
 }
 
 export interface IComfyUINodeError {
@@ -79,8 +86,12 @@ export class ComfyUIAPIService {
     } | undefined;
     /** 进度事件 emitter：监听 'progress' 事件拿到所有 ComfyUI WS 事件 */
     private progressEmitter: EventEmitter;
+    /** 队列状态 emitter：监听 'queue' 事件拿到队列状态变化 */
+    private queueEmitter: EventEmitter;
     /** 当前 prompt 开始时间，用于计算总耗时 */
     private currentPromptStartedAt: number | undefined;
+    /** 当前队列状态 */
+    private queueStatus: IComfyQueueStatus = { queueRemaining: 0, currentlyRunning: 0 };
 
     constructor(clientId: string) {
         this.secure = process.env.COMFYUI_SECURE === "true";
@@ -100,6 +111,7 @@ export class ComfyUIAPIService {
         this.workflowStatus = undefined;
         this.outputFiles = [];
         this.progressEmitter = new EventEmitter();
+        this.queueEmitter = new EventEmitter();
     }
 
     private getUrl(protocol: "http" | "ws") {
@@ -132,6 +144,12 @@ export class ComfyUIAPIService {
         } catch (error) {
             console.log("Error parsing event data:", eventData);
             console.error(error);
+            return;
+        }
+
+        // 处理队列状态事件（status 事件包含全局队列信息，不应被过滤）
+        if (event.type === "status") {
+            this.handleStatusEvent(event);
             return;
         }
 
@@ -192,6 +210,16 @@ export class ComfyUIAPIService {
                     }
                     emit({});
                     break;
+                case "execution_interrupted":
+                case "execution_cancelled":
+                    // 中断/取消：也要 resolve completion，避免串行队列卡死
+                    this.isPromptRunning = false;
+                    this.workflowStatus = event.type;
+                    if (this.workflowCompletionPromise) {
+                        this.workflowCompletionPromise.resolve(true);
+                        this.workflowCompletionPromise = undefined;
+                    }
+                    break;
                 default:
                     this.workflowStatus = event.type;
                     break;
@@ -199,9 +227,6 @@ export class ComfyUIAPIService {
         } else {
             // 没有提示 promptId 时的原本逻辑（保留以兼容）
             switch (event.type) {
-                case "status":
-                    this.workflowStatus = event.type;
-                    break;
                 case "executing":
                     this.workflowStatus = event.type;
                     break;
@@ -240,6 +265,35 @@ export class ComfyUIAPIService {
         }
     }
 
+    /** 处理 status 事件，提取队列状态 */
+    private handleStatusEvent(event: IComfyUIWSEventData) {
+        const data = event.data as {
+            status?: {
+                exec_info?: {
+                    queue_remaining?: number;
+                    queue_in_progress?: number;
+                };
+            };
+        };
+
+        const execInfo = data?.status?.exec_info;
+        if (execInfo) {
+            const newStatus: IComfyQueueStatus = {
+                queueRemaining: execInfo.queue_remaining ?? 0,
+                currentlyRunning: execInfo.queue_in_progress ?? 0,
+            };
+
+            // 只有状态变化时才 emit
+            if (newStatus.queueRemaining !== this.queueStatus.queueRemaining ||
+                newStatus.currentlyRunning !== this.queueStatus.currentlyRunning) {
+                this.queueStatus = newStatus;
+                this.queueEmitter.emit("queue", this.queueStatus);
+                console.log(`[Queue] Remaining: ${this.queueStatus.queueRemaining}, Running: ${this.queueStatus.currentlyRunning}`);
+            }
+        }
+        this.workflowStatus = event.type;
+    }
+
     /** 订阅进度事件（ComfyUI 推送，promptId 已过滤） */
     public onProgress(listener: (event: IComfyProgressEvent) => void) {
         this.progressEmitter.on("progress", listener);
@@ -248,6 +302,21 @@ export class ComfyUIAPIService {
     /** 取消订阅 */
     public offProgress(listener: (event: IComfyProgressEvent) => void) {
         this.progressEmitter.off("progress", listener);
+    }
+
+    /** 订阅队列状态事件 */
+    public onQueueChange(listener: (status: IComfyQueueStatus) => void) {
+        this.queueEmitter.on("queue", listener);
+    }
+
+    /** 取消订阅队列状态事件 */
+    public offQueueChange(listener: (status: IComfyQueueStatus) => void) {
+        this.queueEmitter.off("queue", listener);
+    }
+
+    /** 获取当前队列状态（同步） */
+    public getQueueStatus(): IComfyQueueStatus {
+        return { ...this.queueStatus };
     }
 
     /** 当前 prompt 启动时间（ms） */
@@ -644,6 +713,82 @@ export class ComfyUIAPIService {
         if (!response.ok) throw new Error(`ComfyUI 上传失败: ${response.status}`);
         const result = await response.json();
         return result.subfolder ? `${result.subfolder}/${result.name}` : result.name;
+    }
+
+    /**
+     * 取消指定的 prompt
+     * - status='running'：中断当前正在执行的 task（POST /interrupt）
+     * - status='queued'（默认）：从队列中删除尚未执行的任务（POST /queue { delete: [...] }）
+     */
+    public async cancelPrompt(promptId: string, status?: string): Promise<void> {
+        try {
+            if (status === "running") {
+                console.log(`[Queue] Interrupting running prompt ${promptId} via POST /interrupt`);
+                const response = await fetch(`${this.getUrl("http")}/interrupt`, {
+                    method: 'POST',
+                });
+                if (!response.ok) {
+                    throw new Error(`Failed to interrupt prompt: ${response.status}`);
+                }
+                console.log(`[Queue] Prompt ${promptId} interrupted`);
+
+                // 兜底：立即 resolve completion，避免 waitForCompletion 挂起导致串行队列卡死
+                // （部分 ComfyUI 版本中断后不 emit execution_success/error/interrupted）
+                if (this.workflowCompletionPromise) {
+                    this.isPromptRunning = false;
+                    this.workflowStatus = "execution_interrupted";
+                    this.workflowCompletionPromise.resolve(true);
+                    this.workflowCompletionPromise = undefined;
+                }
+            } else {
+                console.log(`[Queue] Deleting queued prompt ${promptId} via POST /queue`);
+                // ComfyUI 删除排队任务：POST /queue { delete: [...] }
+                const response = await fetch(`${this.getUrl("http")}/queue`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        delete: [promptId],
+                    }),
+                });
+                if (!response.ok) {
+                    throw new Error(`Failed to cancel prompt: ${response.status}`);
+                }
+                const responseText = await response.text();
+                console.log(`[Queue] Prompt ${promptId} cancel response: ${responseText}`);
+            }
+
+            // 取消后立即刷新队列状态
+            this.fetchQueueStatus();
+        } catch (error) {
+            console.error("Failed to cancel prompt:", error);
+            throw error;
+        }
+    }
+
+    /** 获取队列状态 */
+    private async fetchQueueStatus(): Promise<void> {
+        try {
+            const response = await fetch(`${this.getUrl("http")}/queue`);
+            if (response.ok) {
+                const data = await response.json();
+                const pending = data?.queue_pending?.length ?? 0;
+                const running = data?.queue_running?.length ?? 0;
+                const newStatus: IComfyQueueStatus = {
+                    queueRemaining: pending,
+                    currentlyRunning: running,
+                };
+                if (newStatus.queueRemaining !== this.queueStatus.queueRemaining ||
+                    newStatus.currentlyRunning !== this.queueStatus.currentlyRunning) {
+                    this.queueStatus = newStatus;
+                    this.queueEmitter.emit("queue", this.queueStatus);
+                    console.log(`[Queue] Refreshed - Remaining: ${this.queueStatus.queueRemaining}, Running: ${this.queueStatus.currentlyRunning}`);
+                }
+            }
+        } catch (error) {
+            console.error("Failed to fetch queue status:", error);
+        }
     }
 }
 

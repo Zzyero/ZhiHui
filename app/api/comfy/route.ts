@@ -27,12 +27,14 @@ export async function POST(request: NextRequest) {
         }
     }
 
+    const clientPromptId = (formData.get('clientPromptId') as string) || undefined;
+
     if (!viewComfy) {
         return new NextResponse("viewComfy is required", { status: 400 });
     }
 
     try {
-        const { stream, promptId } = await comfyUIService.runWorkflow({ workflow, viewComfy });
+        const { stream, promptId } = await comfyUIService.runWorkflow({ workflow, viewComfy, clientPromptId });
 
         return new NextResponse<ReadableStream<Uint8Array>>(stream, {
             headers: {

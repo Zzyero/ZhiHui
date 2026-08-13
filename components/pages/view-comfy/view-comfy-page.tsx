@@ -203,7 +203,7 @@ export default function ViewComfyPage() {
     const onSelectChange = (data: IViewComfy) => {
         return viewComfyStateDispatcher({
             type: ActionType.UPDATE_CURRENT_VIEW_COMFY,
-            payload: { ...data }
+            payload: { viewComfy: { ...data } }
         });
     }
 

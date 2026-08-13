@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "./toggle";
+import { QueueDropdown } from "./queue-drawer";
 import { useViewComfy } from "@/app/providers/view-comfy-provider";
 import { useEffect, useState } from "react";
 
@@ -25,6 +26,7 @@ export function TopNav() {
             <div className="flex-1" />
 
             <div className="flex items-center gap-2">
+                <QueueDropdown />
                 <ModeToggle />
             </div>
         </nav>

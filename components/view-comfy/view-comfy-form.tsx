@@ -340,7 +340,7 @@ export function ViewComfyForm(args: {
                                                 <p className="text-md text-muted-foreground whitespace-pre-wrap break-all">{form.getValues("description")}</p>
                                             </div>
                                         )}
-                                        <fieldset disabled={isLoading} className="grid gap-4 rounded-lg p-1">
+                                        <fieldset className="grid gap-4 rounded-lg p-1">
                                             {editMode && (
                                                 <legend className="-ml-1 px-1 text-md font-medium">
                                                     基本输入
@@ -367,7 +367,7 @@ export function ViewComfyForm(args: {
                                                 if (activeInputs.length > 0) {
                                                     if (editMode) {
                                                         return (
-                                                            <fieldset disabled={isLoading} key={field.id} className="grid gap-4 rounded-lg border p-4">
+                                                            <fieldset key={field.id} className="grid gap-4 rounded-lg border p-4">
                                                                 <legend className="-ml-1 px-1 text-sm font-medium">
                                                                     {
 
@@ -442,7 +442,7 @@ export function ViewComfyForm(args: {
                                                     }
 
                                                     return (
-                                                        <fieldset disabled={isLoading} key={field.id} className="grid gap-4">
+                                                        <fieldset key={field.id} className="grid gap-4">
                                                             <NestedInputField form={form} nestedIndex={index} editMode={editMode} formFieldName="inputs" setShowEditDialog={setShowEditDialogInput} handleRemove={(inputIndex) => handleRemoveInput({ groupIndex: index, inputIndex })} handleToggleVisibility={(inputIndex) => handleToggleVisibilityInput({ groupIndex: index, inputIndex })} />
                                                         </fieldset>
                                                     )
@@ -683,7 +683,7 @@ function AdvancedInputSection(args: {
                             return null;
                         }
                         return (
-                            <fieldset disabled={isLoading} key={advancedField.id} className="grid gap-4 rounded-lg border p-4">
+                            <fieldset key={advancedField.id} className="grid gap-4 rounded-lg border p-4">
                                 <legend className="-ml-1 px-1 text-sm font-medium">
                                     {
 
@@ -1212,6 +1212,9 @@ function FormMediaInput(args: { input: IInputForm, field: any, editMode?: boolea
                     onOpenChange={setShowMaskEditor}
                 >
                     <DialogContent className="w-[calc(80vw-1rem)] h-[calc(80vh-1rem)] max-w-none border bg-background rounded-lg p-0">
+                        <DialogHeader className="sr-only">
+                            <DialogTitle>蒙版编辑器</DialogTitle>
+                        </DialogHeader>
                         <MaskEditor
                             imageUrl={media.src}
                             existingMask={maskFile}

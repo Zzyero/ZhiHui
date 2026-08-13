@@ -98,7 +98,7 @@ export default function PlaygroundForm(props: {
             initialAdvancedInputsOpen={initialAdvancedInputsOpen}
             onAdvancedInputsOpenChange={handleAdvancedInputsOpenChange}
         >
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full">
                 生成 <WandSparkles className={cn("size-5 ml-2")} />
             </Button>
         </ViewComfyForm>

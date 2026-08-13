@@ -67,6 +67,28 @@ export interface IViewComfyState {
     advancedInputsOpenByWorkflow: Record<string, boolean>;
     /** 每个工作流的表单填写数据（inputs 和 advancedInputs） */
     formDataByWorkflow: Record<string, { inputs: IMultiValueInput[], advancedInputs: IMultiValueInput[] }>;
+    /** 全局队列状态 */
+    queueStatus: IComfyQueueStatus;
+    /** 待执行的 prompt 队列（按 section 分桶） */
+    queueBySection: Record<string, IQueuedPrompt[]>;
+}
+
+/** 队列状态 */
+export interface IComfyQueueStatus {
+    queueRemaining: number;
+    currentlyRunning: number;
+}
+
+/** 排队中的 prompt */
+export interface IQueuedPrompt {
+    promptId: string;
+    /** ComfyUI 服务器返回的真实 promptId（用于中断/取消接口） */
+    realPromptId?: string;
+    sectionName: string;
+    workflowTitle: string;
+    status: 'queued' | 'running' | 'completed' | 'error' | 'canceled';
+    startedAt?: number;
+    queuedAt: number;
 }
 
 export interface IPromptProgress {
@@ -123,7 +145,11 @@ export enum ActionType {
     SET_PROGRESS_DONE = "SET_PROGRESS_DONE",
     REMOVE_PROGRESS = "REMOVE_PROGRESS",
     SET_ADVANCED_INPUTS_OPEN = "SET_ADVANCED_INPUTS_OPEN",
-    SET_FORM_DATA = "SET_FORM_DATA"
+    SET_FORM_DATA = "SET_FORM_DATA",
+    ADD_TO_QUEUE = "ADD_TO_QUEUE",
+    UPDATE_QUEUE_ITEM = "UPDATE_QUEUE_ITEM",
+    REMOVE_FROM_QUEUE = "REMOVE_FROM_QUEUE",
+    SET_QUEUE_STATUS = "SET_QUEUE_STATUS",
 }
 
 // Update the Action type to use the enum
@@ -146,6 +172,10 @@ export type Action =
     | { type: ActionType.REMOVE_PROGRESS; payload: { promptId: string } }
     | { type: ActionType.SET_ADVANCED_INPUTS_OPEN; payload: { workflowId: string, isOpen: boolean } }
     | { type: ActionType.SET_FORM_DATA; payload: { workflowId: string, inputs: IMultiValueInput[], advancedInputs: IMultiValueInput[] } }
+    | { type: ActionType.ADD_TO_QUEUE; payload: { sectionName: string, prompt: IQueuedPrompt } }
+    | { type: ActionType.UPDATE_QUEUE_ITEM; payload: { promptId: string, updates: Partial<IQueuedPrompt> } }
+    | { type: ActionType.REMOVE_FROM_QUEUE; payload: { promptId: string } }
+    | { type: ActionType.SET_QUEUE_STATUS; payload: IComfyQueueStatus }
 
 function viewComfyReducer(state: IViewComfyState, action: Action): IViewComfyState {
     switch (action.type) {
@@ -279,6 +309,8 @@ function viewComfyReducer(state: IViewComfyState, action: Action): IViewComfySta
                 progressByPrompt: {},
                 advancedInputsOpenByWorkflow: {},
                 formDataByWorkflow: {},
+                queueStatus: state.queueStatus,
+                queueBySection: state.queueBySection,
             };
         }
         case ActionType.SET_APP_TITLE:
@@ -402,6 +434,37 @@ function viewComfyReducer(state: IViewComfyState, action: Action): IViewComfySta
                     },
                 },
             };
+        case ActionType.ADD_TO_QUEUE: {
+            const { sectionName, prompt } = action.payload;
+            return {
+                ...state,
+                queueBySection: {
+                    ...state.queueBySection,
+                    [sectionName]: [...(state.queueBySection[sectionName] || []), prompt],
+                },
+            };
+        }
+        case ActionType.UPDATE_QUEUE_ITEM: {
+            const { promptId, updates } = action.payload;
+            const newQueueBySection: Record<string, IQueuedPrompt[]> = {};
+            for (const section of Object.keys(state.queueBySection)) {
+                newQueueBySection[section] = state.queueBySection[section].map((item) =>
+                    item.promptId === promptId ? { ...item, ...updates } : item
+                );
+            }
+            return { ...state, queueBySection: newQueueBySection };
+        }
+        case ActionType.REMOVE_FROM_QUEUE: {
+            const newQueueBySection: Record<string, IQueuedPrompt[]> = {};
+            for (const section of Object.keys(state.queueBySection)) {
+                newQueueBySection[section] = state.queueBySection[section].filter(
+                    (item) => item.promptId !== action.payload.promptId
+                );
+            }
+            return { ...state, queueBySection: newQueueBySection };
+        }
+        case ActionType.SET_QUEUE_STATUS:
+            return { ...state, queueStatus: action.payload };
         default:
             return state;
     }
@@ -425,7 +488,9 @@ export function ViewComfyProvider({ children }: { children: ReactNode }) {
         loadingBySection: {},
         progressByPrompt: {},
         advancedInputsOpenByWorkflow: {},
-        formDataByWorkflow: {}
+        formDataByWorkflow: {},
+        queueStatus: { queueRemaining: 0, currentlyRunning: 0 },
+        queueBySection: {}
     });
 
     return (

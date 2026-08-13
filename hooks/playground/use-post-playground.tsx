@@ -8,8 +8,8 @@ import { v4 as uuidv4 } from 'uuid';
 export const usePostPlayground = () => {
     const [loading, setLoading] = useState(false);
 
-    const doPost = useCallback(async ({ viewComfy, workflow, viewcomfyEndpoint, onSuccess, onError, onProgress }: IUsePostPlayground) => {
-        const params = { viewComfy, workflow, viewcomfyEndpoint, onSuccess, onError, onProgress };
+    const doPost = useCallback(async ({ viewComfy, workflow, viewcomfyEndpoint, clientPromptId, signal, onSuccess, onError, onCancel, onProgress }: IUsePostPlayground) => {
+        const params = { viewComfy, workflow, viewcomfyEndpoint, clientPromptId, signal, onSuccess, onError, onCancel, onProgress };
         setLoading(true);
         try {
             await inferLocalComfy(params)
@@ -331,10 +331,11 @@ class Secret {
 
 const inferLocalComfy = async (params: IPlaygroundParams & {
     onSuccess: (params: { promptId: string, outputs: File[], totalElapsedMs?: number }) => void,
+    onCancel?: () => void,
     onProgress?: (event: { type: string, value?: number, max?: number, currentNode?: string, promptId?: string, errorMessage?: string }) => void
 }) => {
 
-    const { viewComfy, workflow, viewcomfyEndpoint, onSuccess, onProgress } = params;
+    const { viewComfy, workflow, viewcomfyEndpoint, clientPromptId, signal, onSuccess, onCancel, onProgress } = params;
 
     const url = viewcomfyEndpoint ? "/api/viewcomfy" : "/api/comfy";
 
@@ -358,10 +359,14 @@ const inferLocalComfy = async (params: IPlaygroundParams & {
     formData.append('workflow', JSON.stringify(workflow));
     formData.append('viewComfy', JSON.stringify(viewComfyJSON));
     formData.append('viewcomfyEndpoint', viewcomfyEndpoint ?? "");
+    if (clientPromptId) {
+        formData.append('clientPromptId', clientPromptId);
+    }
 
     const response = await fetch(url, {
         method: 'POST',
         body: formData,
+        signal,
     });
 
     // Real ComfyUI prompt_id (or viewcomfy endpoint id) is in first SSE 'started' event;
@@ -391,6 +396,8 @@ const inferLocalComfy = async (params: IPlaygroundParams & {
     let buffer = "";
     const output: File[] = [];
     let totalElapsedMs: number | undefined;
+    let hadError = false;
+    let cancelled = false;
 
     while (true) {
         const { done, value } = await reader.read();
@@ -424,6 +431,7 @@ const inferLocalComfy = async (params: IPlaygroundParams & {
                     const obj = JSON.parse(currentData);
                     onProgress?.({ type: currentEvent, ...obj });
                 } else if (currentEvent === "error") {
+                    hadError = true;
                     const obj = JSON.parse(currentData);
                     onProgress?.({ type: "error", errorMessage: obj.message });
                 } else if (currentEvent === "image") {
@@ -437,11 +445,18 @@ const inferLocalComfy = async (params: IPlaygroundParams & {
                     const obj = JSON.parse(currentData);
                     totalElapsedMs = obj.totalElapsedMs;
                     if (!realPromptId) realPromptId = obj.promptId;
+                } else if (currentEvent === "cancelled") {
+                    cancelled = true;
+                    onCancel?.();
                 }
             } catch (e) {
                 console.error("SSE event parse error", currentEvent, e);
             }
         }
+    }
+
+    if (cancelled || hadError) {
+        return;
     }
 
     onSuccess({ promptId: realPromptId || uuidv4(), outputs: output, totalElapsedMs });
