@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Dropzone } from '@/components/ui/dropzone';
 import ViewComfyFormEditor from '@/components/pages/view-comfy/view-comfy-form-editor';
 import { workflowAPItoViewComfy } from '@/lib/workflow-api-parser';
+import { buildViewComfyJSON } from '@/lib/utils';
 import { useState, useEffect } from 'react';
 import { ActionType, type IViewComfy, type IViewComfyBase, type IViewComfyJSON, type IViewComfySection, useViewComfy } from '@/app/providers/view-comfy-provider';
 import { Label } from '@/components/ui/label';
@@ -31,6 +32,7 @@ export default function ViewComfyPage() {
     const [appImg, setAppImg] = useState<string>(viewComfyState.appImg || "");
     const [appImgError, setAppImgError] = useState<string | undefined>(undefined);
     const [savingSections, setSavingSections] = useState(false);
+    const [savingToFile, setSavingToFile] = useState(false);
 
     // 如果 sections 为空，初始化默认两个分类（不持久化，等用户点保存再写）
     useEffect(() => {
@@ -41,6 +43,25 @@ export default function ViewComfyPage() {
             viewComfyStateDispatcher({ type: ActionType.SET_SECTIONS, payload: initial });
         }
     }, [viewComfyState.sections.length, viewComfyState.viewComfys, viewComfyStateDispatcher]);
+
+    // 编辑模式自动读取根目录 view_comfy.json，无需每次手动导入
+    useEffect(() => {
+        if (viewComfyState.viewComfys.length > 0) return;
+        let cancelled = false;
+        (async () => {
+            try {
+                const res = await fetch("/api/view-comfy", { headers: { accept: "application/json" } });
+                if (!res.ok) return;
+                const data = await res.json();
+                if (!cancelled && data?.workflows?.length) {
+                    viewComfyStateDispatcher({ type: ActionType.INIT_VIEW_COMFY, payload: data as IViewComfyJSON });
+                }
+            } catch {
+                // 文件不存在/读取失败时保持空态，允许手动导入
+            }
+        })();
+        return () => { cancelled = true; };
+    }, [viewComfyState.viewComfys.length, viewComfyStateDispatcher]);
 
     // 当前 workflow 在每个 section 里的"是否归属"
     const currentTitle = viewComfyState.currentViewComfy?.viewComfyJSON.title;
@@ -72,6 +93,24 @@ export default function ViewComfyPage() {
             toast.error('保存分类失败: ' + (err instanceof Error ? err.message : String(err)));
         } finally {
             setSavingSections(false);
+        }
+    };
+
+    const saveToFile = async () => {
+        setSavingToFile(true);
+        try {
+            const data = buildViewComfyJSON({ viewComfyState });
+            const res = await fetch('/api/view-comfy', {
+                method: 'POST',
+                headers: { 'content-type': 'application/json' },
+                body: JSON.stringify({ action: 'save', data }),
+            });
+            if (!res.ok) throw new Error(await res.text());
+            toast.success('已保存到 view_comfy.json');
+        } catch (err) {
+            toast.error('保存失败: ' + (err instanceof Error ? err.message : String(err)));
+        } finally {
+            setSavingToFile(false);
         }
     };
 
@@ -259,6 +298,11 @@ export default function ViewComfyPage() {
                                     </div>
                                 )}
                                 <div className="w-full flex flex-wrap items-center gap-4 mb-4 ml-1">
+                                    <div className="flex gap-2">
+                                        <Button onClick={saveToFile} disabled={savingToFile}>
+                                            {savingToFile ? '保存中…' : '保存到文件'}
+                                        </Button>
+                                    </div>
                                     {(viewComfyState.viewComfys.length > 0 && viewComfyState.currentViewComfy) && (
                                         <div className="flex">
                                             <WorkflowSwitcher viewComfys={viewComfyState.viewComfys} currentViewComfy={viewComfyState.currentViewComfy} onSelectChange={onSelectChange} />

@@ -72,6 +72,7 @@ export const buildViewComfyJSON = ({ viewComfyState }: { viewComfyState: IViewCo
     "version": "0.0.1",
     "appTitle": viewComfyState.appTitle || "",
     "appImg": viewComfyState.appImg || "",
+    sections: viewComfyState.sections || [],
     workflows
   };
 }

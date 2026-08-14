@@ -56,6 +56,21 @@ export async function POST(request: NextRequest) {
                 name: s.name,
                 workflows: (s.workflows || []).filter((t: string) => existingTitles.has(t)),
             }));
+        } else if (action === 'save') {
+            const payload = body.data;
+            if (!payload || typeof payload !== 'object') {
+                return NextResponse.json({ error: 'data is required' }, { status: 400 });
+            }
+            // 只覆盖可编辑字段，保留 file_type/file_version/version 等元数据
+            if (typeof payload.appTitle === 'string') data.appTitle = payload.appTitle;
+            if (typeof payload.appImg === 'string') data.appImg = payload.appImg;
+            if (Array.isArray(payload.sections)) data.sections = payload.sections;
+            if (Array.isArray(payload.workflows)) {
+                data.workflows = payload.workflows.map((w: any) => ({
+                    viewComfyJSON: w.viewComfyJSON,
+                    workflowApiJSON: w.workflowApiJSON,
+                }));
+            }
         } else {
             return NextResponse.json({ error: `unknown action: ${action}` }, { status: 400 });
         }

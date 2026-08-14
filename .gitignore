@@ -22,7 +22,10 @@
 comfy/*
 
 # gallery (user-generated images & manifest)
-gallery/
+/gallery/
+
+# usage stats (runtime-generated)
+/data/
 
 # debug
 npm-debug.log*

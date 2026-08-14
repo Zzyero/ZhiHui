@@ -8,6 +8,7 @@ import { ComfyUIAPIService, type IComfyProgressEvent, getMimeType } from "@/app/
 import { missingViewComfyFileError, viewComfyFileName } from "@/app/constants";
 import { SettingsService } from "@/app/services/settings-service";
 import { generationQueue } from "@/app/services/generation-queue";
+import { statsService } from "@/app/services/stats-service";
 
 const settingsService = new SettingsService();
 export class ComfyUIService {
@@ -128,6 +129,15 @@ export class ComfyUIService {
                             console.error(error);
                         }
                     }
+
+                    // 记录使用统计（仅成功生成；异步不阻塞 SSE）
+                    statsService.recordGeneration({
+                        workflowId: args.workflowId,
+                        title: args.workflowTitle,
+                        sectionName: args.sectionName,
+                        imageCount: outputFiles.length,
+                        elapsedMs: Date.now() - startedAt,
+                    }).catch((err) => console.error("Failed to record generation stats", err));
 
                     const totalElapsedMs = Date.now() - startedAt;
                     send(controller, "done", { totalElapsedMs, promptId });
