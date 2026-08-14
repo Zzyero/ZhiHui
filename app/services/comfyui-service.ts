@@ -132,9 +132,6 @@ export class ComfyUIService {
 
                     // 记录使用统计（仅成功生成；异步不阻塞 SSE）
                     statsService.recordGeneration({
-                        workflowId: args.workflowId,
-                        title: args.workflowTitle,
-                        sectionName: args.sectionName,
                         imageCount: outputFiles.length,
                         elapsedMs: Date.now() - startedAt,
                     }).catch((err) => console.error("Failed to record generation stats", err));

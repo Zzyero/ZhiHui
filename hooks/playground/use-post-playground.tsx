@@ -335,7 +335,7 @@ const inferLocalComfy = async (params: IPlaygroundParams & {
     onProgress?: (event: { type: string, value?: number, max?: number, currentNode?: string, promptId?: string, errorMessage?: string }) => void
 }) => {
 
-    const { viewComfy, workflow, viewcomfyEndpoint, clientPromptId, signal, onSuccess, onCancel, onProgress, workflowId, workflowTitle, sectionName } = params;
+    const { viewComfy, workflow, viewcomfyEndpoint, clientPromptId, signal, onSuccess, onCancel, onProgress } = params;
 
     const url = viewcomfyEndpoint ? "/api/viewcomfy" : "/api/comfy";
 
@@ -361,15 +361,6 @@ const inferLocalComfy = async (params: IPlaygroundParams & {
     formData.append('viewcomfyEndpoint', viewcomfyEndpoint ?? "");
     if (clientPromptId) {
         formData.append('clientPromptId', clientPromptId);
-    }
-    if (workflowId) {
-        formData.append('workflowId', workflowId);
-    }
-    if (workflowTitle) {
-        formData.append('workflowTitle', workflowTitle);
-    }
-    if (sectionName) {
-        formData.append('sectionName', sectionName);
     }
 
     const response = await fetch(url, {

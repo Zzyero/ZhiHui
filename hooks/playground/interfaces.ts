@@ -8,10 +8,6 @@ export interface IPlaygroundParams {
     clientPromptId?: string,
     /** 用于取消/中断请求 */
     signal?: AbortSignal,
-    /** 用于使用统计 */
-    workflowId?: string,
-    workflowTitle?: string,
-    sectionName?: string,
 }
 
 export interface IUsePostPlayground extends IPlaygroundParams {

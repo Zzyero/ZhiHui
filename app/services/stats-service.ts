@@ -7,20 +7,6 @@ export interface IDayStat {
     elapsedMs: number;
 }
 
-export interface IWorkflowStat {
-    workflowId: string;
-    title: string;
-    sectionName: string;
-    count: number;
-    images: number;
-    lastUsedAt: number;
-}
-
-export interface ISectionStat {
-    count: number;
-    images: number;
-}
-
 export interface IStatsData {
     totalGenerations: number;
     totalImages: number;
@@ -28,8 +14,6 @@ export interface IStatsData {
     firstGeneratedAt?: number;
     lastGeneratedAt?: number;
     byDay: Record<string, IDayStat>;
-    byWorkflow: Record<string, IWorkflowStat>;
-    bySection: Record<string, ISectionStat>;
 }
 
 const DEFAULT_DATA_DIR = path.join(process.cwd(), "data");
@@ -59,8 +43,6 @@ class StatsService {
             totalImages: 0,
             totalElapsedMs: 0,
             byDay: {},
-            byWorkflow: {},
-            bySection: {},
         };
     }
 
@@ -90,9 +72,6 @@ class StatsService {
 
     /** 记录一次成功生成 */
     async recordGeneration(params: {
-        workflowId?: string;
-        title?: string;
-        sectionName?: string;
         imageCount: number;
         elapsedMs: number;
     }): Promise<void> {
@@ -113,29 +92,6 @@ class StatsService {
         day.images += images;
         day.elapsedMs += elapsed;
         data.byDay[today] = day;
-
-        const workflowKey = params.workflowId || params.title || "unknown";
-        const wf = data.byWorkflow[workflowKey] ?? {
-            workflowId: params.workflowId || "",
-            title: params.title || "未知工作流",
-            sectionName: params.sectionName || "",
-            count: 0,
-            images: 0,
-            lastUsedAt: 0,
-        };
-        wf.count += 1;
-        wf.images += images;
-        wf.lastUsedAt = now;
-        if (params.title) wf.title = params.title;
-        if (params.sectionName) wf.sectionName = params.sectionName;
-        data.byWorkflow[workflowKey] = wf;
-
-        if (params.sectionName) {
-            const sec = data.bySection[params.sectionName] ?? { count: 0, images: 0 };
-            sec.count += 1;
-            sec.images += images;
-            data.bySection[params.sectionName] = sec;
-        }
 
         await this.persist(data);
     }

@@ -363,9 +363,6 @@ function PlaygroundPageContent({ doPost, sectionName }: IPlaygroundPageContent) 
             workflow: currentWorkflow?.workflowApiJSON,
             clientPromptId: localPromptId,
             signal: controller.signal,
-            workflowId: currentWorkflow?.viewComfyJSON.id,
-            workflowTitle: currentWorkflow?.viewComfyJSON.title,
-            sectionName: sectionName,
             onSuccess: (params: { promptId: string, outputs: File[], totalElapsedMs?: number }) => {
                 onSetResults({ ...params, localPromptId, totalElapsedMs: params.totalElapsedMs });
                 updateTask({ status: 'completed', realPromptId: params.promptId || realPromptId });
