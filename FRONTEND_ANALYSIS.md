@@ -51,7 +51,6 @@ ComfyUI 后端 (本地进程, 默认 127.0.0.1:8188)
 - 客户端 `hooks/playground/use-post-playground.tsx` 用 `response.body.getReader()` **手动解析 SSE 字节流**
   （原生 `EventSource` 只支持 GET，所以这里手动解析）。
 - 取消任务：`DELETE /api/prompt/[promptId]?status=running|queued`。
-- 队列状态：`GET /api/comfy/queue`（浏览器轮询，见下）。
 
 ### 2. Next.js 服务端 ↔ ComfyUI（WebSocket + REST）
 
@@ -88,7 +87,6 @@ ComfyUI WS 事件类型（`ComfyUIWSEventType`）：
 | 路径 | 职责 |
 |---|---|
 | `app/api/comfy/route.ts` | SSE 生成入口 |
-| `app/api/comfy/queue/route.ts` | 队列状态（浏览器轮询） |
 | `app/api/prompt/[promptId]/route.ts` | 取消/中断 |
 | `app/api/comfy-view/route.ts` | 代理 ComfyUI `/view` |
 | `app/services/comfyui-api-service.ts` | WS 连接 + 全部 ComfyUI HTTP 调用 + 事件分发 |
@@ -98,7 +96,7 @@ ComfyUI WS 事件类型（`ComfyUIWSEventType`）：
 | `app/providers/view-comfy-provider.tsx` | 前端全局状态（结果/队列/进度） |
 | `hooks/playground/use-post-playground.tsx` | 客户端发起请求 + 手动解析 SSE |
 | `components/pages/playground/*` | 生成页 UI（表单、任务卡片、结果渲染） |
-| `components/queue-drawer.tsx` | 顶部队列下拉（轮询队列状态） |
+| `components/queue-drawer.tsx` | 顶部队列下拉（展示本地任务队列） |
 | `view_comfy.json` | 工作流配置：`workflows[].viewComfyJSON`（UI 可改）+ `workflowApiJSON`（不可改） |
 
 ## 六、配置（`.env`）
@@ -114,5 +112,4 @@ ComfyUI WS 事件类型（`ComfyUIWSEventType`）：
 ## 七、关键约束 / 约定
 
 - `view_comfy.json` 中 `workflowApiJSON` **不可编辑**，只改 `viewComfyJSON`。
-- 串行队列 `generationQueue` 是**内存队列**，仅单进程有效（`next start` 单进程自托管场景）。
-- 客户端无法直接订阅服务端与 ComfyUI 之间的 WebSocket，故队列状态通过 `GET /api/comfy/queue` 轮询（3s）。
+- 串行队列 `generationQueue` 是**内存队列**，仅单进程有效（`next start` 单进程自托管场景），排队任务缓存在本地。

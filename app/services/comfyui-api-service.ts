@@ -757,11 +757,8 @@ export class ComfyUIAPIService {
         }
     }
 
-    /**
-     * 主动拉取 ComfyUI /queue 并更新缓存。
-     * 返回当前队列状态（供 API 路由轮询使用；浏览器无法直接订阅服务端 WS，改为 HTTP 轮询）。
-     */
-    public async fetchQueueStatus(): Promise<IComfyQueueStatus> {
+    /** 获取队列状态（取消/中断后刷新缓存用） */
+    private async fetchQueueStatus(): Promise<void> {
         try {
             const response = await fetch(`${this.getUrl("http")}/queue`);
             if (response.ok) {
@@ -782,7 +779,6 @@ export class ComfyUIAPIService {
         } catch (error) {
             console.error("Failed to fetch queue status:", error);
         }
-        return { ...this.queueStatus };
     }
 }
 
