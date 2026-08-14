@@ -71,6 +71,8 @@ export interface IViewComfyState {
     queueStatus: IComfyQueueStatus;
     /** 待执行的 prompt 队列（按 section 分桶） */
     queueBySection: Record<string, IQueuedPrompt[]>;
+    /** 一键复刻触发的表单重置信号（自增，PlaygroundForm 监听后 reset） */
+    formResetNonce: number;
 }
 
 /** 队列状态 */
@@ -150,6 +152,7 @@ export enum ActionType {
     UPDATE_QUEUE_ITEM = "UPDATE_QUEUE_ITEM",
     REMOVE_FROM_QUEUE = "REMOVE_FROM_QUEUE",
     SET_QUEUE_STATUS = "SET_QUEUE_STATUS",
+    REQUEST_FORM_RESET = "REQUEST_FORM_RESET",
 }
 
 // Update the Action type to use the enum
@@ -176,6 +179,7 @@ export type Action =
     | { type: ActionType.UPDATE_QUEUE_ITEM; payload: { promptId: string, updates: Partial<IQueuedPrompt> } }
     | { type: ActionType.REMOVE_FROM_QUEUE; payload: { promptId: string } }
     | { type: ActionType.SET_QUEUE_STATUS; payload: IComfyQueueStatus }
+    | { type: ActionType.REQUEST_FORM_RESET }
 
 function viewComfyReducer(state: IViewComfyState, action: Action): IViewComfyState {
     switch (action.type) {
@@ -311,6 +315,7 @@ function viewComfyReducer(state: IViewComfyState, action: Action): IViewComfySta
                 formDataByWorkflow: {},
                 queueStatus: state.queueStatus,
                 queueBySection: state.queueBySection,
+                formResetNonce: state.formResetNonce,
             };
         }
         case ActionType.SET_APP_TITLE:
@@ -465,6 +470,8 @@ function viewComfyReducer(state: IViewComfyState, action: Action): IViewComfySta
         }
         case ActionType.SET_QUEUE_STATUS:
             return { ...state, queueStatus: action.payload };
+        case ActionType.REQUEST_FORM_RESET:
+            return { ...state, formResetNonce: state.formResetNonce + 1 };
         default:
             return state;
     }
@@ -490,7 +497,8 @@ export function ViewComfyProvider({ children }: { children: ReactNode }) {
         advancedInputsOpenByWorkflow: {},
         formDataByWorkflow: {},
         queueStatus: { queueRemaining: 0, currentlyRunning: 0 },
-        queueBySection: {}
+        queueBySection: {},
+        formResetNonce: 0,
     });
 
     return (

@@ -504,18 +504,8 @@ export class ComfyUIAPIService {
             this.workflowStatus = undefined;
             // 重置单例的 outputs 数组，避免上次残留
             this.outputFiles = [];
-            // 创建一个真实可 await 的 completionPromise（即使没人 await，也会 resolve 避免报错）
-            this.workflowCompletionPromise = {
-                resolve: () => {},
-                reject: () => {},
-            };
-            new Promise<void>((resolve) => {
-                // 保留 closure 内部 resolve 给 handler 用
-                this.workflowCompletionPromise = {
-                    resolve: () => resolve(),
-                    reject: () => {},
-                };
-            });
+            // 完成信号由后续 waitForCompletion() 挂载并阻塞等待；此处仅重置，避免残留上一个 prompt 的 promise。
+            this.workflowCompletionPromise = undefined;
 
             return this.promptId;
         } catch (error: any) {
@@ -767,8 +757,11 @@ export class ComfyUIAPIService {
         }
     }
 
-    /** 获取队列状态 */
-    private async fetchQueueStatus(): Promise<void> {
+    /**
+     * 主动拉取 ComfyUI /queue 并更新缓存。
+     * 返回当前队列状态（供 API 路由轮询使用；浏览器无法直接订阅服务端 WS，改为 HTTP 轮询）。
+     */
+    public async fetchQueueStatus(): Promise<IComfyQueueStatus> {
         try {
             const response = await fetch(`${this.getUrl("http")}/queue`);
             if (response.ok) {
@@ -789,6 +782,7 @@ export class ComfyUIAPIService {
         } catch (error) {
             console.error("Failed to fetch queue status:", error);
         }
+        return { ...this.queueStatus };
     }
 }
 

@@ -19,8 +19,6 @@ import {
     ChevronDownIcon,
 } from "lucide-react"
 import { useViewComfy, ActionType, type IQueuedPrompt } from "@/app/providers/view-comfy-provider"
-import { getComfyUIAPIService, IComfyQueueStatus } from "@/app/services/comfyui-api-service"
-import { useEffect } from "react"
 
 interface QueueDropdownProps {
     className?: string
@@ -30,28 +28,36 @@ export function QueueDropdown({ className }: QueueDropdownProps) {
     const { viewComfyState, viewComfyStateDispatcher } = useViewComfy()
     const [open, setOpen] = React.useState(false)
 
-    // 从 queueStatus 获取 ComfyUI 队列数量（目前用于显示）
-    const { queueRemaining } = viewComfyState.queueStatus
+    // ComfyUI 队列状态（来自服务端轮询，见下方 useEffect）
+    const { queueRemaining, currentlyRunning } = viewComfyState.queueStatus
 
-    // 监听 WebSocket 队列状态变化，更新到 provider
+    // 浏览器无法直接订阅服务端与 ComfyUI 之间的 WebSocket，
+    // 因此通过 HTTP 轮询 /api/comfy/queue 获取队列状态并写入 provider。
     React.useEffect(() => {
-        try {
-            const comfyService = getComfyUIAPIService()
+        let cancelled = false
 
-            const handleQueueChange = (status: IComfyQueueStatus) => {
-                viewComfyStateDispatcher({
-                    type: ActionType.SET_QUEUE_STATUS,
-                    payload: status
-                })
+        const pollQueueStatus = async () => {
+            try {
+                const response = await fetch("/api/comfy/queue", { cache: "no-store" })
+                if (!response.ok) return
+                const status = await response.json()
+                if (!cancelled) {
+                    viewComfyStateDispatcher({
+                        type: ActionType.SET_QUEUE_STATUS,
+                        payload: status,
+                    })
+                }
+            } catch {
+                // ComfyUI 未启动/不可达时忽略，保留上一次状态
             }
+        }
 
-            comfyService.onQueueChange(handleQueueChange)
+        pollQueueStatus()
+        const timerId = setInterval(pollQueueStatus, 3000)
 
-            return () => {
-                comfyService.offQueueChange(handleQueueChange)
-            }
-        } catch {
-            // ComfyUI API service might not be available on client side
+        return () => {
+            cancelled = true
+            clearInterval(timerId)
         }
     }, [viewComfyStateDispatcher])
 
@@ -132,6 +138,12 @@ export function QueueDropdown({ className }: QueueDropdownProps) {
                         </span>
                     )}
                 </div>
+                {(queueRemaining > 0 || currentlyRunning > 0) && (
+                    <div className="flex items-center justify-between px-3 py-1.5 border-b text-xs text-muted-foreground">
+                        <span>ComfyUI 队列</span>
+                        <span className="tabular-nums">运行 {currentlyRunning} · 排队 {queueRemaining}</span>
+                    </div>
+                )}
 
                 <ScrollArea className="max-h-[300px]">
                     {allQueuedTasks.length === 0 ? (

@@ -4,7 +4,8 @@ import {
     Settings,
     Download,
     CircleX,
-    Play
+    Play,
+    Images
 } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
@@ -435,6 +436,26 @@ function PlaygroundPageContent({ doPost, sectionName }: IPlaygroundPageContent) 
         doPost(doPostParams);
     }
 
+    const handleAddToGallery = useCallback(async (output: IOutput) => {
+        const file = output.file;
+        if (!file || !(file instanceof File)) {
+            toast.error("该结果没有可保存的图片文件");
+            return;
+        }
+        const formData = new FormData();
+        formData.append("image", file, output.filename || file.name);
+        formData.append("sectionName", sectionName || "智能生图");
+        formData.append("workflowTitle", currentWorkflow?.viewComfyJSON.title || "");
+        formData.append("workflowId", currentWorkflow?.viewComfyJSON.id || "");
+        try {
+            const res = await fetch("/api/gallery", { method: "POST", body: formData });
+            if (!res.ok) throw new Error("add failed");
+            toast.success("已添加到画廊");
+        } catch {
+            toast.error("添加到画廊失败");
+        }
+    }, [sectionName, currentWorkflow]);
+
     const onSelectChange = (data: IViewComfy) => {
         return viewComfyStateDispatcher({
             type: ActionType.UPDATE_CURRENT_VIEW_COMFY,
@@ -527,6 +548,7 @@ function PlaygroundPageContent({ doPost, sectionName }: IPlaygroundPageContent) 
                                                 onShowErrorDialog={onShowErrorDialog}
                                                 showOutputFileName={showOutputFileName}
                                                 textOutputEnabled={textOutputEnabled}
+                                                onAddToGallery={handleAddToGallery}
                                             />
                                             {index !== sectionQueue.length - 1 && <hr className="w-full py-4 border-gray-300" />}
                                         </Fragment>
@@ -554,7 +576,7 @@ export default function PlaygroundPage({ sectionName }: { sectionName?: string }
     );
 }
 
-export function ImageDialog({ output, showOutputFileName }: { output: IOutput, showOutputFileName: boolean }) {
+export function ImageDialog({ output, showOutputFileName, onAddToGallery }: { output: IOutput, showOutputFileName: boolean, onAddToGallery?: (output: IOutput) => void }) {
     const backgroundColor = "black";
     const scaleUp = false;
     const zoomFactor = 8;
@@ -676,7 +698,7 @@ export function ImageDialog({ output, showOutputFileName }: { output: IOutput, s
                     </TransformWrapper>
                 </div>
                 <DialogFooter className="bg-transparent">
-                    <Button className="w-full"
+                    <Button
                         onClick={() => {
                             const link = document.createElement('a');
                             link.href = output.url;
@@ -684,6 +706,12 @@ export function ImageDialog({ output, showOutputFileName }: { output: IOutput, s
                             link.click();
                         }}
                     >下载</Button>
+                    {onAddToGallery && (
+                        <Button variant="secondary" onClick={() => onAddToGallery(output)}>
+                            <Images className="size-4 mr-2" />
+                            添加到画廊
+                        </Button>
+                    )}
                 </DialogFooter>
             </DialogContent>
         </Dialog>
@@ -874,11 +902,13 @@ export function FileOutput({ output }: { output: IOutput }) {
 function OutputRenderer({
     output,
     textOutputEnabled,
-    showOutputFileName }:
+    showOutputFileName,
+    onAddToGallery }:
     {
         output: IOutput,
         textOutputEnabled: boolean,
         showOutputFileName: boolean,
+        onAddToGallery?: (output: IOutput) => void,
     }) {
 
     const getOutputComponent = () => {
@@ -891,7 +921,7 @@ function OutputRenderer({
         if (contentType.startsWith('image/') && contentType !== "image/vnd.adobe.photoshop") {
             return (
                 <SelectableImage imageUrl={output.url}>
-                    <ImageDialog output={output} showOutputFileName={showOutputFileName} />
+                    <ImageDialog output={output} showOutputFileName={showOutputFileName} onAddToGallery={onAddToGallery} />
                 </SelectableImage>
             );
         } else if (isVideo) {
@@ -1026,13 +1056,14 @@ const TaskProgress = ({ progress }: { progress?: { value: number; max: number; c
     );
 };
 
-function TaskCard({ task, progress, result, onShowErrorDialog, showOutputFileName, textOutputEnabled }: {
+function TaskCard({ task, progress, result, onShowErrorDialog, showOutputFileName, textOutputEnabled, onAddToGallery }: {
     task: IQueuedPrompt;
     progress?: { value: number; max: number; currentNode?: string; startedAt: number } | undefined;
     result?: IGeneration | undefined;
     onShowErrorDialog: (error: string) => void;
     showOutputFileName: boolean;
     textOutputEnabled: boolean;
+    onAddToGallery?: (output: IOutput) => void;
 }) {
     const statusLabel = {
         queued: "排队中",
@@ -1101,6 +1132,7 @@ function TaskCard({ task, progress, result, onShowErrorDialog, showOutputFileNam
                                 output={output}
                                 showOutputFileName={showOutputFileName}
                                 textOutputEnabled={textOutputEnabled}
+                                onAddToGallery={onAddToGallery}
                             />
                         </Fragment>
                     ))}

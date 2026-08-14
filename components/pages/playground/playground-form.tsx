@@ -47,6 +47,8 @@ export default function PlaygroundForm(props: {
 
     // 使用 ref 跟踪当前工作流 ID，确保只在工作流改变时才 reset
     const prevWorkflowIdRef = useRef<string | null>(null);
+    const formResetNonce = viewComfyState.formResetNonce;
+    const lastResetNonceRef = useRef<number>(formResetNonce);
 
     // 当工作流改变时，需要显式 reset 表单以使用新的 defaultValues
     useEffect(() => {
@@ -56,6 +58,14 @@ export default function PlaygroundForm(props: {
         }
         prevWorkflowIdRef.current = workflowId;
     }, [workflowId, defaultValues, form]);
+
+    // 一键复刻：nonce 变化时强制用最新 defaultValues（已回填的参数）reset 表单
+    useEffect(() => {
+        if (formResetNonce !== lastResetNonceRef.current) {
+            lastResetNonceRef.current = formResetNonce;
+            form.reset(defaultValues);
+        }
+    }, [formResetNonce, defaultValues, form]);
 
     const handleAdvancedInputsOpenChange = useCallback((isOpen: boolean) => {
         viewComfyStateDispatcher({
