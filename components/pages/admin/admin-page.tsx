@@ -28,10 +28,9 @@ import {
     type LucideIcon,
 } from "lucide-react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Progress } from "@/components/ui/progress"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 import type { IMonitorSnapshot, IGPUInfo } from "@/app/services/monitor-service"
 import type { IStatsData } from "@/app/services/stats-service"
 
@@ -119,6 +118,15 @@ function Ring({ value, max, color, size = 92, strokeWidth = 9, children }: {
     )
 }
 
+function UsageBar({ value, className }: { value: number; className?: string }) {
+    const pct = Math.max(0, Math.min(100, value));
+    return (
+        <div className={cn("h-1.5 w-full overflow-hidden rounded-full bg-gray-300 dark:bg-gray-600", className)}>
+            <div className="h-full rounded-full bg-black transition-all" style={{ width: pct + "%" }} />
+        </div>
+    );
+}
+
 function StatCard({ icon: Icon, label, value }: { icon: LucideIcon; label: string; value: React.ReactNode }) {
     return (
         <Card>
@@ -150,7 +158,7 @@ function GpuCard({ gpu }: { gpu: IGPUInfo }) {
                                 <span>显存</span>
                                 <span className="tabular-nums">{gpu.memoryUsed} / {gpu.memoryTotal} MiB</span>
                             </div>
-                            <Progress value={memPct} className="mt-1 h-1.5" />
+                            <UsageBar value={memPct} className="mt-1" />
                         </div>
                         <div className="flex items-center gap-4 text-xs text-muted-foreground">
                             <span className="inline-flex items-center gap-1">
@@ -231,15 +239,6 @@ export default function AdminPage() {
         }
         return days
     }, [stats])
-
-    const workflows = React.useMemo(() => {
-        return Object.values(stats?.byWorkflow ?? {}).sort((a, b) => b.count - a.count)
-    }, [stats])
-
-    const sections = React.useMemo(() => {
-        return Object.entries(stats?.bySection ?? {}).sort((a, b) => b[1].count - a[1].count)
-    }, [stats])
-    const maxSectionCount = Math.max(1, ...sections.map(([, s]) => s.count))
 
     const gpuHistory = React.useMemo(() => {
         const h = monitor?.history
@@ -383,7 +382,7 @@ export default function AdminPage() {
                                         <span className="text-2xl font-semibold tabular-nums">{Math.round(memory.usagePercent)}%</span>
                                         <span className="text-xs text-muted-foreground tabular-nums">{formatBytes(memory.used)} / {formatBytes(memory.total)}</span>
                                     </div>
-                                    <Progress value={memory.usagePercent} className="h-2.5" />
+                                    <UsageBar value={memory.usagePercent} className="h-2.5" />
                                     <div className="text-xs text-muted-foreground">
                                         运行时长 {(() => { const u = monitor.uptime; const d = Math.floor(u / 86400); const h = Math.floor((u % 86400) / 3600); const m = Math.floor((u % 3600) / 60); return d > 0 ? d + " 天 " + h + " 小时" : h > 0 ? h + " 小时 " + m + " 分" : m + " 分" })()}
                                     </div>
@@ -393,79 +392,25 @@ export default function AdminPage() {
                     </Card>
                 </div>
 
-                <div className="grid gap-4 lg:grid-cols-2">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <TrendingUp className="size-4" />
-                                每日生成图片
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="h-56 text-primary">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={dailyData} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
-                                        <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.2} vertical={false} />
-                                        <XAxis dataKey="date" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} minTickGap={16} />
-                                        <YAxis allowDecimals={false} tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
-                                        <Tooltip contentStyle={tooltipStyle} cursor={{ fill: "rgba(0,0,0,0.04)" }} />
-                                        <Bar dataKey="images" fill="currentColor" radius={[4, 4, 0, 0]} name="生成图片" />
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <Activity className="size-4" />
-                                工作流使用次数
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            {workflows.length === 0 ? (
-                                <p className="py-10 text-center text-sm text-muted-foreground">暂无生成记录</p>
-                            ) : (
-                                <div className="max-h-56 space-y-2 overflow-y-auto pr-1">
-                                    {workflows.map((wf) => (
-                                        <div key={wf.workflowId || wf.title} className="flex items-center justify-between rounded-lg border p-3">
-                                            <div className="min-w-0">
-                                                <div className="truncate text-sm font-medium">{wf.title}</div>
-                                                <div className="text-xs text-muted-foreground">{wf.sectionName || "未分类"} · 图片 {wf.images}</div>
-                                            </div>
-                                            <Badge variant="secondary" className="shrink-0">{wf.count} 次</Badge>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-                </div>
-
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
-                            <ImageIcon className="size-4" />
-                            各分类使用情况
+                            <TrendingUp className="size-4" />
+                            每日生成图片
                         </CardTitle>
                     </CardHeader>
                     <CardContent>
-                        {sections.length === 0 ? (
-                            <p className="py-8 text-center text-sm text-muted-foreground">暂无数据</p>
-                        ) : (
-                            <div className="space-y-3">
-                                {sections.map(([name, s]) => (
-                                    <div key={name}>
-                                        <div className="flex justify-between text-xs">
-                                            <span>{name}</span>
-                                            <span className="text-muted-foreground tabular-nums">{s.count} 次 · {s.images} 图</span>
-                                        </div>
-                                        <Progress value={(s.count / maxSectionCount) * 100} className="mt-1 h-1.5" />
-                                    </div>
-                                ))}
-                            </div>
-                        )}
+                        <div className="h-56 text-primary">
+                            <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={dailyData} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
+                                    <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.2} vertical={false} />
+                                    <XAxis dataKey="date" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} minTickGap={16} />
+                                    <YAxis allowDecimals={false} tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
+                                    <Tooltip contentStyle={tooltipStyle} cursor={{ fill: "rgba(0,0,0,0.04)" }} />
+                                    <Bar dataKey="images" fill="currentColor" radius={[4, 4, 0, 0]} name="生成图片" />
+                                </BarChart>
+                            </ResponsiveContainer>
+                        </div>
                     </CardContent>
                 </Card>
             </div>
