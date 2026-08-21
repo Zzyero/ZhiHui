@@ -16,6 +16,7 @@ import type { IViewComfyBase } from "@/app/providers/view-comfy-provider";
 import type { IInputField, IMultiValueInput } from "@/lib/workflow-api-parser";
 import { parseWorkflowApiTypeToInputHtmlType } from "@/components/pages/view-comfy/view-comfy-form-editor";
 import { Textarea } from "@/components/ui/textarea";
+import { AutoGrowTextarea } from "@/components/ui/auto-grow-textarea";
 import { CHECKBOX_STYLE, FORM_STYLE, TEXT_AREA_STYLE } from "@/components/styles";
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from "@/components/ui/checkbox";
@@ -1264,7 +1265,7 @@ function FormTextAreaInput(args: {
                 )}
             </FormLabel>
             <FormControl>
-                <Textarea
+                <AutoGrowTextarea
                     placeholder={input.placeholder}
                     className={TEXT_AREA_STYLE}
                     {...field}
@@ -1362,13 +1363,20 @@ function FormBasicInput(args: {
                 )}
             </FormLabel>
             <FormControl>
-                <Input
-                    placeholder={input.placeholder}
-                    {...field}
-                    type={parseWorkflowApiTypeToInputHtmlType(input.valueType)}
-                    min={input.range?.min}
-                    max={input.range?.max}
-                />
+                {parseWorkflowApiTypeToInputHtmlType(input.valueType) === "text" ? (
+                    <AutoGrowTextarea
+                        placeholder={input.placeholder}
+                        {...field}
+                    />
+                ) : (
+                    <Input
+                        placeholder={input.placeholder}
+                        {...field}
+                        type={parseWorkflowApiTypeToInputHtmlType(input.valueType)}
+                        min={input.range?.min}
+                        max={input.range?.max}
+                    />
+                )}
             </FormControl>
             {(input.helpText !== "Helper Text") && (
                 <FormDescription className="whitespace-pre-wrap">

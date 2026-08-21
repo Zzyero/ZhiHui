@@ -10,7 +10,8 @@
       "workflows": [
         "我的工作流 1",
         "Qwen-image图像生成（四步加速）",
-        "Qwen-Image图像生成"
+        "Qwen-Image图像生成",
+        "Qwen-Image多图参考生图"
       ]
     },
     {
@@ -20,7 +21,8 @@
         "Qwen-image-edit单图编辑（4步加速）",
         "局部重绘+扩图",
         "局部重绘",
-        "图像编辑"
+        "图像编辑",
+        "图片高清放大"
       ]
     },
     {
@@ -15560,6 +15562,2246 @@
           "class_type": "SaveAudioAdvanced",
           "_meta": {
             "title": "保存音频（高级）"
+          }
+        }
+      }
+    },
+    {
+      "viewComfyJSON": {
+        "title": "Qwen-Image多图参考生图",
+        "description": "",
+        "viewcomfyEndpoint": "",
+        "previewImages": [],
+        "inputs": [
+          {
+            "title": "加载图像",
+            "inputs": [
+              {
+                "title": "加载图像",
+                "placeholder": "加载图像",
+                "value": null,
+                "workflowPath": [
+                  "351",
+                  "inputs",
+                  "image"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "image",
+                "validations": {
+                  "required": false
+                },
+                "key": "351-inputs-image"
+              }
+            ],
+            "key": "351-LoadImage"
+          },
+          {
+            "title": "加载图像",
+            "inputs": [
+              {
+                "title": "加载图像",
+                "placeholder": "加载图像",
+                "value": null,
+                "workflowPath": [
+                  "352",
+                  "inputs",
+                  "image"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "image",
+                "validations": {
+                  "required": false
+                },
+                "key": "352-inputs-image"
+              }
+            ],
+            "key": "352-LoadImage"
+          },
+          {
+            "title": "加载图像",
+            "inputs": [
+              {
+                "title": "加载图像",
+                "placeholder": "加载图像",
+                "value": null,
+                "workflowPath": [
+                  "353",
+                  "inputs",
+                  "image"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "image",
+                "validations": {
+                  "required": false
+                },
+                "key": "353-inputs-image"
+              }
+            ],
+            "key": "353-LoadImage"
+          }
+        ],
+        "advancedInputs": [
+          {
+            "title": "加载CLIP",
+            "inputs": [
+              {
+                "title": "Clip_name",
+                "placeholder": "Clip_name",
+                "value": "Qwen\\qwen_2.5_vl_7b_fp8_scaled.safetensors",
+                "workflowPath": [
+                  "38",
+                  "inputs",
+                  "clip_name"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "38-inputs-clip_name"
+              },
+              {
+                "title": "Type",
+                "placeholder": "Type",
+                "value": "qwen_image",
+                "workflowPath": [
+                  "38",
+                  "inputs",
+                  "type"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "38-inputs-type"
+              },
+              {
+                "title": "Device",
+                "placeholder": "Device",
+                "value": "default",
+                "workflowPath": [
+                  "38",
+                  "inputs",
+                  "device"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "38-inputs-device"
+              }
+            ],
+            "key": "38-CLIPLoader"
+          },
+          {
+            "title": "LoRA加载器（仅模型）",
+            "inputs": [
+              {
+                "title": "Lora_name",
+                "placeholder": "Lora_name",
+                "value": "Qwen-Image-Edit\\Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+                "workflowPath": [
+                  "122",
+                  "inputs",
+                  "lora_name"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "122-inputs-lora_name"
+              },
+              {
+                "title": "Strength_model",
+                "placeholder": "Strength_model",
+                "value": 1,
+                "workflowPath": [
+                  "122",
+                  "inputs",
+                  "strength_model"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "122-inputs-strength_model"
+              }
+            ],
+            "key": "122-LoraLoaderModelOnly"
+          },
+          {
+            "title": "K采样器",
+            "inputs": [
+              {
+                "title": "Seed",
+                "placeholder": "Seed",
+                "value": 834341911737738,
+                "workflowPath": [
+                  "302",
+                  "inputs",
+                  "seed"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "seed",
+                "validations": {
+                  "required": true
+                },
+                "key": "302-inputs-seed"
+              },
+              {
+                "title": "Steps",
+                "placeholder": "Steps",
+                "value": 8,
+                "workflowPath": [
+                  "302",
+                  "inputs",
+                  "steps"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "302-inputs-steps"
+              },
+              {
+                "title": "Cfg",
+                "placeholder": "Cfg",
+                "value": 1,
+                "workflowPath": [
+                  "302",
+                  "inputs",
+                  "cfg"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "302-inputs-cfg"
+              },
+              {
+                "title": "Sampler_name",
+                "placeholder": "Sampler_name",
+                "value": "euler",
+                "workflowPath": [
+                  "302",
+                  "inputs",
+                  "sampler_name"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "302-inputs-sampler_name"
+              },
+              {
+                "title": "Scheduler",
+                "placeholder": "Scheduler",
+                "value": "simple",
+                "workflowPath": [
+                  "302",
+                  "inputs",
+                  "scheduler"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "302-inputs-scheduler"
+              },
+              {
+                "title": "Denoise",
+                "placeholder": "Denoise",
+                "value": 1,
+                "workflowPath": [
+                  "302",
+                  "inputs",
+                  "denoise"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "302-inputs-denoise"
+              }
+            ],
+            "key": "302-KSampler"
+          },
+          {
+            "title": "FluxKontext多参考潜在方法",
+            "inputs": [
+              {
+                "title": "Reference_latents_method",
+                "placeholder": "Reference_latents_method",
+                "value": "index_timestep_zero",
+                "workflowPath": [
+                  "330",
+                  "inputs",
+                  "reference_latents_method"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "330-inputs-reference_latents_method"
+              }
+            ],
+            "key": "330-FluxKontextMultiReferenceLatentMethod"
+          },
+          {
+            "title": "FluxKontext多参考潜在方法",
+            "inputs": [
+              {
+                "title": "Reference_latents_method",
+                "placeholder": "Reference_latents_method",
+                "value": "index_timestep_zero",
+                "workflowPath": [
+                  "331",
+                  "inputs",
+                  "reference_latents_method"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "331-inputs-reference_latents_method"
+              }
+            ],
+            "key": "331-FluxKontextMultiReferenceLatentMethod"
+          },
+          {
+            "title": "UNet加载器",
+            "inputs": [
+              {
+                "title": "Unet_name",
+                "placeholder": "Unet_name",
+                "value": "Qwen_Image_Edit\\qwen_image_edit_2511_fp8mixed.safetensors",
+                "workflowPath": [
+                  "339",
+                  "inputs",
+                  "unet_name"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "339-inputs-unet_name"
+              },
+              {
+                "title": "Weight_dtype",
+                "placeholder": "Weight_dtype",
+                "value": "default",
+                "workflowPath": [
+                  "339",
+                  "inputs",
+                  "weight_dtype"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "339-inputs-weight_dtype"
+              }
+            ],
+            "key": "339-UNETLoader"
+          },
+          {
+            "title": "🔤 CR Text",
+            "inputs": [
+              {
+                "title": "Text",
+                "placeholder": "Text",
+                "value": "图像1和图像2的两人，在图像3的背景下拥抱",
+                "workflowPath": [
+                  "355",
+                  "inputs",
+                  "text"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "355-inputs-text"
+              }
+            ],
+            "key": "355-CR Text"
+          },
+          {
+            "title": "空Latent图像",
+            "inputs": [
+              {
+                "title": "Width",
+                "placeholder": "Width",
+                "value": 720,
+                "workflowPath": [
+                  "356",
+                  "inputs",
+                  "width"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "356-inputs-width"
+              },
+              {
+                "title": "Height",
+                "placeholder": "Height",
+                "value": 1280,
+                "workflowPath": [
+                  "356",
+                  "inputs",
+                  "height"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "356-inputs-height"
+              },
+              {
+                "title": "Batch_size",
+                "placeholder": "Batch_size",
+                "value": 1,
+                "workflowPath": [
+                  "356",
+                  "inputs",
+                  "batch_size"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "356-inputs-batch_size"
+              }
+            ],
+            "key": "356-EmptyLatentImage"
+          },
+          {
+            "title": "加载VAE",
+            "inputs": [
+              {
+                "title": "Vae_name",
+                "placeholder": "Vae_name",
+                "value": "Qwen\\qwen_image_vae.safetensors",
+                "workflowPath": [
+                  "380",
+                  "inputs",
+                  "vae_name"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "380-inputs-vae_name"
+              }
+            ],
+            "key": "380-VAELoader"
+          },
+          {
+            "title": "保存图像（高级）",
+            "inputs": [
+              {
+                "title": "Filename_prefix",
+                "placeholder": "Filename_prefix",
+                "value": "ComfyUI",
+                "workflowPath": [
+                  "384",
+                  "inputs",
+                  "filename_prefix"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "384-inputs-filename_prefix"
+              },
+              {
+                "title": "Format",
+                "placeholder": "Format",
+                "value": "png",
+                "workflowPath": [
+                  "384",
+                  "inputs",
+                  "format"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "384-inputs-format"
+              },
+              {
+                "title": "Format.bit_depth",
+                "placeholder": "Format.bit_depth",
+                "value": "8-bit",
+                "workflowPath": [
+                  "384",
+                  "inputs",
+                  "format.bit_depth"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "384-inputs-format.bit_depth"
+              },
+              {
+                "title": "Format.input_color_space",
+                "placeholder": "Format.input_color_space",
+                "value": "sRGB",
+                "workflowPath": [
+                  "384",
+                  "inputs",
+                  "format.input_color_space"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "384-inputs-format.input_color_space"
+              }
+            ],
+            "key": "384-SaveImageAdvanced"
+          }
+        ],
+        "id": "55c09aeaf8c8c"
+      },
+      "workflowApiJSON": {
+        "38": {
+          "inputs": {
+            "clip_name": "Qwen\\qwen_2.5_vl_7b_fp8_scaled.safetensors",
+            "type": "qwen_image",
+            "device": "default"
+          },
+          "class_type": "CLIPLoader",
+          "_meta": {
+            "title": "加载CLIP"
+          }
+        },
+        "122": {
+          "inputs": {
+            "lora_name": "Qwen-Image-Edit\\Qwen-Image-Edit-2511-Lightning-4steps-V1.0-bf16.safetensors",
+            "strength_model": 1,
+            "model": [
+              "339",
+              0
+            ]
+          },
+          "class_type": "LoraLoaderModelOnly",
+          "_meta": {
+            "title": "LoRA加载器（仅模型）"
+          }
+        },
+        "302": {
+          "inputs": {
+            "seed": 834341911737738,
+            "steps": 8,
+            "cfg": 1,
+            "sampler_name": "euler",
+            "scheduler": "simple",
+            "denoise": 1,
+            "model": [
+              "122",
+              0
+            ],
+            "positive": [
+              "330",
+              0
+            ],
+            "negative": [
+              "331",
+              0
+            ],
+            "latent_image": [
+              "356",
+              0
+            ]
+          },
+          "class_type": "KSampler",
+          "_meta": {
+            "title": "K采样器"
+          }
+        },
+        "303": {
+          "inputs": {
+            "samples": [
+              "302",
+              0
+            ],
+            "vae": [
+              "380",
+              0
+            ]
+          },
+          "class_type": "VAEDecode",
+          "_meta": {
+            "title": "VAE解码"
+          }
+        },
+        "330": {
+          "inputs": {
+            "reference_latents_method": "index_timestep_zero",
+            "conditioning": [
+              "375",
+              0
+            ]
+          },
+          "class_type": "FluxKontextMultiReferenceLatentMethod",
+          "_meta": {
+            "title": "FluxKontext多参考潜在方法"
+          }
+        },
+        "331": {
+          "inputs": {
+            "reference_latents_method": "index_timestep_zero",
+            "conditioning": [
+              "381",
+              0
+            ]
+          },
+          "class_type": "FluxKontextMultiReferenceLatentMethod",
+          "_meta": {
+            "title": "FluxKontext多参考潜在方法"
+          }
+        },
+        "339": {
+          "inputs": {
+            "unet_name": "Qwen_Image_Edit\\qwen_image_edit_2511_fp8mixed.safetensors",
+            "weight_dtype": "default"
+          },
+          "class_type": "UNETLoader",
+          "_meta": {
+            "title": "UNet加载器"
+          }
+        },
+        "351": {
+          "inputs": {
+            "image": "屏幕截图 2026-08-14 210605.png"
+          },
+          "class_type": "LoadImage",
+          "_meta": {
+            "title": "加载图像"
+          }
+        },
+        "352": {
+          "inputs": {
+            "image": "ninging.png"
+          },
+          "class_type": "LoadImage",
+          "_meta": {
+            "title": "加载图像"
+          }
+        },
+        "353": {
+          "inputs": {
+            "image": "屏幕截图 2026-08-16 201257.png"
+          },
+          "class_type": "LoadImage",
+          "_meta": {
+            "title": "加载图像"
+          }
+        },
+        "355": {
+          "inputs": {
+            "text": "图像1和图像2的两人，在图像3的背景下拥抱"
+          },
+          "class_type": "CR Text",
+          "_meta": {
+            "title": "🔤 CR Text"
+          }
+        },
+        "356": {
+          "inputs": {
+            "width": 720,
+            "height": 1280,
+            "batch_size": 1
+          },
+          "class_type": "EmptyLatentImage",
+          "_meta": {
+            "title": "空Latent图像"
+          }
+        },
+        "375": {
+          "inputs": {
+            "prompt": [
+              "355",
+              0
+            ],
+            "clip": [
+              "38",
+              0
+            ],
+            "vae": [
+              "380",
+              0
+            ],
+            "image1": [
+              "351",
+              0
+            ],
+            "image2": [
+              "352",
+              0
+            ],
+            "image3": [
+              "353",
+              0
+            ]
+          },
+          "class_type": "TextEncodeQwenImageEditPlus",
+          "_meta": {
+            "title": "文本编码（QwenImageEditPlus）"
+          }
+        },
+        "380": {
+          "inputs": {
+            "vae_name": "Qwen\\qwen_image_vae.safetensors"
+          },
+          "class_type": "VAELoader",
+          "_meta": {
+            "title": "加载VAE"
+          }
+        },
+        "381": {
+          "inputs": {
+            "conditioning": [
+              "375",
+              0
+            ]
+          },
+          "class_type": "ConditioningZeroOut",
+          "_meta": {
+            "title": "条件零化"
+          }
+        },
+        "384": {
+          "inputs": {
+            "filename_prefix": "ComfyUI",
+            "format": "png",
+            "format.bit_depth": "8-bit",
+            "format.input_color_space": "sRGB",
+            "images": [
+              "303",
+              0
+            ]
+          },
+          "class_type": "SaveImageAdvanced",
+          "_meta": {
+            "title": "保存图像（高级）"
+          }
+        }
+      }
+    },
+    {
+      "viewComfyJSON": {
+        "title": "图片高清放大",
+        "description": "",
+        "viewcomfyEndpoint": "",
+        "previewImages": [],
+        "inputs": [
+          {
+            "title": "CLIP文本编码",
+            "inputs": [
+              {
+                "title": "CLIP文本编码",
+                "placeholder": "CLIP文本编码",
+                "value": "将原图进行高清画质修复与清晰度增强，仅提升画面质量，不改变画面风格、人物风格及整体视觉效果。严格保持原始画面内容、主体姿态、人物身份、五官特征、服装款式、构图、背景环境、光影关系和色彩氛围不变，不新增、不删减、不替换任何物体或细节，也不进行风格化重绘。",
+                "workflowPath": [
+                  "78",
+                  "inputs",
+                  "text"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "long-text",
+                "validations": {
+                  "required": true
+                },
+                "key": "78-inputs-text"
+              }
+            ],
+            "key": "78-CLIPTextEncode"
+          },
+          {
+            "title": "加载图像",
+            "inputs": [
+              {
+                "title": "加载图像",
+                "placeholder": "加载图像",
+                "value": null,
+                "workflowPath": [
+                  "82",
+                  "inputs",
+                  "image"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "image",
+                "validations": {
+                  "required": false
+                },
+                "key": "82-inputs-image"
+              }
+            ],
+            "key": "82-LoadImage"
+          }
+        ],
+        "advancedInputs": [
+          {
+            "title": "SeedVR2 (Down)Load VAE Model",
+            "inputs": [
+              {
+                "title": "Model",
+                "placeholder": "Model",
+                "value": "ema_vae_fp16.safetensors",
+                "workflowPath": [
+                  "48",
+                  "inputs",
+                  "model"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "48-inputs-model"
+              },
+              {
+                "title": "Device",
+                "placeholder": "Device",
+                "value": "cuda:0",
+                "workflowPath": [
+                  "48",
+                  "inputs",
+                  "device"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "48-inputs-device"
+              },
+              {
+                "title": "Encode_tiled",
+                "placeholder": "Encode_tiled",
+                "value": true,
+                "workflowPath": [
+                  "48",
+                  "inputs",
+                  "encode_tiled"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "boolean",
+                "validations": {
+                  "required": false
+                },
+                "key": "48-inputs-encode_tiled"
+              },
+              {
+                "title": "Encode_tile_size",
+                "placeholder": "Encode_tile_size",
+                "value": 1024,
+                "workflowPath": [
+                  "48",
+                  "inputs",
+                  "encode_tile_size"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "48-inputs-encode_tile_size"
+              },
+              {
+                "title": "Encode_tile_overlap",
+                "placeholder": "Encode_tile_overlap",
+                "value": 128,
+                "workflowPath": [
+                  "48",
+                  "inputs",
+                  "encode_tile_overlap"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "48-inputs-encode_tile_overlap"
+              },
+              {
+                "title": "Decode_tiled",
+                "placeholder": "Decode_tiled",
+                "value": true,
+                "workflowPath": [
+                  "48",
+                  "inputs",
+                  "decode_tiled"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "boolean",
+                "validations": {
+                  "required": false
+                },
+                "key": "48-inputs-decode_tiled"
+              },
+              {
+                "title": "Decode_tile_size",
+                "placeholder": "Decode_tile_size",
+                "value": 1024,
+                "workflowPath": [
+                  "48",
+                  "inputs",
+                  "decode_tile_size"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "48-inputs-decode_tile_size"
+              },
+              {
+                "title": "Decode_tile_overlap",
+                "placeholder": "Decode_tile_overlap",
+                "value": 128,
+                "workflowPath": [
+                  "48",
+                  "inputs",
+                  "decode_tile_overlap"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "48-inputs-decode_tile_overlap"
+              },
+              {
+                "title": "Tile_debug",
+                "placeholder": "Tile_debug",
+                "value": "false",
+                "workflowPath": [
+                  "48",
+                  "inputs",
+                  "tile_debug"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "48-inputs-tile_debug"
+              },
+              {
+                "title": "Offload_device",
+                "placeholder": "Offload_device",
+                "value": "cpu",
+                "workflowPath": [
+                  "48",
+                  "inputs",
+                  "offload_device"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "48-inputs-offload_device"
+              },
+              {
+                "title": "Cache_model",
+                "placeholder": "Cache_model",
+                "value": false,
+                "workflowPath": [
+                  "48",
+                  "inputs",
+                  "cache_model"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "boolean",
+                "validations": {
+                  "required": false
+                },
+                "key": "48-inputs-cache_model"
+              }
+            ],
+            "key": "48-SeedVR2LoadVAEModel"
+          },
+          {
+            "title": "SeedVR2 Video Upscaler (v2.5.24)",
+            "inputs": [
+              {
+                "title": "Seed",
+                "placeholder": "Seed",
+                "value": 3615735077,
+                "workflowPath": [
+                  "50",
+                  "inputs",
+                  "seed"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "seed",
+                "validations": {
+                  "required": true
+                },
+                "key": "50-inputs-seed"
+              },
+              {
+                "title": "Resolution",
+                "placeholder": "Resolution",
+                "value": 4096,
+                "workflowPath": [
+                  "50",
+                  "inputs",
+                  "resolution"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "50-inputs-resolution"
+              },
+              {
+                "title": "Max_resolution",
+                "placeholder": "Max_resolution",
+                "value": 4096,
+                "workflowPath": [
+                  "50",
+                  "inputs",
+                  "max_resolution"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "50-inputs-max_resolution"
+              },
+              {
+                "title": "Batch_size",
+                "placeholder": "Batch_size",
+                "value": 5,
+                "workflowPath": [
+                  "50",
+                  "inputs",
+                  "batch_size"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "50-inputs-batch_size"
+              },
+              {
+                "title": "Uniform_batch_size",
+                "placeholder": "Uniform_batch_size",
+                "value": false,
+                "workflowPath": [
+                  "50",
+                  "inputs",
+                  "uniform_batch_size"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "boolean",
+                "validations": {
+                  "required": false
+                },
+                "key": "50-inputs-uniform_batch_size"
+              },
+              {
+                "title": "Color_correction",
+                "placeholder": "Color_correction",
+                "value": "lab",
+                "workflowPath": [
+                  "50",
+                  "inputs",
+                  "color_correction"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "50-inputs-color_correction"
+              },
+              {
+                "title": "Temporal_overlap",
+                "placeholder": "Temporal_overlap",
+                "value": 0,
+                "workflowPath": [
+                  "50",
+                  "inputs",
+                  "temporal_overlap"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "50-inputs-temporal_overlap"
+              },
+              {
+                "title": "Prepend_frames",
+                "placeholder": "Prepend_frames",
+                "value": 0,
+                "workflowPath": [
+                  "50",
+                  "inputs",
+                  "prepend_frames"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "50-inputs-prepend_frames"
+              },
+              {
+                "title": "Input_noise_scale",
+                "placeholder": "Input_noise_scale",
+                "value": 0,
+                "workflowPath": [
+                  "50",
+                  "inputs",
+                  "input_noise_scale"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "50-inputs-input_noise_scale"
+              },
+              {
+                "title": "Latent_noise_scale",
+                "placeholder": "Latent_noise_scale",
+                "value": 0,
+                "workflowPath": [
+                  "50",
+                  "inputs",
+                  "latent_noise_scale"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "50-inputs-latent_noise_scale"
+              },
+              {
+                "title": "Offload_device",
+                "placeholder": "Offload_device",
+                "value": "cuda:0",
+                "workflowPath": [
+                  "50",
+                  "inputs",
+                  "offload_device"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "50-inputs-offload_device"
+              },
+              {
+                "title": "Enable_debug",
+                "placeholder": "Enable_debug",
+                "value": false,
+                "workflowPath": [
+                  "50",
+                  "inputs",
+                  "enable_debug"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "boolean",
+                "validations": {
+                  "required": false
+                },
+                "key": "50-inputs-enable_debug"
+              }
+            ],
+            "key": "50-SeedVR2VideoUpscaler"
+          },
+          {
+            "title": "保存图像",
+            "inputs": [
+              {
+                "title": "Filename_prefix",
+                "placeholder": "Filename_prefix",
+                "value": "屿僳",
+                "workflowPath": [
+                  "53",
+                  "inputs",
+                  "filename_prefix"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "53-inputs-filename_prefix"
+              }
+            ],
+            "key": "53-SaveImage"
+          },
+          {
+            "title": "随机噪波",
+            "inputs": [
+              {
+                "title": "Noise_seed",
+                "placeholder": "Noise_seed",
+                "value": 786729101384370,
+                "workflowPath": [
+                  "55",
+                  "inputs",
+                  "noise_seed"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "seed",
+                "validations": {
+                  "required": true
+                },
+                "key": "55-inputs-noise_seed"
+              }
+            ],
+            "key": "55-RandomNoise"
+          },
+          {
+            "title": "加载VAE",
+            "inputs": [
+              {
+                "title": "Vae_name",
+                "placeholder": "Vae_name",
+                "value": "Flux\\flux2-vae.safetensors",
+                "workflowPath": [
+                  "63",
+                  "inputs",
+                  "vae_name"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "63-inputs-vae_name"
+              }
+            ],
+            "key": "63-VAELoader"
+          },
+          {
+            "title": "CFG引导器",
+            "inputs": [
+              {
+                "title": "Cfg",
+                "placeholder": "Cfg",
+                "value": 1,
+                "workflowPath": [
+                  "66",
+                  "inputs",
+                  "cfg"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "66-inputs-cfg"
+              }
+            ],
+            "key": "66-CFGGuider"
+          },
+          {
+            "title": "Flux2 调度 / 步数",
+            "inputs": [
+              {
+                "title": "Steps",
+                "placeholder": "Steps",
+                "value": 4,
+                "workflowPath": [
+                  "67",
+                  "inputs",
+                  "steps"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "67-inputs-steps"
+              }
+            ],
+            "key": "67-Flux2Scheduler"
+          },
+          {
+            "title": "K采样器选择",
+            "inputs": [
+              {
+                "title": "Sampler_name",
+                "placeholder": "Sampler_name",
+                "value": "euler",
+                "workflowPath": [
+                  "68",
+                  "inputs",
+                  "sampler_name"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "68-inputs-sampler_name"
+              }
+            ],
+            "key": "68-KSamplerSelect"
+          },
+          {
+            "title": "Color Match",
+            "inputs": [
+              {
+                "title": "Method",
+                "placeholder": "Method",
+                "value": "mkl",
+                "workflowPath": [
+                  "73",
+                  "inputs",
+                  "method"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "73-inputs-method"
+              },
+              {
+                "title": "Strength",
+                "placeholder": "Strength",
+                "value": 0.65,
+                "workflowPath": [
+                  "73",
+                  "inputs",
+                  "strength"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "float",
+                "validations": {
+                  "required": true
+                },
+                "key": "73-inputs-strength"
+              },
+              {
+                "title": "Multithread",
+                "placeholder": "Multithread",
+                "value": true,
+                "workflowPath": [
+                  "73",
+                  "inputs",
+                  "multithread"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "boolean",
+                "validations": {
+                  "required": false
+                },
+                "key": "73-inputs-multithread"
+              }
+            ],
+            "key": "73-ColorMatch"
+          },
+          {
+            "title": "Flux2 目标潜空间",
+            "inputs": [
+              {
+                "title": "Batch_size",
+                "placeholder": "Batch_size",
+                "value": 1,
+                "workflowPath": [
+                  "77",
+                  "inputs",
+                  "batch_size"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "77-inputs-batch_size"
+              }
+            ],
+            "key": "77-EmptyFlux2LatentImage"
+          },
+          {
+            "title": "缩放图像（像素）",
+            "inputs": [
+              {
+                "title": "Upscale_method",
+                "placeholder": "Upscale_method",
+                "value": "lanczos",
+                "workflowPath": [
+                  "79",
+                  "inputs",
+                  "upscale_method"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "79-inputs-upscale_method"
+              },
+              {
+                "title": "Megapixels",
+                "placeholder": "Megapixels",
+                "value": 2.5000000000000004,
+                "workflowPath": [
+                  "79",
+                  "inputs",
+                  "megapixels"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "float",
+                "validations": {
+                  "required": true
+                },
+                "key": "79-inputs-megapixels"
+              },
+              {
+                "title": "Resolution_steps",
+                "placeholder": "Resolution_steps",
+                "value": 1,
+                "workflowPath": [
+                  "79",
+                  "inputs",
+                  "resolution_steps"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "79-inputs-resolution_steps"
+              }
+            ],
+            "key": "79-ImageScaleToTotalPixels"
+          },
+          {
+            "title": "加载CLIP",
+            "inputs": [
+              {
+                "title": "Clip_name",
+                "placeholder": "Clip_name",
+                "value": "Qwen\\qwen_3_8b_fp8mixed.safetensors",
+                "workflowPath": [
+                  "80",
+                  "inputs",
+                  "clip_name"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "80-inputs-clip_name"
+              },
+              {
+                "title": "Type",
+                "placeholder": "Type",
+                "value": "flux2",
+                "workflowPath": [
+                  "80",
+                  "inputs",
+                  "type"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "80-inputs-type"
+              },
+              {
+                "title": "Device",
+                "placeholder": "Device",
+                "value": "default",
+                "workflowPath": [
+                  "80",
+                  "inputs",
+                  "device"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "80-inputs-device"
+              }
+            ],
+            "key": "80-CLIPLoader"
+          },
+          {
+            "title": "LoRA加载器（仅模型）",
+            "inputs": [
+              {
+                "title": "Lora_name",
+                "placeholder": "Lora_name",
+                "value": "klein_9B_Turbo_r128.safetensors",
+                "workflowPath": [
+                  "84",
+                  "inputs",
+                  "lora_name"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "84-inputs-lora_name"
+              },
+              {
+                "title": "Strength_model",
+                "placeholder": "Strength_model",
+                "value": 0.2,
+                "workflowPath": [
+                  "84",
+                  "inputs",
+                  "strength_model"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "float",
+                "validations": {
+                  "required": true
+                },
+                "key": "84-inputs-strength_model"
+              }
+            ],
+            "key": "84-LoraLoaderModelOnly"
+          },
+          {
+            "title": "LoRA加载器（仅模型）",
+            "inputs": [
+              {
+                "title": "Lora_name",
+                "placeholder": "Lora_name",
+                "value": "f2k_9B_lcs_consist_20260415.safetensors",
+                "workflowPath": [
+                  "85",
+                  "inputs",
+                  "lora_name"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "85-inputs-lora_name"
+              },
+              {
+                "title": "Strength_model",
+                "placeholder": "Strength_model",
+                "value": 1,
+                "workflowPath": [
+                  "85",
+                  "inputs",
+                  "strength_model"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "85-inputs-strength_model"
+              }
+            ],
+            "key": "85-LoraLoaderModelOnly"
+          },
+          {
+            "title": "UNet加载器",
+            "inputs": [
+              {
+                "title": "Unet_name",
+                "placeholder": "Unet_name",
+                "value": "Flux\\Flux.2-Klein\\flux-2-klein-9b-fp8.safetensors",
+                "workflowPath": [
+                  "87",
+                  "inputs",
+                  "unet_name"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "87-inputs-unet_name"
+              },
+              {
+                "title": "Weight_dtype",
+                "placeholder": "Weight_dtype",
+                "value": "default",
+                "workflowPath": [
+                  "87",
+                  "inputs",
+                  "weight_dtype"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "87-inputs-weight_dtype"
+              }
+            ],
+            "key": "87-UNETLoader"
+          },
+          {
+            "title": "SeedVR2 (Down)Load DiT Model",
+            "inputs": [
+              {
+                "title": "Model",
+                "placeholder": "Model",
+                "value": "seedvr2_ema_3b_fp8_e4m3fn.safetensors",
+                "workflowPath": [
+                  "172",
+                  "inputs",
+                  "model"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "172-inputs-model"
+              },
+              {
+                "title": "Device",
+                "placeholder": "Device",
+                "value": "cuda:0",
+                "workflowPath": [
+                  "172",
+                  "inputs",
+                  "device"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "172-inputs-device"
+              },
+              {
+                "title": "Blocks_to_swap",
+                "placeholder": "Blocks_to_swap",
+                "value": 0,
+                "workflowPath": [
+                  "172",
+                  "inputs",
+                  "blocks_to_swap"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "172-inputs-blocks_to_swap"
+              },
+              {
+                "title": "Swap_io_components",
+                "placeholder": "Swap_io_components",
+                "value": false,
+                "workflowPath": [
+                  "172",
+                  "inputs",
+                  "swap_io_components"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "boolean",
+                "validations": {
+                  "required": false
+                },
+                "key": "172-inputs-swap_io_components"
+              },
+              {
+                "title": "Offload_device",
+                "placeholder": "Offload_device",
+                "value": "cuda:0",
+                "workflowPath": [
+                  "172",
+                  "inputs",
+                  "offload_device"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "172-inputs-offload_device"
+              },
+              {
+                "title": "Cache_model",
+                "placeholder": "Cache_model",
+                "value": "sdpa",
+                "workflowPath": [
+                  "172",
+                  "inputs",
+                  "cache_model"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "172-inputs-cache_model"
+              },
+              {
+                "title": "Attention_mode",
+                "placeholder": "Attention_mode",
+                "value": "sdpa",
+                "workflowPath": [
+                  "172",
+                  "inputs",
+                  "attention_mode"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "172-inputs-attention_mode"
+              }
+            ],
+            "key": "172-SeedVR2LoadDiTModel"
+          }
+        ],
+        "id": "abf870fe7ef45"
+      },
+      "workflowApiJSON": {
+        "48": {
+          "inputs": {
+            "model": "ema_vae_fp16.safetensors",
+            "device": "cuda:0",
+            "encode_tiled": true,
+            "encode_tile_size": 1024,
+            "encode_tile_overlap": 128,
+            "decode_tiled": true,
+            "decode_tile_size": 1024,
+            "decode_tile_overlap": 128,
+            "tile_debug": "false",
+            "offload_device": "cpu",
+            "cache_model": false
+          },
+          "class_type": "SeedVR2LoadVAEModel",
+          "_meta": {
+            "title": "SeedVR2 (Down)Load VAE Model"
+          }
+        },
+        "50": {
+          "inputs": {
+            "seed": 3615735077,
+            "resolution": 4096,
+            "max_resolution": 4096,
+            "batch_size": 5,
+            "uniform_batch_size": false,
+            "color_correction": "lab",
+            "temporal_overlap": 0,
+            "prepend_frames": 0,
+            "input_noise_scale": 0,
+            "latent_noise_scale": 0,
+            "offload_device": "cuda:0",
+            "enable_debug": false,
+            "image": [
+              "73",
+              0
+            ],
+            "dit": [
+              "172",
+              0
+            ],
+            "vae": [
+              "48",
+              0
+            ]
+          },
+          "class_type": "SeedVR2VideoUpscaler",
+          "_meta": {
+            "title": "SeedVR2 Video Upscaler (v2.5.24)"
+          }
+        },
+        "51": {
+          "inputs": {
+            "rgthree_comparer": {
+              "images": [
+                {
+                  "name": "A",
+                  "selected": true,
+                  "url": "/api/view?filename=rgthree.compare._temp_ccxgg_00003_.png&type=temp&subfolder=&rand=0.33372808047364266"
+                },
+                {
+                  "name": "B",
+                  "selected": true,
+                  "url": "/api/view?filename=rgthree.compare._temp_ccxgg_00004_.png&type=temp&subfolder=&rand=0.663265969772684"
+                }
+              ]
+            },
+            "image_a": [
+              "82",
+              0
+            ],
+            "image_b": [
+              "50",
+              0
+            ]
+          },
+          "class_type": "Image Comparer (rgthree)",
+          "_meta": {
+            "title": "图像对比"
+          }
+        },
+        "53": {
+          "inputs": {
+            "filename_prefix": "屿僳",
+            "images": [
+              "50",
+              0
+            ]
+          },
+          "class_type": "SaveImage",
+          "_meta": {
+            "title": "保存图像"
+          }
+        },
+        "54": {
+          "inputs": {
+            "samples": [
+              "56",
+              0
+            ],
+            "vae": [
+              "63",
+              0
+            ]
+          },
+          "class_type": "VAEDecode",
+          "_meta": {
+            "title": "VAE解码"
+          }
+        },
+        "55": {
+          "inputs": {
+            "noise_seed": 786729101384370
+          },
+          "class_type": "RandomNoise",
+          "_meta": {
+            "title": "随机噪波"
+          }
+        },
+        "56": {
+          "inputs": {
+            "noise": [
+              "55",
+              0
+            ],
+            "guider": [
+              "66",
+              0
+            ],
+            "sampler": [
+              "68",
+              0
+            ],
+            "sigmas": [
+              "67",
+              0
+            ],
+            "latent_image": [
+              "77",
+              0
+            ]
+          },
+          "class_type": "SamplerCustomAdvanced",
+          "_meta": {
+            "title": "自定义采样器（高级）"
+          }
+        },
+        "58": {
+          "inputs": {
+            "pixels": [
+              "79",
+              0
+            ],
+            "vae": [
+              "63",
+              0
+            ]
+          },
+          "class_type": "VAEEncode",
+          "_meta": {
+            "title": "VAE编码"
+          }
+        },
+        "59": {
+          "inputs": {
+            "conditioning": [
+              "78",
+              0
+            ],
+            "latent": [
+              "58",
+              0
+            ]
+          },
+          "class_type": "ReferenceLatent",
+          "_meta": {
+            "title": "正向图像潜空间注入"
+          }
+        },
+        "60": {
+          "inputs": {
+            "conditioning": [
+              "61",
+              0
+            ],
+            "latent": [
+              "58",
+              0
+            ]
+          },
+          "class_type": "ReferenceLatent",
+          "_meta": {
+            "title": "负向潜空间抑制"
+          }
+        },
+        "61": {
+          "inputs": {
+            "conditioning": [
+              "78",
+              0
+            ]
+          },
+          "class_type": "ConditioningZeroOut",
+          "_meta": {
+            "title": "条件零化"
+          }
+        },
+        "63": {
+          "inputs": {
+            "vae_name": "Flux\\flux2-vae.safetensors"
+          },
+          "class_type": "VAELoader",
+          "_meta": {
+            "title": "加载VAE"
+          }
+        },
+        "66": {
+          "inputs": {
+            "cfg": 1,
+            "model": [
+              "85",
+              0
+            ],
+            "positive": [
+              "59",
+              0
+            ],
+            "negative": [
+              "60",
+              0
+            ]
+          },
+          "class_type": "CFGGuider",
+          "_meta": {
+            "title": "CFG引导器"
+          }
+        },
+        "67": {
+          "inputs": {
+            "steps": 4,
+            "width": [
+              "69",
+              0
+            ],
+            "height": [
+              "69",
+              1
+            ]
+          },
+          "class_type": "Flux2Scheduler",
+          "_meta": {
+            "title": "Flux2 调度 / 步数"
+          }
+        },
+        "68": {
+          "inputs": {
+            "sampler_name": "euler"
+          },
+          "class_type": "KSamplerSelect",
+          "_meta": {
+            "title": "K采样器选择"
+          }
+        },
+        "69": {
+          "inputs": {
+            "image": [
+              "79",
+              0
+            ]
+          },
+          "class_type": "GetImageSize",
+          "_meta": {
+            "title": "获取图像尺寸"
+          }
+        },
+        "73": {
+          "inputs": {
+            "method": "mkl",
+            "strength": 0.65,
+            "multithread": true,
+            "image_ref": [
+              "82",
+              0
+            ],
+            "image_target": [
+              "54",
+              0
+            ]
+          },
+          "class_type": "ColorMatch",
+          "_meta": {
+            "title": "Color Match"
+          }
+        },
+        "77": {
+          "inputs": {
+            "width": [
+              "69",
+              0
+            ],
+            "height": [
+              "69",
+              1
+            ],
+            "batch_size": 1
+          },
+          "class_type": "EmptyFlux2LatentImage",
+          "_meta": {
+            "title": "Flux2 目标潜空间"
+          }
+        },
+        "78": {
+          "inputs": {
+            "text": "将原图进行高清画质修复与清晰度增强，仅提升画面质量，不改变画面风格、人物风格及整体视觉效果。严格保持原始画面内容、主体姿态、人物身份、五官特征、服装款式、构图、背景环境、光影关系和色彩氛围不变，不新增、不删减、不替换任何物体或细节，也不进行风格化重绘。",
+            "clip": [
+              "80",
+              0
+            ]
+          },
+          "class_type": "CLIPTextEncode",
+          "_meta": {
+            "title": "CLIP文本编码"
+          }
+        },
+        "79": {
+          "inputs": {
+            "upscale_method": "lanczos",
+            "megapixels": 2.5000000000000004,
+            "resolution_steps": 1,
+            "image": [
+              "82",
+              0
+            ]
+          },
+          "class_type": "ImageScaleToTotalPixels",
+          "_meta": {
+            "title": "缩放图像（像素）"
+          }
+        },
+        "80": {
+          "inputs": {
+            "clip_name": "Qwen\\qwen_3_8b_fp8mixed.safetensors",
+            "type": "flux2",
+            "device": "default"
+          },
+          "class_type": "CLIPLoader",
+          "_meta": {
+            "title": "加载CLIP"
+          }
+        },
+        "82": {
+          "inputs": {
+            "image": "屏幕截图 2026-08-01 231735.png"
+          },
+          "class_type": "LoadImage",
+          "_meta": {
+            "title": "加载图像"
+          }
+        },
+        "84": {
+          "inputs": {
+            "lora_name": "klein_9B_Turbo_r128.safetensors",
+            "strength_model": 0.2,
+            "model": [
+              "87",
+              0
+            ]
+          },
+          "class_type": "LoraLoaderModelOnly",
+          "_meta": {
+            "title": "LoRA加载器（仅模型）"
+          }
+        },
+        "85": {
+          "inputs": {
+            "lora_name": "f2k_9B_lcs_consist_20260415.safetensors",
+            "strength_model": 1,
+            "model": [
+              "84",
+              0
+            ]
+          },
+          "class_type": "LoraLoaderModelOnly",
+          "_meta": {
+            "title": "LoRA加载器（仅模型）"
+          }
+        },
+        "87": {
+          "inputs": {
+            "unet_name": "Flux\\Flux.2-Klein\\flux-2-klein-9b-fp8.safetensors",
+            "weight_dtype": "default"
+          },
+          "class_type": "UNETLoader",
+          "_meta": {
+            "title": "UNet加载器"
+          }
+        },
+        "94": {
+          "inputs": {
+            "images": [
+              "73",
+              0
+            ]
+          },
+          "class_type": "PreviewImage",
+          "_meta": {
+            "title": "预览图像"
+          }
+        },
+        "172": {
+          "inputs": {
+            "model": "seedvr2_ema_3b_fp8_e4m3fn.safetensors",
+            "device": "cuda:0",
+            "blocks_to_swap": 0,
+            "swap_io_components": false,
+            "offload_device": "cuda:0",
+            "cache_model": "sdpa",
+            "attention_mode": "sdpa"
+          },
+          "class_type": "SeedVR2LoadDiTModel",
+          "_meta": {
+            "title": "SeedVR2 (Down)Load DiT Model"
           }
         }
       }
