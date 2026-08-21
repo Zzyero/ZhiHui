@@ -21,6 +21,8 @@ export interface IInputField {
     range?: { min?: number, max?: number };
     tooltip?: string;
     visibility?: InputVisibility;
+    /** 是否开放给智能体修改（编辑页勾选；默认仅 long-text 提示词开放） */
+    agentExposed?: boolean;
 }
 
 export interface IMultiValueInput {

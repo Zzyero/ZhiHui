@@ -8,12 +8,21 @@ export interface IAgentSettings {
     apiKey: string;
     /** 模型名，例如 qwen2.5:7b / deepseek-chat */
     model: string;
+    /** 采样温度 */
+    temperature?: number;
+    /** 单次生成最大 token 数 */
+    maxTokens?: number;
+    /** 智能体每轮最多迭代（工具调用）次数 */
+    maxRounds?: number;
 }
 
 const DEFAULT_SETTINGS: IAgentSettings = {
     baseUrl: "http://localhost:11434/v1",
     apiKey: "",
     model: "",
+    temperature: 0.7,
+    maxTokens: 4096,
+    maxRounds: 6,
 };
 
 const DEFAULT_DATA_DIR = path.join(process.cwd(), "data");
@@ -58,6 +67,9 @@ class AgentSettingsService {
             baseUrl: typeof settings.baseUrl === "string" ? settings.baseUrl : current.baseUrl,
             apiKey: typeof settings.apiKey === "string" ? settings.apiKey : current.apiKey,
             model: typeof settings.model === "string" ? settings.model : current.model,
+            temperature: typeof settings.temperature === "number" ? settings.temperature : current.temperature,
+            maxTokens: typeof settings.maxTokens === "number" ? settings.maxTokens : current.maxTokens,
+            maxRounds: typeof settings.maxRounds === "number" ? settings.maxRounds : current.maxRounds,
         };
         await this.persist(next);
         return next;

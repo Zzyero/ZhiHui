@@ -1,0 +1,27 @@
+{
+  "skills": [
+    {
+      "name": "image-prompt",
+      "description": "图片生成提示词规范：构图、光线、风格、画质、比例。",
+      "mediaType": "image",
+      "file": "image-prompt.md"
+    },
+    {
+      "name": "video-prompt",
+      "description": "视频生成提示词规范：镜头运动命令、时长、分辨率。",
+      "mediaType": "video",
+      "file": "video-prompt.md"
+    },
+    {
+      "name": "music-prompt",
+      "description": "音乐生成提示词规范：流派、情绪、器乐、歌词结构标签。",
+      "mediaType": "audio",
+      "titleKeywords": [
+        "音乐",
+        "歌曲",
+        "music"
+      ],
+      "file": "music-prompt.md"
+    }
+  ]
+}

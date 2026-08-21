@@ -1,6 +1,6 @@
 
 import React from "react";
-import { useFieldArray, type UseFieldArrayReturn, type UseFormReturn } from "react-hook-form"
+import { useFieldArray, useFormContext, type UseFieldArrayReturn, type UseFormReturn } from "react-hook-form"
 import {
     Form,
     FormControl,
@@ -20,7 +20,7 @@ import { AutoGrowTextarea } from "@/components/ui/auto-grow-textarea";
 import { CHECKBOX_STYLE, FORM_STYLE, TEXT_AREA_STYLE } from "@/components/styles";
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Checkbox } from "@/components/ui/checkbox";
-import { Trash2, Info, Check, SquarePen, MoveUp, MoveDown, Brush, Undo2, Eye, EyeOff } from "lucide-react";
+import { Trash2, Info, Check, SquarePen, MoveUp, MoveDown, Brush, Undo2, Eye, EyeOff, Bot } from "lucide-react";
 import { Dropzone } from "@/components/ui/dropzone";
 import { ChevronsUpDown } from "lucide-react"
 import {
@@ -1615,10 +1615,46 @@ function FieldActionButtons(props: {
 }) {
 
     const { remove, toggleVisibility, index, setShowEditDialog, input, field } = props;
+    const { setValue, watch } = useFormContext();
     const isHidden = input.visibility === 'hidden';
+    // 统一成点号路径（react-hook-form 内部用点号），并把末尾 .value 换成 .agentExposed
+    const agentExposedPath = (() => {
+        const raw = field?.name ? String(field.name) : "";
+        if (!raw) return undefined;
+        const dot = raw.replace(/\[(\d+)\]/g, ".$1");
+        return dot.replace(/\.value$/, ".agentExposed");
+    })();
+    // 用 watch 订阅该字段，setValue 后能即时刷新按钮状态
+    const watchedAgentExposed = agentExposedPath ? watch(agentExposedPath) : undefined;
+    const isAgentExposed = watchedAgentExposed === true || (watchedAgentExposed === undefined && input.valueType === "long-text");
+
+    const handleToggleAgentExposed = () => {
+        if (!agentExposedPath) return;
+        setValue(agentExposedPath, !isAgentExposed);
+    };
 
     return (
         <div className="flex items-center gap-1 ml-auto">
+            <Tooltip>
+                <TooltipTrigger asChild>
+                    <Button
+                        type="button"
+                        size="icon"
+                        variant={isAgentExposed ? "default" : "ghost"}
+                        className={isAgentExposed ? "" : "text-muted-foreground"}
+                        onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleToggleAgentExposed();
+                        }}
+                    >
+                        <Bot className="size-5" />
+                    </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                    {isAgentExposed ? <p>智能体可修改该参数（点击关闭）</p> : <p>开放给智能体修改该参数</p>}
+                </TooltipContent>
+            </Tooltip>
             <Button
                 type="button"
                 size="icon"

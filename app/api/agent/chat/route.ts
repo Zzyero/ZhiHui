@@ -1,5 +1,5 @@
 import { type NextRequest, NextResponse } from "next/server";
-import { agentService } from "@/app/services/agent-service";
+import { agentService, type IAgentProgressEvent } from "@/app/services/agent-service";
 
 export const dynamic = "force-dynamic";
 
@@ -19,8 +19,30 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "message is required" }, { status: 400 });
         }
 
-        const assistantMessage = await agentService.chat(sessionId, message, attachments);
-        return NextResponse.json({ message: assistantMessage });
+        const encoder = new TextEncoder();
+        const stream = new ReadableStream<Uint8Array>({
+            async start(controller) {
+                const emit = (event: IAgentProgressEvent) => {
+                    controller.enqueue(encoder.encode(`event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`));
+                };
+                try {
+                    const assistantMessage = await agentService.chat(sessionId, message, attachments, emit);
+                    emit({ type: "done", message: assistantMessage });
+                } catch (error) {
+                    emit({ type: "error", error: error instanceof Error ? error.message : String(error) });
+                } finally {
+                    controller.close();
+                }
+            },
+        });
+
+        return new NextResponse(stream, {
+            headers: {
+                "Content-Type": "text/event-stream",
+                "Cache-Control": "no-cache, no-transform",
+                "Connection": "keep-alive",
+            },
+        });
     } catch (error) {
         console.error("POST /api/agent/chat failed", error);
         const msg = error instanceof Error ? error.message : "Failed to chat";

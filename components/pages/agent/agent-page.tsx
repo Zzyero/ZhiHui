@@ -3,19 +3,30 @@
 import * as React from "react"
 import { toast } from "sonner"
 import type { IAgentMessage, IAgentSessionSummary } from "@/app/services/agent-service"
+import { useViewComfy, ActionType } from "@/app/providers/view-comfy-provider"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
 import { ArrowUp, Loader2, MessageSquare, Paperclip, Pencil, Plus, Sparkles, Trash2, X } from "lucide-react"
-import { ImageDialog, type IOutput } from "@/components/pages/playground/playground-page"
+import { ImageDialog, VideoDialog, AudioDialog, type IOutput } from "@/components/pages/playground/playground-page"
 
 function mimeFor(name: string): string {
     const ext = name.toLowerCase().split(".").pop() || ""
     const map: Record<string, string> = {
         png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", webp: "image/webp", gif: "image/gif",
-        mp4: "video/mp4", webm: "video/webm", mp3: "audio/mpeg", wav: "audio/wav",
+        mp4: "video/mp4", webm: "video/webm", mov: "video/quicktime", mkv: "video/x-matroska", avi: "video/x-msvideo",
+        mp3: "audio/mpeg", wav: "audio/wav", flac: "audio/flac", ogg: "audio/ogg", m4a: "audio/mp4", aac: "audio/aac",
     }
     return map[ext] || "image/png"
+}
+
+function statusLabel(e: { phase?: string; skill?: string; workflowTitle?: string }): string {
+    switch (e.phase) {
+        case "reading-skill": return "读取技能 " + (e.skill || "") + "…"
+        case "generating": return "生成中" + (e.workflowTitle ? "（" + e.workflowTitle + "）" : "") + "…"
+        case "thinking": return "思考中…"
+        default: return "处理中…"
+    }
 }
 
 export default function AgentPage() {
@@ -25,6 +36,8 @@ export default function AgentPage() {
     const [input, setInput] = React.useState("")
     const [attachments, setAttachments] = React.useState<File[]>([])
     const [loading, setLoading] = React.useState(false)
+    const [status, setStatus] = React.useState<string | null>(null)
+    const { viewComfyStateDispatcher } = useViewComfy()
     const fileInputRef = React.useRef<HTMLInputElement>(null)
     const textareaRef = React.useRef<HTMLTextAreaElement>(null)
     const scrollRef = React.useRef<HTMLDivElement>(null)
@@ -139,6 +152,7 @@ export default function AgentPage() {
         setInput("")
         setAttachments([])
         setLoading(true)
+        setStatus("思考中…")
         if (textareaRef.current) textareaRef.current.style.height = "auto"
 
         const formData = new FormData()
@@ -148,14 +162,86 @@ export default function AgentPage() {
 
         try {
             const res = await fetch("/api/agent/chat", { method: "POST", body: formData })
-            const data = await res.json()
-            if (!res.ok) throw new Error(data.error || "发送失败")
-            setMessages((prev) => [...prev, data.message])
+            if (!res.ok) {
+                let err = "发送失败"
+                try {
+                    const t = await res.text()
+                    const j = JSON.parse(t)
+                    err = j.error || err
+                } catch { /* ignore */ }
+                throw new Error(err)
+            }
+            if (!res.body) throw new Error("浏览器不支持流式响应")
+
+            const reader = res.body.getReader()
+            const decoder = new TextDecoder()
+            let buffer = ""
+            let finalMessage: IAgentMessage | null = null
+            let errorMsg: string | null = null
+
+            while (true) {
+                const { done, value } = await reader.read()
+                if (done) break
+                buffer += decoder.decode(value, { stream: true })
+                const events = buffer.split("\n\n")
+                buffer = events.pop() || ""
+                for (const eventText of events) {
+                    let eventName = "message"
+                    let data = ""
+                    for (const raw of eventText.split("\n")) {
+                        const line = raw.trimEnd()
+                        if (line.startsWith("event:")) eventName = line.substring(6).trim()
+                        else if (line.startsWith("data:")) data += (data ? "\n" : "") + line.substring(5).trim()
+                    }
+                    if (!data) continue
+                    try {
+                        const obj = JSON.parse(data)
+                        if (eventName === "status") setStatus(statusLabel(obj))
+                        else if (eventName === "done") finalMessage = obj.message
+                        else if (eventName === "error") errorMsg = obj.error || "生成失败"
+                        else if (eventName === "queue") {
+                            const section = obj.sectionName || "智能体"
+                            if (obj.queueStatus === "queued" && obj.promptId) {
+                                viewComfyStateDispatcher({
+                                    type: ActionType.ADD_TO_QUEUE,
+                                    payload: {
+                                        sectionName: section,
+                                        prompt: {
+                                            promptId: obj.promptId,
+                                            sectionName: section,
+                                            workflowTitle: obj.workflowTitle || "智能体任务",
+                                            status: "queued",
+                                            queuedAt: Date.now(),
+                                        },
+                                    },
+                                })
+                            } else if (obj.promptId) {
+                                viewComfyStateDispatcher({
+                                    type: ActionType.UPDATE_QUEUE_ITEM,
+                                    payload: {
+                                        promptId: obj.promptId,
+                                        updates: {
+                                            status: obj.queueStatus,
+                                            ...(obj.realPromptId ? { realPromptId: obj.realPromptId } : {}),
+                                            ...(obj.queueStatus === "running" ? { startedAt: Date.now() } : {}),
+                                        },
+                                    },
+                                })
+                            }
+                        }
+                    } catch { /* ignore malformed */ }
+                }
+            }
+
+            if (errorMsg) throw new Error(errorMsg)
+            if (finalMessage) setMessages((prev) => [...prev, finalMessage])
+            else throw new Error("未收到回复")
             await loadSessions()
         } catch (error) {
             toast.error(error instanceof Error ? error.message : "发送失败")
         } finally {
             setLoading(false)
+            setStatus(null)
         }
     }
 
@@ -350,20 +436,29 @@ export default function AgentPage() {
                                             ) : (
                                                 <div className="text-[15px] leading-relaxed text-foreground">
                                                     {m.content && <div className="whitespace-pre-wrap">{m.content}</div>}
-                                                    {m.images?.map((img, i) => (
-                                                        <ImageDialog
-                                                            key={i}
-                                                            output={{
-                                                                filename: img.name,
-                                                                contentType: mimeFor(img.name),
-                                                                url: "/api/agent/file/outputs/" + img.name,
-                                                                size: 0,
-                                                            }}
-                                                            showOutputFileName={false}
-                                                            onAddToGallery={(output) => handleAddToGallery(output, img.workflowTitle, img.workflowId)}
-                                                            className="mt-3 h-auto max-h-80 w-auto rounded-xl border border-border/50 shadow-sm"
-                                                        />
-                                                    ))}
+                                                    {m.outputs?.map((o, i) => {
+                                                        const output: IOutput = {
+                                                            filename: o.name,
+                                                            contentType: mimeFor(o.name),
+                                                            url: "/api/agent/file/outputs/" + o.name,
+                                                            size: 0,
+                                                        }
+                                                        if (o.type === "video") {
+                                                            return <VideoDialog key={i} output={output} showOutputFileName={false} />
+                                                        }
+                                                        if (o.type === "audio") {
+                                                            return <AudioDialog key={i} output={output} />
+                                                        }
+                                                        return (
+                                                            <ImageDialog
+                                                                key={i}
+                                                                output={output}
+                                                                showOutputFileName={false}
+                                                                onAddToGallery={(out) => handleAddToGallery(out, o.workflowTitle, o.workflowId)}
+                                                                className="mt-3 h-auto max-h-80 w-auto rounded-xl border border-border/50 shadow-sm"
+                                                            />
+                                                        )
+                                                    })}
                                                 </div>
                                             )}
                                         </div>
@@ -374,10 +469,9 @@ export default function AgentPage() {
                                         <div className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-muted">
                                             <Sparkles className="size-3.5 text-muted-foreground" />
                                         </div>
-                                        <div className="flex items-center gap-1 py-1">
-                                            <span className="size-1.5 animate-bounce rounded-full bg-muted-foreground/60" />
-                                            <span className="size-1.5 animate-bounce rounded-full bg-muted-foreground/60" style={{ animationDelay: "0.15s" }} />
-                                            <span className="size-1.5 animate-bounce rounded-full bg-muted-foreground/60" style={{ animationDelay: "0.3s" }} />
+                                        <div className="flex items-center gap-2 py-1 text-sm text-muted-foreground">
+                                            <Loader2 className="size-4 animate-spin" />
+                                            <span>{status || "思考中…"}</span>
                                         </div>
                                     </div>
                                 )}
