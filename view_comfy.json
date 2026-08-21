@@ -11,7 +11,8 @@
         "我的工作流 1",
         "Qwen-image图像生成（四步加速）",
         "Qwen-Image图像生成",
-        "Qwen-Image多图参考生图"
+        "Qwen-Image多图参考生图",
+        "Minimax h3参考生图"
       ]
     },
     {
@@ -44,7 +45,8 @@
         "音频编辑",
         "音频克隆",
         "音频音色转换",
-        "视频音色转换"
+        "视频音色转换",
+        "音乐生成"
       ]
     }
   ],
@@ -15641,6 +15643,29 @@
               }
             ],
             "key": "353-LoadImage"
+          },
+          {
+            "title": "🔤 CR Text",
+            "inputs": [
+              {
+                "title": "Text",
+                "placeholder": "Text",
+                "value": "图像1和图像2的两人，在图像3的背景下拥抱",
+                "workflowPath": [
+                  "355",
+                  "inputs",
+                  "text"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "355-inputs-text"
+              }
+            ],
+            "key": "355-CR Text"
           }
         ],
         "advancedInputs": [
@@ -15934,29 +15959,6 @@
               }
             ],
             "key": "339-UNETLoader"
-          },
-          {
-            "title": "🔤 CR Text",
-            "inputs": [
-              {
-                "title": "Text",
-                "placeholder": "Text",
-                "value": "图像1和图像2的两人，在图像3的背景下拥抱",
-                "workflowPath": [
-                  "355",
-                  "inputs",
-                  "text"
-                ],
-                "helpText": "Helper Text",
-                "tooltip": "",
-                "valueType": "string",
-                "validations": {
-                  "required": true
-                },
-                "key": "355-inputs-text"
-              }
-            ],
-            "key": "355-CR Text"
           },
           {
             "title": "空Latent图像",
@@ -17802,6 +17804,3497 @@
           "class_type": "SeedVR2LoadDiTModel",
           "_meta": {
             "title": "SeedVR2 (Down)Load DiT Model"
+          }
+        }
+      }
+    },
+    {
+      "viewComfyJSON": {
+        "title": "MinimaxH3 全能参考生成视频",
+        "description": "",
+        "viewcomfyEndpoint": "",
+        "previewImages": [],
+        "inputs": [
+          {
+            "title": "加载图像",
+            "inputs": [
+              {
+                "title": "加载图像",
+                "placeholder": "加载图像",
+                "value": null,
+                "workflowPath": [
+                  "137",
+                  "inputs",
+                  "image"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "image",
+                "validations": {
+                  "required": false
+                },
+                "key": "137-inputs-image"
+              }
+            ],
+            "key": "137-LoadImage"
+          },
+          {
+            "title": "加载图像",
+            "inputs": [
+              {
+                "title": "加载图像",
+                "placeholder": "加载图像",
+                "value": null,
+                "workflowPath": [
+                  "139",
+                  "inputs",
+                  "image"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "image",
+                "validations": {
+                  "required": false
+                },
+                "key": "139-inputs-image"
+              }
+            ],
+            "key": "139-LoadImage"
+          },
+          {
+            "title": "加载图像",
+            "inputs": [
+              {
+                "title": "加载图像",
+                "placeholder": "加载图像",
+                "value": null,
+                "workflowPath": [
+                  "147",
+                  "inputs",
+                  "image"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "image",
+                "validations": {
+                  "required": false
+                },
+                "key": "147-inputs-image"
+              }
+            ],
+            "key": "147-LoadImage"
+          },
+          {
+            "title": "加载图像",
+            "inputs": [
+              {
+                "title": "加载图像",
+                "placeholder": "加载图像",
+                "value": null,
+                "workflowPath": [
+                  "148",
+                  "inputs",
+                  "image"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "image",
+                "validations": {
+                  "required": false
+                },
+                "key": "148-inputs-image"
+              }
+            ],
+            "key": "148-LoadImage"
+          },
+          {
+            "title": "加载图像",
+            "inputs": [
+              {
+                "title": "加载图像",
+                "placeholder": "加载图像",
+                "value": null,
+                "workflowPath": [
+                  "149",
+                  "inputs",
+                  "image"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "image",
+                "validations": {
+                  "required": false
+                },
+                "key": "149-inputs-image"
+              }
+            ],
+            "key": "149-LoadImage"
+          },
+          {
+            "title": "加载图像",
+            "inputs": [
+              {
+                "title": "加载图像",
+                "placeholder": "加载图像",
+                "value": null,
+                "workflowPath": [
+                  "150",
+                  "inputs",
+                  "image"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "image",
+                "validations": {
+                  "required": false
+                },
+                "key": "150-inputs-image"
+              }
+            ],
+            "key": "150-LoadImage"
+          },
+          {
+            "title": "加载图像",
+            "inputs": [
+              {
+                "title": "加载图像",
+                "placeholder": "加载图像",
+                "value": null,
+                "workflowPath": [
+                  "151",
+                  "inputs",
+                  "image"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "image",
+                "validations": {
+                  "required": false
+                },
+                "key": "151-inputs-image"
+              }
+            ],
+            "key": "151-LoadImage"
+          },
+          {
+            "title": "加载图像",
+            "inputs": [
+              {
+                "title": "加载图像",
+                "placeholder": "加载图像",
+                "value": null,
+                "workflowPath": [
+                  "152",
+                  "inputs",
+                  "image"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "image",
+                "validations": {
+                  "required": false
+                },
+                "key": "152-inputs-image"
+              }
+            ],
+            "key": "152-LoadImage"
+          },
+          {
+            "title": "加载图像",
+            "inputs": [
+              {
+                "title": "加载图像",
+                "placeholder": "加载图像",
+                "value": null,
+                "workflowPath": [
+                  "153",
+                  "inputs",
+                  "image"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "image",
+                "validations": {
+                  "required": false
+                },
+                "key": "153-inputs-image"
+              }
+            ],
+            "key": "153-LoadImage"
+          },
+          {
+            "title": "加载视频",
+            "inputs": [
+              {
+                "title": "Video",
+                "placeholder": "Video",
+                "value": null,
+                "workflowPath": [
+                  "154",
+                  "inputs",
+                  "video"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "video",
+                "validations": {
+                  "required": false
+                },
+                "key": "154-inputs-video"
+              },
+              {
+                "title": "Force_rate",
+                "placeholder": "Force_rate",
+                "value": 0,
+                "workflowPath": [
+                  "154",
+                  "inputs",
+                  "force_rate"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "154-inputs-force_rate"
+              },
+              {
+                "title": "Custom_width",
+                "placeholder": "Custom_width",
+                "value": 0,
+                "workflowPath": [
+                  "154",
+                  "inputs",
+                  "custom_width"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "154-inputs-custom_width"
+              },
+              {
+                "title": "Custom_height",
+                "placeholder": "Custom_height",
+                "value": 0,
+                "workflowPath": [
+                  "154",
+                  "inputs",
+                  "custom_height"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "154-inputs-custom_height"
+              },
+              {
+                "title": "Frame_load_cap",
+                "placeholder": "Frame_load_cap",
+                "value": 0,
+                "workflowPath": [
+                  "154",
+                  "inputs",
+                  "frame_load_cap"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "154-inputs-frame_load_cap"
+              },
+              {
+                "title": "Skip_first_frames",
+                "placeholder": "Skip_first_frames",
+                "value": 0,
+                "workflowPath": [
+                  "154",
+                  "inputs",
+                  "skip_first_frames"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "154-inputs-skip_first_frames"
+              },
+              {
+                "title": "Select_every_nth",
+                "placeholder": "Select_every_nth",
+                "value": 1,
+                "workflowPath": [
+                  "154",
+                  "inputs",
+                  "select_every_nth"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "154-inputs-select_every_nth"
+              },
+              {
+                "title": "Format",
+                "placeholder": "Format",
+                "value": "AnimateDiff",
+                "workflowPath": [
+                  "154",
+                  "inputs",
+                  "format"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "154-inputs-format"
+              }
+            ],
+            "key": "154-VHS_LoadVideo"
+          },
+          {
+            "title": "加载视频",
+            "inputs": [
+              {
+                "title": "Video",
+                "placeholder": "Video",
+                "value": null,
+                "workflowPath": [
+                  "155",
+                  "inputs",
+                  "video"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "video",
+                "validations": {
+                  "required": false
+                },
+                "key": "155-inputs-video"
+              },
+              {
+                "title": "Force_rate",
+                "placeholder": "Force_rate",
+                "value": 0,
+                "workflowPath": [
+                  "155",
+                  "inputs",
+                  "force_rate"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "155-inputs-force_rate"
+              },
+              {
+                "title": "Custom_width",
+                "placeholder": "Custom_width",
+                "value": 0,
+                "workflowPath": [
+                  "155",
+                  "inputs",
+                  "custom_width"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "155-inputs-custom_width"
+              },
+              {
+                "title": "Custom_height",
+                "placeholder": "Custom_height",
+                "value": 0,
+                "workflowPath": [
+                  "155",
+                  "inputs",
+                  "custom_height"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "155-inputs-custom_height"
+              },
+              {
+                "title": "Frame_load_cap",
+                "placeholder": "Frame_load_cap",
+                "value": 0,
+                "workflowPath": [
+                  "155",
+                  "inputs",
+                  "frame_load_cap"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "155-inputs-frame_load_cap"
+              },
+              {
+                "title": "Skip_first_frames",
+                "placeholder": "Skip_first_frames",
+                "value": 0,
+                "workflowPath": [
+                  "155",
+                  "inputs",
+                  "skip_first_frames"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "155-inputs-skip_first_frames"
+              },
+              {
+                "title": "Select_every_nth",
+                "placeholder": "Select_every_nth",
+                "value": 1,
+                "workflowPath": [
+                  "155",
+                  "inputs",
+                  "select_every_nth"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "155-inputs-select_every_nth"
+              },
+              {
+                "title": "Format",
+                "placeholder": "Format",
+                "value": "AnimateDiff",
+                "workflowPath": [
+                  "155",
+                  "inputs",
+                  "format"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "155-inputs-format"
+              }
+            ],
+            "key": "155-VHS_LoadVideo"
+          },
+          {
+            "title": "加载视频",
+            "inputs": [
+              {
+                "title": "Video",
+                "placeholder": "Video",
+                "value": null,
+                "workflowPath": [
+                  "156",
+                  "inputs",
+                  "video"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "video",
+                "validations": {
+                  "required": false
+                },
+                "key": "156-inputs-video"
+              },
+              {
+                "title": "Force_rate",
+                "placeholder": "Force_rate",
+                "value": 0,
+                "workflowPath": [
+                  "156",
+                  "inputs",
+                  "force_rate"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "156-inputs-force_rate"
+              },
+              {
+                "title": "Custom_width",
+                "placeholder": "Custom_width",
+                "value": 0,
+                "workflowPath": [
+                  "156",
+                  "inputs",
+                  "custom_width"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "156-inputs-custom_width"
+              },
+              {
+                "title": "Custom_height",
+                "placeholder": "Custom_height",
+                "value": 0,
+                "workflowPath": [
+                  "156",
+                  "inputs",
+                  "custom_height"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "156-inputs-custom_height"
+              },
+              {
+                "title": "Frame_load_cap",
+                "placeholder": "Frame_load_cap",
+                "value": 0,
+                "workflowPath": [
+                  "156",
+                  "inputs",
+                  "frame_load_cap"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "156-inputs-frame_load_cap"
+              },
+              {
+                "title": "Skip_first_frames",
+                "placeholder": "Skip_first_frames",
+                "value": 0,
+                "workflowPath": [
+                  "156",
+                  "inputs",
+                  "skip_first_frames"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "156-inputs-skip_first_frames"
+              },
+              {
+                "title": "Select_every_nth",
+                "placeholder": "Select_every_nth",
+                "value": 1,
+                "workflowPath": [
+                  "156",
+                  "inputs",
+                  "select_every_nth"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "156-inputs-select_every_nth"
+              },
+              {
+                "title": "Format",
+                "placeholder": "Format",
+                "value": "AnimateDiff",
+                "workflowPath": [
+                  "156",
+                  "inputs",
+                  "format"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "156-inputs-format"
+              }
+            ],
+            "key": "156-VHS_LoadVideo"
+          },
+          {
+            "title": "加载音频",
+            "inputs": [
+              {
+                "title": "Audio",
+                "placeholder": "Audio",
+                "value": null,
+                "workflowPath": [
+                  "160",
+                  "inputs",
+                  "audio"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "audio",
+                "validations": {
+                  "required": false
+                },
+                "key": "160-inputs-audio"
+              }
+            ],
+            "key": "160-LoadAudio"
+          },
+          {
+            "title": "加载音频",
+            "inputs": [
+              {
+                "title": "Audio",
+                "placeholder": "Audio",
+                "value": null,
+                "workflowPath": [
+                  "161",
+                  "inputs",
+                  "audio"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "audio",
+                "validations": {
+                  "required": false
+                },
+                "key": "161-inputs-audio"
+              }
+            ],
+            "key": "161-LoadAudio"
+          },
+          {
+            "title": "加载音频",
+            "inputs": [
+              {
+                "title": "Audio",
+                "placeholder": "Audio",
+                "value": null,
+                "workflowPath": [
+                  "162",
+                  "inputs",
+                  "audio"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "audio",
+                "validations": {
+                  "required": false
+                },
+                "key": "162-inputs-audio"
+              }
+            ],
+            "key": "162-LoadAudio"
+          }
+        ],
+        "advancedInputs": [
+          {
+            "title": "保存视频",
+            "inputs": [
+              {
+                "title": "Filename_prefix",
+                "placeholder": "Filename_prefix",
+                "value": "video/MiniMax_H3",
+                "workflowPath": [
+                  "92",
+                  "inputs",
+                  "filename_prefix"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "92-inputs-filename_prefix"
+              },
+              {
+                "title": "Format",
+                "placeholder": "Format",
+                "value": "auto",
+                "workflowPath": [
+                  "92",
+                  "inputs",
+                  "format"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "92-inputs-format"
+              },
+              {
+                "title": "Codec",
+                "placeholder": "Codec",
+                "value": "auto",
+                "workflowPath": [
+                  "92",
+                  "inputs",
+                  "codec"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "92-inputs-codec"
+              }
+            ],
+            "key": "92-SaveVideo"
+          },
+          {
+            "title": "Resolution Selector (Size)",
+            "inputs": [
+              {
+                "title": "Aspect_ratio",
+                "placeholder": "Aspect_ratio",
+                "value": "16:9 (Widescreen)",
+                "workflowPath": [
+                  "115",
+                  "inputs",
+                  "aspect_ratio"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "115-inputs-aspect_ratio"
+              },
+              {
+                "title": "Megapixels",
+                "placeholder": "Megapixels",
+                "value": 0.4,
+                "workflowPath": [
+                  "115",
+                  "inputs",
+                  "megapixels"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "float",
+                "validations": {
+                  "required": true
+                },
+                "key": "115-inputs-megapixels"
+              },
+              {
+                "title": "Multiple",
+                "placeholder": "Multiple",
+                "value": 32,
+                "workflowPath": [
+                  "115",
+                  "inputs",
+                  "multiple"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "115-inputs-multiple"
+              }
+            ],
+            "key": "115-ResolutionSelector"
+          },
+          {
+            "title": "加载VAE",
+            "inputs": [
+              {
+                "title": "Vae_name",
+                "placeholder": "Vae_name",
+                "value": "MiniMax\\minimax_h3_video_vae_fp16.safetensors",
+                "workflowPath": [
+                  "119",
+                  "inputs",
+                  "vae_name"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "119-inputs-vae_name"
+              }
+            ],
+            "key": "119-VAELoader"
+          },
+          {
+            "title": "加载VAE",
+            "inputs": [
+              {
+                "title": "Vae_name",
+                "placeholder": "Vae_name",
+                "value": "MiniMax\\minimax_h3_audio_vae_fp32.safetensors",
+                "workflowPath": [
+                  "120",
+                  "inputs",
+                  "vae_name"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "120-inputs-vae_name"
+              }
+            ],
+            "key": "120-VAELoader"
+          },
+          {
+            "title": "K采样器选择",
+            "inputs": [
+              {
+                "title": "Sampler_name",
+                "placeholder": "Sampler_name",
+                "value": "res_multistep",
+                "workflowPath": [
+                  "123",
+                  "inputs",
+                  "sampler_name"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "123-inputs-sampler_name"
+              }
+            ],
+            "key": "123-KSamplerSelect"
+          },
+          {
+            "title": "基本调度器",
+            "inputs": [
+              {
+                "title": "Scheduler",
+                "placeholder": "Scheduler",
+                "value": "simple",
+                "workflowPath": [
+                  "124",
+                  "inputs",
+                  "scheduler"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "124-inputs-scheduler"
+              },
+              {
+                "title": "Denoise",
+                "placeholder": "Denoise",
+                "value": 1,
+                "workflowPath": [
+                  "124",
+                  "inputs",
+                  "denoise"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "124-inputs-denoise"
+              }
+            ],
+            "key": "124-BasicScheduler"
+          },
+          {
+            "title": "UNet加载器",
+            "inputs": [
+              {
+                "title": "Unet_name",
+                "placeholder": "Unet_name",
+                "value": "MiniMax\\minimax_h3_ref2va_pruned_int8_convrot.safetensors",
+                "workflowPath": [
+                  "127",
+                  "inputs",
+                  "unet_name"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "127-inputs-unet_name"
+              },
+              {
+                "title": "Weight_dtype",
+                "placeholder": "Weight_dtype",
+                "value": "default",
+                "workflowPath": [
+                  "127",
+                  "inputs",
+                  "weight_dtype"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "127-inputs-weight_dtype"
+              }
+            ],
+            "key": "127-UNETLoader"
+          },
+          {
+            "title": "加载CLIP",
+            "inputs": [
+              {
+                "title": "Clip_name",
+                "placeholder": "Clip_name",
+                "value": "Qwen\\qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
+                "workflowPath": [
+                  "128",
+                  "inputs",
+                  "clip_name"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "128-inputs-clip_name"
+              },
+              {
+                "title": "Type",
+                "placeholder": "Type",
+                "value": "minimax",
+                "workflowPath": [
+                  "128",
+                  "inputs",
+                  "type"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "128-inputs-type"
+              },
+              {
+                "title": "Device",
+                "placeholder": "Device",
+                "value": "default",
+                "workflowPath": [
+                  "128",
+                  "inputs",
+                  "device"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "128-inputs-device"
+              }
+            ],
+            "key": "128-CLIPLoader"
+          },
+          {
+            "title": "随机噪波",
+            "inputs": [
+              {
+                "title": "Noise_seed",
+                "placeholder": "Noise_seed",
+                "value": 261662374822964,
+                "workflowPath": [
+                  "129",
+                  "inputs",
+                  "noise_seed"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "seed",
+                "validations": {
+                  "required": true
+                },
+                "key": "129-inputs-noise_seed"
+              }
+            ],
+            "key": "129-RandomNoise"
+          },
+          {
+            "title": "创建视频",
+            "inputs": [
+              {
+                "title": "Fps",
+                "placeholder": "Fps",
+                "value": 24,
+                "workflowPath": [
+                  "130",
+                  "inputs",
+                  "fps"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "130-inputs-fps"
+              },
+              {
+                "title": "Bit_depth",
+                "placeholder": "Bit_depth",
+                "value": 8,
+                "workflowPath": [
+                  "130",
+                  "inputs",
+                  "bit_depth"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "130-inputs-bit_depth"
+              }
+            ],
+            "key": "130-CreateVideo"
+          },
+          {
+            "title": "数学表达式",
+            "inputs": [
+              {
+                "title": "Expression",
+                "placeholder": "Expression",
+                "value": "max(5, round(a * 24)) + (5 - (max(5, round(a * 24)) % 17)) % 17",
+                "workflowPath": [
+                  "131",
+                  "inputs",
+                  "expression"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "131-inputs-expression"
+              }
+            ],
+            "key": "131-ComfyMathExpression"
+          },
+          {
+            "title": "Float (Duration)",
+            "inputs": [
+              {
+                "title": "Value",
+                "placeholder": "Value",
+                "value": 5,
+                "workflowPath": [
+                  "132",
+                  "inputs",
+                  "value"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "132-inputs-value"
+              }
+            ],
+            "key": "132-PrimitiveFloat"
+          },
+          {
+            "title": "MiniMax H3 Reference to Video",
+            "inputs": [
+              {
+                "title": "Ref_image_size",
+                "placeholder": "Ref_image_size",
+                "value": "match",
+                "workflowPath": [
+                  "136",
+                  "inputs",
+                  "ref_image_size"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "136-inputs-ref_image_size"
+              }
+            ],
+            "key": "136-MiniMaxH3ReferenceToVideo"
+          },
+          {
+            "title": "Input Text (Prompt)",
+            "inputs": [
+              {
+                "title": "Value",
+                "placeholder": "Value",
+                "value": "Bold comic-book ink style, heavy linework, red and blue-black palette, night city. Use <Picture 2> and <Picture 1> as reference frames and <Audio 1> exactly as it is.\nCUT 1: top-down view of the little boy superhero on the rooftop — red cape fluttering in the wind, hands planted on his hips, freckles and a cocky grin as he looks straight up into the camera. The camera slowly descends toward him as he delivers his line — as he speaks, comic-book graphic overlay text word by word in sync with his voice: \"GET READY TO\" - \"MEET\" — \"YOUR\" — \"MAKER\" — huge jagged comic lettering, white with heavy black outlines and red drop shadows, tilted at scrappy angles, until the three words hang stacked in the air above him between his face and the lens.\nTRANSITION: a violent WHIP PAN off the rooftop that SMEARS the floating words away with it, motion-streaked —\nCUT 2: low hero angle on the colossal black mech-kaiju towering over the skyline as it rears back and unleashes a GIANT terrifying ROAR — jaws wide with fangs, red eyes and chest-core flaring blinding bright, blue lightning arcing off its head, the roar's shockwave rippling dust and rattling windows down the buildings, comic-style speed-lines and ink splatter bursting from the impact of the sound. It leans INTO the camera as the roar peaks. Hold on the roar.",
+                "workflowPath": [
+                  "138",
+                  "inputs",
+                  "value"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "138-inputs-value"
+              }
+            ],
+            "key": "138-PrimitiveStringMultiline"
+          },
+          {
+            "title": "Int (Full)",
+            "inputs": [
+              {
+                "title": "Value",
+                "placeholder": "Value",
+                "value": 20,
+                "workflowPath": [
+                  "143",
+                  "inputs",
+                  "value"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "143-inputs-value"
+              }
+            ],
+            "key": "143-PrimitiveInt"
+          },
+          {
+            "title": "Int (Lightning LoRA)",
+            "inputs": [
+              {
+                "title": "Value",
+                "placeholder": "Value",
+                "value": 4,
+                "workflowPath": [
+                  "144",
+                  "inputs",
+                  "value"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "144-inputs-value"
+              }
+            ],
+            "key": "144-PrimitiveInt"
+          },
+          {
+            "title": "LoRA加载器（仅模型）",
+            "inputs": [
+              {
+                "title": "Lora_name",
+                "placeholder": "Lora_name",
+                "value": "minimax_h3_ref2v_turbo_4step_v0.1_comfyui_bf16.safetensors",
+                "workflowPath": [
+                  "145",
+                  "inputs",
+                  "lora_name"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "145-inputs-lora_name"
+              },
+              {
+                "title": "Strength_model",
+                "placeholder": "Strength_model",
+                "value": 1,
+                "workflowPath": [
+                  "145",
+                  "inputs",
+                  "strength_model"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "145-inputs-strength_model"
+              }
+            ],
+            "key": "145-LoraLoaderModelOnly"
+          },
+          {
+            "title": "Boolean (Enable Lightning LoRA)",
+            "inputs": [
+              {
+                "title": "Value",
+                "placeholder": "Value",
+                "value": false,
+                "workflowPath": [
+                  "146",
+                  "inputs",
+                  "value"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "boolean",
+                "validations": {
+                  "required": false
+                },
+                "key": "146-inputs-value"
+              }
+            ],
+            "key": "146-PrimitiveBoolean"
+          }
+        ],
+        "id": "c8ab8295506c6"
+      },
+      "workflowApiJSON": {
+        "92": {
+          "inputs": {
+            "filename_prefix": "video/MiniMax_H3",
+            "format": "auto",
+            "codec": "auto",
+            "video": [
+              "130",
+              0
+            ]
+          },
+          "class_type": "SaveVideo",
+          "_meta": {
+            "title": "保存视频"
+          }
+        },
+        "115": {
+          "inputs": {
+            "aspect_ratio": "16:9 (Widescreen)",
+            "megapixels": 0.4,
+            "multiple": 32
+          },
+          "class_type": "ResolutionSelector",
+          "_meta": {
+            "title": "Resolution Selector (Size)"
+          }
+        },
+        "119": {
+          "inputs": {
+            "vae_name": "MiniMax\\minimax_h3_video_vae_fp16.safetensors"
+          },
+          "class_type": "VAELoader",
+          "_meta": {
+            "title": "加载VAE"
+          }
+        },
+        "120": {
+          "inputs": {
+            "vae_name": "MiniMax\\minimax_h3_audio_vae_fp32.safetensors"
+          },
+          "class_type": "VAELoader",
+          "_meta": {
+            "title": "加载VAE"
+          }
+        },
+        "121": {
+          "inputs": {
+            "samples": [
+              "125",
+              0
+            ],
+            "vae": [
+              "120",
+              0
+            ]
+          },
+          "class_type": "VAEDecodeAudio",
+          "_meta": {
+            "title": "VAE解码（音频）"
+          }
+        },
+        "122": {
+          "inputs": {
+            "samples": [
+              "125",
+              0
+            ],
+            "vae": [
+              "119",
+              0
+            ]
+          },
+          "class_type": "VAEDecode",
+          "_meta": {
+            "title": "VAE解码"
+          }
+        },
+        "123": {
+          "inputs": {
+            "sampler_name": "res_multistep"
+          },
+          "class_type": "KSamplerSelect",
+          "_meta": {
+            "title": "K采样器选择"
+          }
+        },
+        "124": {
+          "inputs": {
+            "scheduler": "simple",
+            "steps": [
+              "142",
+              0
+            ],
+            "denoise": 1,
+            "model": [
+              "127",
+              0
+            ]
+          },
+          "class_type": "BasicScheduler",
+          "_meta": {
+            "title": "基本调度器"
+          }
+        },
+        "125": {
+          "inputs": {
+            "noise": [
+              "129",
+              0
+            ],
+            "guider": [
+              "126",
+              0
+            ],
+            "sampler": [
+              "123",
+              0
+            ],
+            "sigmas": [
+              "124",
+              0
+            ],
+            "latent_image": [
+              "136",
+              1
+            ]
+          },
+          "class_type": "SamplerCustomAdvanced",
+          "_meta": {
+            "title": "自定义采样器（高级）"
+          }
+        },
+        "126": {
+          "inputs": {
+            "model": [
+              "141",
+              0
+            ],
+            "conditioning": [
+              "136",
+              0
+            ]
+          },
+          "class_type": "BasicGuider",
+          "_meta": {
+            "title": "基本引导器"
+          }
+        },
+        "127": {
+          "inputs": {
+            "unet_name": "MiniMax\\minimax_h3_ref2va_pruned_int8_convrot.safetensors",
+            "weight_dtype": "default"
+          },
+          "class_type": "UNETLoader",
+          "_meta": {
+            "title": "UNet加载器"
+          }
+        },
+        "128": {
+          "inputs": {
+            "clip_name": "Qwen\\qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
+            "type": "minimax",
+            "device": "default"
+          },
+          "class_type": "CLIPLoader",
+          "_meta": {
+            "title": "加载CLIP"
+          }
+        },
+        "129": {
+          "inputs": {
+            "noise_seed": 261662374822964
+          },
+          "class_type": "RandomNoise",
+          "_meta": {
+            "title": "随机噪波"
+          }
+        },
+        "130": {
+          "inputs": {
+            "fps": 24,
+            "bit_depth": 8,
+            "images": [
+              "122",
+              0
+            ],
+            "audio": [
+              "121",
+              0
+            ]
+          },
+          "class_type": "CreateVideo",
+          "_meta": {
+            "title": "创建视频"
+          }
+        },
+        "131": {
+          "inputs": {
+            "expression": "max(5, round(a * 24)) + (5 - (max(5, round(a * 24)) % 17)) % 17",
+            "values.a": [
+              "132",
+              0
+            ]
+          },
+          "class_type": "ComfyMathExpression",
+          "_meta": {
+            "title": "数学表达式"
+          }
+        },
+        "132": {
+          "inputs": {
+            "value": 5
+          },
+          "class_type": "PrimitiveFloat",
+          "_meta": {
+            "title": "Float (Duration)"
+          }
+        },
+        "136": {
+          "inputs": {
+            "prompt": [
+              "138",
+              0
+            ],
+            "width": [
+              "115",
+              0
+            ],
+            "height": [
+              "115",
+              1
+            ],
+            "length": [
+              "131",
+              1
+            ],
+            "ref_image_size": "match",
+            "clip": [
+              "128",
+              0
+            ],
+            "vae": [
+              "119",
+              0
+            ],
+            "audio_vae": [
+              "120",
+              0
+            ],
+            "ref_images.ref_image_0": [
+              "137",
+              0
+            ],
+            "ref_images.ref_image_1": [
+              "139",
+              0
+            ],
+            "ref_images.ref_image_2": [
+              "147",
+              0
+            ],
+            "ref_images.ref_image_3": [
+              "148",
+              0
+            ],
+            "ref_images.ref_image_4": [
+              "149",
+              0
+            ],
+            "ref_images.ref_image_5": [
+              "150",
+              0
+            ],
+            "ref_images.ref_image_6": [
+              "151",
+              0
+            ],
+            "ref_images.ref_image_7": [
+              "152",
+              0
+            ],
+            "ref_images.ref_image_8": [
+              "153",
+              0
+            ],
+            "ref_videos.ref_video_0": [
+              "154",
+              0
+            ],
+            "ref_videos.ref_video_1": [
+              "155",
+              0
+            ],
+            "ref_videos.ref_video_2": [
+              "156",
+              0
+            ],
+            "ref_video_audios.ref_video_audio_0": [
+              "154",
+              2
+            ],
+            "ref_video_audios.ref_video_audio_1": [
+              "155",
+              2
+            ],
+            "ref_video_audios.ref_video_audio_2": [
+              "156",
+              2
+            ],
+            "ref_audios.ref_audio_0": [
+              "160",
+              0
+            ],
+            "ref_audios.ref_audio_1": [
+              "161",
+              0
+            ],
+            "ref_audios.ref_audio_2": [
+              "162",
+              0
+            ]
+          },
+          "class_type": "MiniMaxH3ReferenceToVideo",
+          "_meta": {
+            "title": "MiniMax H3 Reference to Video"
+          }
+        },
+        "137": {
+          "inputs": {
+            "image": "red_superboy_on_city_roof.png"
+          },
+          "class_type": "LoadImage",
+          "_meta": {
+            "title": "加载图像"
+          }
+        },
+        "138": {
+          "inputs": {
+            "value": "Bold comic-book ink style, heavy linework, red and blue-black palette, night city. Use <Picture 2> and <Picture 1> as reference frames and <Audio 1> exactly as it is.\nCUT 1: top-down view of the little boy superhero on the rooftop — red cape fluttering in the wind, hands planted on his hips, freckles and a cocky grin as he looks straight up into the camera. The camera slowly descends toward him as he delivers his line — as he speaks, comic-book graphic overlay text word by word in sync with his voice: \"GET READY TO\" - \"MEET\" — \"YOUR\" — \"MAKER\" — huge jagged comic lettering, white with heavy black outlines and red drop shadows, tilted at scrappy angles, until the three words hang stacked in the air above him between his face and the lens.\nTRANSITION: a violent WHIP PAN off the rooftop that SMEARS the floating words away with it, motion-streaked —\nCUT 2: low hero angle on the colossal black mech-kaiju towering over the skyline as it rears back and unleashes a GIANT terrifying ROAR — jaws wide with fangs, red eyes and chest-core flaring blinding bright, blue lightning arcing off its head, the roar's shockwave rippling dust and rattling windows down the buildings, comic-style speed-lines and ink splatter bursting from the impact of the sound. It leans INTO the camera as the roar peaks. Hold on the roar."
+          },
+          "class_type": "PrimitiveStringMultiline",
+          "_meta": {
+            "title": "Input Text (Prompt)"
+          }
+        },
+        "139": {
+          "inputs": {
+            "image": "mecha_dragon_lightning.png"
+          },
+          "class_type": "LoadImage",
+          "_meta": {
+            "title": "加载图像"
+          }
+        },
+        "141": {
+          "inputs": {
+            "switch": [
+              "146",
+              0
+            ],
+            "on_false": [
+              "127",
+              0
+            ],
+            "on_true": [
+              "145",
+              0
+            ]
+          },
+          "class_type": "ComfySwitchNode",
+          "_meta": {
+            "title": "If/Else Switch (model)"
+          }
+        },
+        "142": {
+          "inputs": {
+            "switch": [
+              "146",
+              0
+            ],
+            "on_false": [
+              "143",
+              0
+            ],
+            "on_true": [
+              "144",
+              0
+            ]
+          },
+          "class_type": "ComfySwitchNode",
+          "_meta": {
+            "title": "If/Else Switch (Steps)"
+          }
+        },
+        "143": {
+          "inputs": {
+            "value": 20
+          },
+          "class_type": "PrimitiveInt",
+          "_meta": {
+            "title": "Int (Full)"
+          }
+        },
+        "144": {
+          "inputs": {
+            "value": 4
+          },
+          "class_type": "PrimitiveInt",
+          "_meta": {
+            "title": "Int (Lightning LoRA)"
+          }
+        },
+        "145": {
+          "inputs": {
+            "lora_name": "minimax_h3_ref2v_turbo_4step_v0.1_comfyui_bf16.safetensors",
+            "strength_model": 1,
+            "model": [
+              "127",
+              0
+            ]
+          },
+          "class_type": "LoraLoaderModelOnly",
+          "_meta": {
+            "title": "LoRA加载器（仅模型）"
+          }
+        },
+        "146": {
+          "inputs": {
+            "value": false
+          },
+          "class_type": "PrimitiveBoolean",
+          "_meta": {
+            "title": "Boolean (Enable Lightning LoRA)"
+          }
+        },
+        "147": {
+          "inputs": {
+            "image": "0271ee3c-90d8-4e2d-9956-8285b0f16084_屏幕截图 2026-08-18 161609.png"
+          },
+          "class_type": "LoadImage",
+          "_meta": {
+            "title": "加载图像"
+          }
+        },
+        "148": {
+          "inputs": {
+            "image": "0271ee3c-90d8-4e2d-9956-8285b0f16084_屏幕截图 2026-08-18 161609.png"
+          },
+          "class_type": "LoadImage",
+          "_meta": {
+            "title": "加载图像"
+          }
+        },
+        "149": {
+          "inputs": {
+            "image": "0271ee3c-90d8-4e2d-9956-8285b0f16084_屏幕截图 2026-08-18 161609.png"
+          },
+          "class_type": "LoadImage",
+          "_meta": {
+            "title": "加载图像"
+          }
+        },
+        "150": {
+          "inputs": {
+            "image": "0271ee3c-90d8-4e2d-9956-8285b0f16084_屏幕截图 2026-08-18 161609.png"
+          },
+          "class_type": "LoadImage",
+          "_meta": {
+            "title": "加载图像"
+          }
+        },
+        "151": {
+          "inputs": {
+            "image": "0271ee3c-90d8-4e2d-9956-8285b0f16084_屏幕截图 2026-08-18 161609.png"
+          },
+          "class_type": "LoadImage",
+          "_meta": {
+            "title": "加载图像"
+          }
+        },
+        "152": {
+          "inputs": {
+            "image": "0271ee3c-90d8-4e2d-9956-8285b0f16084_屏幕截图 2026-08-18 161609.png"
+          },
+          "class_type": "LoadImage",
+          "_meta": {
+            "title": "加载图像"
+          }
+        },
+        "153": {
+          "inputs": {
+            "image": "0271ee3c-90d8-4e2d-9956-8285b0f16084_屏幕截图 2026-08-18 161609.png"
+          },
+          "class_type": "LoadImage",
+          "_meta": {
+            "title": "加载图像"
+          }
+        },
+        "154": {
+          "inputs": {
+            "video": "179d5192-3a9b-47a5-b4c8-4279f2a7694d_MiniMax_H3_00001_.mp4",
+            "force_rate": 0,
+            "custom_width": 0,
+            "custom_height": 0,
+            "frame_load_cap": 0,
+            "skip_first_frames": 0,
+            "select_every_nth": 1,
+            "format": "AnimateDiff"
+          },
+          "class_type": "VHS_LoadVideo",
+          "_meta": {
+            "title": "加载视频"
+          }
+        },
+        "155": {
+          "inputs": {
+            "video": "179d5192-3a9b-47a5-b4c8-4279f2a7694d_MiniMax_H3_00001_.mp4",
+            "force_rate": 0,
+            "custom_width": 0,
+            "custom_height": 0,
+            "frame_load_cap": 0,
+            "skip_first_frames": 0,
+            "select_every_nth": 1,
+            "format": "AnimateDiff"
+          },
+          "class_type": "VHS_LoadVideo",
+          "_meta": {
+            "title": "加载视频"
+          }
+        },
+        "156": {
+          "inputs": {
+            "video": "179d5192-3a9b-47a5-b4c8-4279f2a7694d_MiniMax_H3_00001_.mp4",
+            "force_rate": 0,
+            "custom_width": 0,
+            "custom_height": 0,
+            "frame_load_cap": 0,
+            "skip_first_frames": 0,
+            "select_every_nth": 1,
+            "format": "AnimateDiff"
+          },
+          "class_type": "VHS_LoadVideo",
+          "_meta": {
+            "title": "加载视频"
+          }
+        },
+        "160": {
+          "inputs": {
+            "audio": "13569ab0-0df6-4d0b-bc81-54d45a5d7119_QQ 消息.wav"
+          },
+          "class_type": "LoadAudio",
+          "_meta": {
+            "title": "加载音频"
+          }
+        },
+        "161": {
+          "inputs": {
+            "audio": "13569ab0-0df6-4d0b-bc81-54d45a5d7119_QQ 消息.wav"
+          },
+          "class_type": "LoadAudio",
+          "_meta": {
+            "title": "加载音频"
+          }
+        },
+        "162": {
+          "inputs": {
+            "audio": "13569ab0-0df6-4d0b-bc81-54d45a5d7119_QQ 消息.wav"
+          },
+          "class_type": "LoadAudio",
+          "_meta": {
+            "title": "加载音频"
+          }
+        }
+      }
+    },
+    {
+      "viewComfyJSON": {
+        "title": "Minimax h3参考生图",
+        "description": "",
+        "viewcomfyEndpoint": "",
+        "previewImages": [],
+        "inputs": [
+          {
+            "title": "Reference Image（换成你的图）",
+            "inputs": [
+              {
+                "title": "Reference Image（换成你的图）",
+                "placeholder": "Reference Image（换成你的图）",
+                "value": null,
+                "workflowPath": [
+                  "40",
+                  "inputs",
+                  "image"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "image",
+                "validations": {
+                  "required": false
+                },
+                "key": "40-inputs-image"
+              }
+            ],
+            "key": "40-LoadImage"
+          },
+          {
+            "title": "加载图像",
+            "inputs": [
+              {
+                "title": "加载图像",
+                "placeholder": "加载图像",
+                "value": null,
+                "workflowPath": [
+                  "71",
+                  "inputs",
+                  "image"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "image",
+                "validations": {
+                  "required": false
+                },
+                "key": "71-inputs-image"
+              }
+            ],
+            "key": "71-LoadImage"
+          }
+        ],
+        "advancedInputs": [
+          {
+            "title": "UNet加载器",
+            "inputs": [
+              {
+                "title": "Unet_name",
+                "placeholder": "Unet_name",
+                "value": "MiniMax\\minimax_h3_ref2va_pruned_int8_convrot.safetensors",
+                "workflowPath": [
+                  "1",
+                  "inputs",
+                  "unet_name"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "1-inputs-unet_name"
+              },
+              {
+                "title": "Weight_dtype",
+                "placeholder": "Weight_dtype",
+                "value": "default",
+                "workflowPath": [
+                  "1",
+                  "inputs",
+                  "weight_dtype"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "1-inputs-weight_dtype"
+              }
+            ],
+            "key": "1-UNETLoader"
+          },
+          {
+            "title": "加载CLIP",
+            "inputs": [
+              {
+                "title": "Clip_name",
+                "placeholder": "Clip_name",
+                "value": "Qwen\\qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
+                "workflowPath": [
+                  "2",
+                  "inputs",
+                  "clip_name"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "2-inputs-clip_name"
+              },
+              {
+                "title": "Type",
+                "placeholder": "Type",
+                "value": "minimax",
+                "workflowPath": [
+                  "2",
+                  "inputs",
+                  "type"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "2-inputs-type"
+              },
+              {
+                "title": "Device",
+                "placeholder": "Device",
+                "value": "default",
+                "workflowPath": [
+                  "2",
+                  "inputs",
+                  "device"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "2-inputs-device"
+              }
+            ],
+            "key": "2-CLIPLoader"
+          },
+          {
+            "title": "Video VAE",
+            "inputs": [
+              {
+                "title": "Vae_name",
+                "placeholder": "Vae_name",
+                "value": "MiniMax\\minimax_h3_video_vae_fp16.safetensors",
+                "workflowPath": [
+                  "3",
+                  "inputs",
+                  "vae_name"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "3-inputs-vae_name"
+              }
+            ],
+            "key": "3-VAELoader"
+          },
+          {
+            "title": "Audio VAE",
+            "inputs": [
+              {
+                "title": "Vae_name",
+                "placeholder": "Vae_name",
+                "value": "MiniMax\\minimax_h3_audio_vae_fp32.safetensors",
+                "workflowPath": [
+                  "4",
+                  "inputs",
+                  "vae_name"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "4-inputs-vae_name"
+              }
+            ],
+            "key": "4-VAELoader"
+          },
+          {
+            "title": "Prompt（六段式，改我）",
+            "inputs": [
+              {
+                "title": "Value",
+                "placeholder": "Value",
+                "value": "subject_definitions:\n<Subject 1> is the male politician character in <Picture 2>: a cartoon caricature middle‑aged east‑asian man with neat black hair, wrinkled eye details, subtle smug smiling facial expression, dark formal business suit, white dress shirt, purple necktie.\nsummary:\n[reference generation] Replace the female politician character in <Picture 1> with <Subject 1>, keep all other elements, pose, composition, graphic comic‑book art style completely unchanged.\nretention_analysis:\n<Subject 1> (appears in [Shot 1]): fully_adapted‑reused: import the character facial features, hair, suit‑and‑purple‑tie outfit design from Picture2; adopt the original pose from Picture1: one hand holds medical syringe, the other arm transforms into large green hulk‑style muscular fist; all Picture1 original elements are preserved: \"NEO‑MILITARISM\" text, pink paint splatter splash background, comic speed‑line effects, bold ink comic‑book drawing style, color palette, layout and framing; only the original female character is swapped out for <Subject1>.\ndetailed_description:\nThe target image uses bold hand‑drawn comic‑book caricature illustration style, thick ink outlines, pop‑art comic speed‑line effects, exactly matching the art rendering of Picture1.\n[Shot 1] Static medium shot frames <Subject 1>, the middle‑aged male politician from Picture2, placed in the exact position of the original woman in Picture1. He wears his dark suit, white shirt and purple tie. His one hand grips the medical syringe, his other arm mutates into a huge green veiny hulk‑like muscular clenched fist. The text \"NEO‑MILITARISM\" sits above the giant green fist. Pink paint‑splash splatter graphic stays on upper‑left background. Black radial comic speed lines fill the right‑side background. Image framing, composition, line art texture, color tone are 100% consistent with Picture1, only the human character is replaced. Camera stays fixed, no pose or background element altered.\noverall_soundscape:\nN/A\nnon_diegetic_music:\nN/A\n",
+                "workflowPath": [
+                  "5",
+                  "inputs",
+                  "value"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "5-inputs-value"
+              }
+            ],
+            "key": "5-PrimitiveStringMultiline"
+          },
+          {
+            "title": "Width（对齐参考图宽高比）",
+            "inputs": [
+              {
+                "title": "Value",
+                "placeholder": "Value",
+                "value": 768,
+                "workflowPath": [
+                  "6",
+                  "inputs",
+                  "value"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "6-inputs-value"
+              }
+            ],
+            "key": "6-PrimitiveInt"
+          },
+          {
+            "title": "Height（对齐参考图宽高比）",
+            "inputs": [
+              {
+                "title": "Value",
+                "placeholder": "Value",
+                "value": 768,
+                "workflowPath": [
+                  "7",
+                  "inputs",
+                  "value"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "7-inputs-value"
+              }
+            ],
+            "key": "7-PrimitiveInt"
+          },
+          {
+            "title": "Duration (s) — 0.9 = 22 帧",
+            "inputs": [
+              {
+                "title": "Value",
+                "placeholder": "Value",
+                "value": 0.2,
+                "workflowPath": [
+                  "8",
+                  "inputs",
+                  "value"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "float",
+                "validations": {
+                  "required": true
+                },
+                "key": "8-inputs-value"
+              }
+            ],
+            "key": "8-PrimitiveFloat"
+          },
+          {
+            "title": "Duration -> 17k+5 frame grid @24fps",
+            "inputs": [
+              {
+                "title": "Expression",
+                "placeholder": "Expression",
+                "value": "max(5, round(a * 24)) + (5 - (max(5, round(a * 24)) % 17)) % 17",
+                "workflowPath": [
+                  "9",
+                  "inputs",
+                  "expression"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "9-inputs-expression"
+              }
+            ],
+            "key": "9-ComfyMathExpression"
+          },
+          {
+            "title": "Seed（重抽就换）",
+            "inputs": [
+              {
+                "title": "Value",
+                "placeholder": "Value",
+                "value": 21,
+                "workflowPath": [
+                  "10",
+                  "inputs",
+                  "value"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "10-inputs-value"
+              }
+            ],
+            "key": "10-PrimitiveInt"
+          },
+          {
+            "title": "Steps",
+            "inputs": [
+              {
+                "title": "Value",
+                "placeholder": "Value",
+                "value": 20,
+                "workflowPath": [
+                  "11",
+                  "inputs",
+                  "value"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "11-inputs-value"
+              }
+            ],
+            "key": "11-PrimitiveInt"
+          },
+          {
+            "title": "K采样器选择",
+            "inputs": [
+              {
+                "title": "Sampler_name",
+                "placeholder": "Sampler_name",
+                "value": "res_multistep",
+                "workflowPath": [
+                  "13",
+                  "inputs",
+                  "sampler_name"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "13-inputs-sampler_name"
+              }
+            ],
+            "key": "13-KSamplerSelect"
+          },
+          {
+            "title": "基本调度器",
+            "inputs": [
+              {
+                "title": "Scheduler",
+                "placeholder": "Scheduler",
+                "value": "beta",
+                "workflowPath": [
+                  "14",
+                  "inputs",
+                  "scheduler"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "14-inputs-scheduler"
+              },
+              {
+                "title": "Denoise",
+                "placeholder": "Denoise",
+                "value": 1,
+                "workflowPath": [
+                  "14",
+                  "inputs",
+                  "denoise"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "14-inputs-denoise"
+              }
+            ],
+            "key": "14-BasicScheduler"
+          },
+          {
+            "title": "创建视频",
+            "inputs": [
+              {
+                "title": "Fps",
+                "placeholder": "Fps",
+                "value": 24,
+                "workflowPath": [
+                  "19",
+                  "inputs",
+                  "fps"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "19-inputs-fps"
+              },
+              {
+                "title": "Bit_depth",
+                "placeholder": "Bit_depth",
+                "value": 8,
+                "workflowPath": [
+                  "19",
+                  "inputs",
+                  "bit_depth"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "19-inputs-bit_depth"
+              }
+            ],
+            "key": "19-CreateVideo"
+          },
+          {
+            "title": "MiniMax H3 Reference to Video",
+            "inputs": [
+              {
+                "title": "Ref_image_size",
+                "placeholder": "Ref_image_size",
+                "value": "match",
+                "workflowPath": [
+                  "20",
+                  "inputs",
+                  "ref_image_size"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "20-inputs-ref_image_size"
+              }
+            ],
+            "key": "20-MiniMaxH3ReferenceToVideo"
+          },
+          {
+            "title": "Save Video（QC 用，可 bypass）",
+            "inputs": [
+              {
+                "title": "Filename_prefix",
+                "placeholder": "Filename_prefix",
+                "value": "R2I/2026-08-21/video/h3_ref2i",
+                "workflowPath": [
+                  "21",
+                  "inputs",
+                  "filename_prefix"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "21-inputs-filename_prefix"
+              },
+              {
+                "title": "Format",
+                "placeholder": "Format",
+                "value": "auto",
+                "workflowPath": [
+                  "21",
+                  "inputs",
+                  "format"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "21-inputs-format"
+              },
+              {
+                "title": "Codec",
+                "placeholder": "Codec",
+                "value": "auto",
+                "workflowPath": [
+                  "21",
+                  "inputs",
+                  "codec"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "21-inputs-codec"
+              },
+              {
+                "title": "Video-preview",
+                "placeholder": "Video-preview",
+                "value": "",
+                "workflowPath": [
+                  "21",
+                  "inputs",
+                  "video-preview"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "21-inputs-video-preview",
+                "visibility": "deleted"
+              }
+            ],
+            "key": "21-SaveVideo"
+          },
+          {
+            "title": "[NOTE]",
+            "inputs": [
+              {
+                "title": "Value",
+                "placeholder": "Value",
+                "value": "**MiniMax H3 REF2I — 人类版示例：把视频模型当图像编辑器用（原生节点，零插件）**\nDrag this file into ComfyUI, press Run. It loads the built-in example.png doodle fox, generates a short STATIC \"video\" of the edit, and saves EVERY decoded frame as a PNG — pick your favorite frame, done.\n\n**输出位置 / Outputs:** every run auto-creates a dated folder via %date% (frontend-side substitution — only works when queueing from the UI, not via raw API):\n- Frames: output/R2I/<yyyy-MM-dd>/h3_ref2i_00001..N_.png (all 22 frames, auto-numbered, never overwritten)\n- Video:  output/R2I/<yyyy-MM-dd>/video/h3_ref2i_*.mp4 (QC only — spot blink/motion frames)\n\n**怎么改成自己的图 / Adapt it:**\n1. LoadImage 节点换成你的参考图（1-2 张最佳，越多越慢越容易身份打架）\n2. Width/Height 改成和你参考图一致的宽高比（32 的倍数，短边 ≤768 最快）——不一致可能出黑边\n3. 改 Prompt 节点（六段式语法，见下）\n4. 其他都不用动：Duration 0.9s = 22 帧候选（帧数网格 17k+5，时长自动向上取整；0.2s = 5 帧纯抽卡但画质可能下降）；Seed 想重抽就换一个；Steps 20 / beta 调度别动\n\n**Prompt 六段式速查（retention_analysis 是编辑指令核心）:**\n- subject_definitions — <Subject N> 绑定 <Picture N>，特征点清\n- summary — 一句话任务书\n- retention_analysis ★ — 保留什么 / 改什么：\n  · partially_preserved = 主力：逐项列\"保留清单\"(face, hair, eyes, pose retained exactly) + \"替换指令\"(X replaced by Y)，越具体越听话\n  · attribute_transfer = 跨角色迁移（Subject 1 = 身份来自图A，Subject 2 = 服装来自图B）\n  · 3D/动漫转真人（cosplayer 重构）：保留清单只放可穿戴件（假发/美瞳/服装），脸写 NOT retained，替换成真人\n- detailed_description — 静态镜头 + 构图锚点（\"entire body from head to toes visible, headroom above, floor space below\" 防裁切）+ 目标细节\n- overall_soundscape / non_diegetic_music — 图像任务填 N/A 即可\n\n**经验参数（3080 实测）:** 768x1024 · 22f · beta ≈ 90-150s/次；成本 ≈ 45s 固定 + ~6.5s/帧 + ~15s/参考图。完整 prompt 语法见 MiniMax 官方 VIDEO_PROMPT_WRITING_GUIDE_ref_en.md",
+                "workflowPath": [
+                  "30",
+                  "inputs",
+                  "value"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "30-inputs-value"
+              }
+            ],
+            "key": "30-PrimitiveStringMultiline"
+          },
+          {
+            "title": "Save All Frames（自动建日期文件夹）",
+            "inputs": [
+              {
+                "title": "Filename_prefix",
+                "placeholder": "Filename_prefix",
+                "value": "R2I/2026-08-21/h3_ref2i",
+                "workflowPath": [
+                  "70",
+                  "inputs",
+                  "filename_prefix"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "70-inputs-filename_prefix"
+              }
+            ],
+            "key": "70-SaveImage"
+          }
+        ],
+        "id": "a620eeae5a5ef"
+      },
+      "workflowApiJSON": {
+        "1": {
+          "inputs": {
+            "unet_name": "MiniMax\\minimax_h3_ref2va_pruned_int8_convrot.safetensors",
+            "weight_dtype": "default"
+          },
+          "class_type": "UNETLoader",
+          "_meta": {
+            "title": "UNet加载器"
+          }
+        },
+        "2": {
+          "inputs": {
+            "clip_name": "Qwen\\qwen3vl_32b_minimax_h3_nvfp4_awq.safetensors",
+            "type": "minimax",
+            "device": "default"
+          },
+          "class_type": "CLIPLoader",
+          "_meta": {
+            "title": "加载CLIP"
+          }
+        },
+        "3": {
+          "inputs": {
+            "vae_name": "MiniMax\\minimax_h3_video_vae_fp16.safetensors"
+          },
+          "class_type": "VAELoader",
+          "_meta": {
+            "title": "Video VAE"
+          }
+        },
+        "4": {
+          "inputs": {
+            "vae_name": "MiniMax\\minimax_h3_audio_vae_fp32.safetensors"
+          },
+          "class_type": "VAELoader",
+          "_meta": {
+            "title": "Audio VAE"
+          }
+        },
+        "5": {
+          "inputs": {
+            "value": "subject_definitions:\n<Subject 1> is the male politician character in <Picture 2>: a cartoon caricature middle‑aged east‑asian man with neat black hair, wrinkled eye details, subtle smug smiling facial expression, dark formal business suit, white dress shirt, purple necktie.\nsummary:\n[reference generation] Replace the female politician character in <Picture 1> with <Subject 1>, keep all other elements, pose, composition, graphic comic‑book art style completely unchanged.\nretention_analysis:\n<Subject 1> (appears in [Shot 1]): fully_adapted‑reused: import the character facial features, hair, suit‑and‑purple‑tie outfit design from Picture2; adopt the original pose from Picture1: one hand holds medical syringe, the other arm transforms into large green hulk‑style muscular fist; all Picture1 original elements are preserved: \"NEO‑MILITARISM\" text, pink paint splatter splash background, comic speed‑line effects, bold ink comic‑book drawing style, color palette, layout and framing; only the original female character is swapped out for <Subject1>.\ndetailed_description:\nThe target image uses bold hand‑drawn comic‑book caricature illustration style, thick ink outlines, pop‑art comic speed‑line effects, exactly matching the art rendering of Picture1.\n[Shot 1] Static medium shot frames <Subject 1>, the middle‑aged male politician from Picture2, placed in the exact position of the original woman in Picture1. He wears his dark suit, white shirt and purple tie. His one hand grips the medical syringe, his other arm mutates into a huge green veiny hulk‑like muscular clenched fist. The text \"NEO‑MILITARISM\" sits above the giant green fist. Pink paint‑splash splatter graphic stays on upper‑left background. Black radial comic speed lines fill the right‑side background. Image framing, composition, line art texture, color tone are 100% consistent with Picture1, only the human character is replaced. Camera stays fixed, no pose or background element altered.\noverall_soundscape:\nN/A\nnon_diegetic_music:\nN/A\n"
+          },
+          "class_type": "PrimitiveStringMultiline",
+          "_meta": {
+            "title": "Prompt（六段式，改我）"
+          }
+        },
+        "6": {
+          "inputs": {
+            "value": 768
+          },
+          "class_type": "PrimitiveInt",
+          "_meta": {
+            "title": "Width（对齐参考图宽高比）"
+          }
+        },
+        "7": {
+          "inputs": {
+            "value": 768
+          },
+          "class_type": "PrimitiveInt",
+          "_meta": {
+            "title": "Height（对齐参考图宽高比）"
+          }
+        },
+        "8": {
+          "inputs": {
+            "value": 0.2
+          },
+          "class_type": "PrimitiveFloat",
+          "_meta": {
+            "title": "Duration (s) — 0.9 = 22 帧"
+          }
+        },
+        "9": {
+          "inputs": {
+            "expression": "max(5, round(a * 24)) + (5 - (max(5, round(a * 24)) % 17)) % 17",
+            "values.a": [
+              "8",
+              0
+            ]
+          },
+          "class_type": "ComfyMathExpression",
+          "_meta": {
+            "title": "Duration -> 17k+5 frame grid @24fps"
+          }
+        },
+        "10": {
+          "inputs": {
+            "value": 21
+          },
+          "class_type": "PrimitiveInt",
+          "_meta": {
+            "title": "Seed（重抽就换）"
+          }
+        },
+        "11": {
+          "inputs": {
+            "value": 20
+          },
+          "class_type": "PrimitiveInt",
+          "_meta": {
+            "title": "Steps"
+          }
+        },
+        "12": {
+          "inputs": {
+            "noise_seed": [
+              "10",
+              0
+            ]
+          },
+          "class_type": "RandomNoise",
+          "_meta": {
+            "title": "随机噪波"
+          }
+        },
+        "13": {
+          "inputs": {
+            "sampler_name": "res_multistep"
+          },
+          "class_type": "KSamplerSelect",
+          "_meta": {
+            "title": "K采样器选择"
+          }
+        },
+        "14": {
+          "inputs": {
+            "scheduler": "beta",
+            "steps": [
+              "11",
+              0
+            ],
+            "denoise": 1,
+            "model": [
+              "1",
+              0
+            ]
+          },
+          "class_type": "BasicScheduler",
+          "_meta": {
+            "title": "基本调度器"
+          }
+        },
+        "15": {
+          "inputs": {
+            "model": [
+              "1",
+              0
+            ],
+            "conditioning": [
+              "20",
+              0
+            ]
+          },
+          "class_type": "BasicGuider",
+          "_meta": {
+            "title": "基本引导器"
+          }
+        },
+        "16": {
+          "inputs": {
+            "noise": [
+              "12",
+              0
+            ],
+            "guider": [
+              "15",
+              0
+            ],
+            "sampler": [
+              "13",
+              0
+            ],
+            "sigmas": [
+              "14",
+              0
+            ],
+            "latent_image": [
+              "20",
+              1
+            ]
+          },
+          "class_type": "SamplerCustomAdvanced",
+          "_meta": {
+            "title": "自定义采样器（高级）"
+          }
+        },
+        "17": {
+          "inputs": {
+            "samples": [
+              "16",
+              0
+            ],
+            "vae": [
+              "3",
+              0
+            ]
+          },
+          "class_type": "VAEDecode",
+          "_meta": {
+            "title": "VAE解码"
+          }
+        },
+        "18": {
+          "inputs": {
+            "samples": [
+              "16",
+              0
+            ],
+            "vae": [
+              "4",
+              0
+            ]
+          },
+          "class_type": "VAEDecodeAudio",
+          "_meta": {
+            "title": "VAE解码（音频）"
+          }
+        },
+        "19": {
+          "inputs": {
+            "fps": 24,
+            "bit_depth": 8,
+            "images": [
+              "17",
+              0
+            ],
+            "audio": [
+              "18",
+              0
+            ]
+          },
+          "class_type": "CreateVideo",
+          "_meta": {
+            "title": "创建视频"
+          }
+        },
+        "20": {
+          "inputs": {
+            "prompt": [
+              "5",
+              0
+            ],
+            "width": [
+              "6",
+              0
+            ],
+            "height": [
+              "7",
+              0
+            ],
+            "length": [
+              "9",
+              1
+            ],
+            "ref_image_size": "match",
+            "clip": [
+              "2",
+              0
+            ],
+            "vae": [
+              "3",
+              0
+            ],
+            "audio_vae": [
+              "4",
+              0
+            ],
+            "ref_images.ref_image_0": [
+              "40",
+              0
+            ],
+            "ref_images.ref_image_1": [
+              "71",
+              0
+            ]
+          },
+          "class_type": "MiniMaxH3ReferenceToVideo",
+          "_meta": {
+            "title": "MiniMax H3 Reference to Video"
+          }
+        },
+        "21": {
+          "inputs": {
+            "filename_prefix": "R2I/2026-08-21/video/h3_ref2i",
+            "format": "auto",
+            "codec": "auto",
+            "video-preview": "",
+            "video": [
+              "19",
+              0
+            ]
+          },
+          "class_type": "SaveVideo",
+          "_meta": {
+            "title": "Save Video（QC 用，可 bypass）"
+          }
+        },
+        "30": {
+          "inputs": {
+            "value": "**MiniMax H3 REF2I — 人类版示例：把视频模型当图像编辑器用（原生节点，零插件）**\nDrag this file into ComfyUI, press Run. It loads the built-in example.png doodle fox, generates a short STATIC \"video\" of the edit, and saves EVERY decoded frame as a PNG — pick your favorite frame, done.\n\n**输出位置 / Outputs:** every run auto-creates a dated folder via %date% (frontend-side substitution — only works when queueing from the UI, not via raw API):\n- Frames: output/R2I/<yyyy-MM-dd>/h3_ref2i_00001..N_.png (all 22 frames, auto-numbered, never overwritten)\n- Video:  output/R2I/<yyyy-MM-dd>/video/h3_ref2i_*.mp4 (QC only — spot blink/motion frames)\n\n**怎么改成自己的图 / Adapt it:**\n1. LoadImage 节点换成你的参考图（1-2 张最佳，越多越慢越容易身份打架）\n2. Width/Height 改成和你参考图一致的宽高比（32 的倍数，短边 ≤768 最快）——不一致可能出黑边\n3. 改 Prompt 节点（六段式语法，见下）\n4. 其他都不用动：Duration 0.9s = 22 帧候选（帧数网格 17k+5，时长自动向上取整；0.2s = 5 帧纯抽卡但画质可能下降）；Seed 想重抽就换一个；Steps 20 / beta 调度别动\n\n**Prompt 六段式速查（retention_analysis 是编辑指令核心）:**\n- subject_definitions — <Subject N> 绑定 <Picture N>，特征点清\n- summary — 一句话任务书\n- retention_analysis ★ — 保留什么 / 改什么：\n  · partially_preserved = 主力：逐项列\"保留清单\"(face, hair, eyes, pose retained exactly) + \"替换指令\"(X replaced by Y)，越具体越听话\n  · attribute_transfer = 跨角色迁移（Subject 1 = 身份来自图A，Subject 2 = 服装来自图B）\n  · 3D/动漫转真人（cosplayer 重构）：保留清单只放可穿戴件（假发/美瞳/服装），脸写 NOT retained，替换成真人\n- detailed_description — 静态镜头 + 构图锚点（\"entire body from head to toes visible, headroom above, floor space below\" 防裁切）+ 目标细节\n- overall_soundscape / non_diegetic_music — 图像任务填 N/A 即可\n\n**经验参数（3080 实测）:** 768x1024 · 22f · beta ≈ 90-150s/次；成本 ≈ 45s 固定 + ~6.5s/帧 + ~15s/参考图。完整 prompt 语法见 MiniMax 官方 VIDEO_PROMPT_WRITING_GUIDE_ref_en.md"
+          },
+          "class_type": "PrimitiveStringMultiline",
+          "_meta": {
+            "title": "[NOTE]"
+          }
+        },
+        "40": {
+          "inputs": {
+            "image": "flux2_00030.png"
+          },
+          "class_type": "LoadImage",
+          "_meta": {
+            "title": "Reference Image（换成你的图）"
+          }
+        },
+        "70": {
+          "inputs": {
+            "filename_prefix": "R2I/2026-08-21/h3_ref2i",
+            "images": [
+              "17",
+              0
+            ]
+          },
+          "class_type": "SaveImage",
+          "_meta": {
+            "title": "Save All Frames（自动建日期文件夹）"
+          }
+        },
+        "71": {
+          "inputs": {
+            "image": "ComfyUI_00016_.png"
+          },
+          "class_type": "LoadImage",
+          "_meta": {
+            "title": "加载图像"
+          }
+        }
+      }
+    },
+    {
+      "viewComfyJSON": {
+        "title": "音乐生成",
+        "description": "",
+        "viewcomfyEndpoint": "",
+        "previewImages": [],
+        "inputs": [
+          {
+            "title": "保存音频（高级）",
+            "inputs": [
+              {
+                "title": "Filename_prefix",
+                "placeholder": "Filename_prefix",
+                "value": "audio/audio_minimax_music3",
+                "workflowPath": [
+                  "35",
+                  "inputs",
+                  "filename_prefix"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "35-inputs-filename_prefix"
+              },
+              {
+                "title": "Format",
+                "placeholder": "Format",
+                "value": "mp3",
+                "workflowPath": [
+                  "35",
+                  "inputs",
+                  "format"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "35-inputs-format"
+              },
+              {
+                "title": "Format.quality",
+                "placeholder": "Format.quality",
+                "value": "V0",
+                "workflowPath": [
+                  "35",
+                  "inputs",
+                  "format.quality"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "35-inputs-format.quality"
+              }
+            ],
+            "key": "35-SaveAudioAdvanced"
+          },
+          {
+            "title": "UNet加载器",
+            "inputs": [
+              {
+                "title": "Unet_name",
+                "placeholder": "Unet_name",
+                "value": "minimax_music3_dit_fp16.safetensors",
+                "workflowPath": [
+                  "44",
+                  "inputs",
+                  "unet_name"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "44-inputs-unet_name"
+              },
+              {
+                "title": "Weight_dtype",
+                "placeholder": "Weight_dtype",
+                "value": "default",
+                "workflowPath": [
+                  "44",
+                  "inputs",
+                  "weight_dtype"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "44-inputs-weight_dtype"
+              }
+            ],
+            "key": "44-UNETLoader"
+          },
+          {
+            "title": "MiniMax Music3 Text Encode",
+            "inputs": [
+              {
+                "title": "Caption",
+                "placeholder": "Caption",
+                "value": "Global Metadata: Lo-fi hip-hop, chillhop. 78 BPM, D flat major, major scale with jazzy extensions. Laid-back and dreamy throughout, a gentle warm drift with a subtle late-night glow that deepens in the middle and dissolves softly at the end. Studying, raining-outside, headphones-on late-night listening. Bedroom production: muddy warm texture, heavy vinyl crackle, tape hiss and wow-flutter pitch wobble, low-passed dusty mix, soft-clipped drums, everything slightly detuned and cozy.\n\nVocal Details: Soft androgynous vocal, hushed half-sung half-spoken delivery, sitting low in the mix like another instrument, lazy behind-the-beat phrasing, gentle breathy timbre. Sparse murmured double-tracked harmonies, occasional wordless \"mmm\" and \"ooh\" hums drenched in tape delay and warm spring reverb. Long stretches with no vocals at all.\n\nArrangement: Dusty boom-bap drums with a soft thumping kick, cracked snare with lazy swing, brushed hi-hats, low round sub bass. Warm Rhodes piano chords with slow chorus wobble as the harmonic bed, mellow jazzy guitar licks answering the vocal lines, constant vinyl crackle as texture. Intro: rain and vinyl noise, solo Rhodes chords fading in, drums slipping in halfway. Verses: minimal — drums, bass, Rhodes, soft guitar fills between lines. Instrumental sections: guitar and Rhodes trade relaxed jazzy phrases over the beat, occasional muted trumpet ghost notes far in the background. Bridge: drums drop away to rain, crackle, and floating detuned Rhodes, then the beat eases back in. Outro: elements fade one by one until only vinyl crackle and a last unresolved Rhodes chord remain.",
+                "workflowPath": [
+                  "45",
+                  "inputs",
+                  "caption"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "45-inputs-caption"
+              },
+              {
+                "title": "Lyrics",
+                "placeholder": "Lyrics",
+                "value": "[Intro]\nMmm...\n(rain on the window)\nOoh...\n\n[Verse]\nMidnight and the canvas glows\nDragging little wires where the current flows\nType a quiet dream, let the sampler drift\nNoise into a picture, like the fog just lifts\nTwenty slow steps, I'm in no hurry now\nLatents turning colors and I don't know how\nEvery render's like a polaroid I found\nSoft focus memories, no sound\n\n[Instrumental]\n\n[Verse]\nQueue another frame, let the motion breathe\nPictures start to move like the falling leaves\nVideo drifting by at twenty-four\nLittle animations on my bedroom floor\nSeed after seed like the rain outside\nSome of them are keepers, some I let slide\nSave the ones that feel like a Sunday slow\nNode to node to node... and off we go\n\n[Chorus]\nMmm... let it render on\n(take your time, take your time)\nOoh... by the morning it'll all be done\n(one more queue, one more try)\n\n[Instrumental]\n\n[Bridge]\nRain keeps drawing pictures on the glass...\nMy machine keeps dreaming...\nNeither of us fast...\n\n[Chorus]\nMmm... let it render on\n(take your time, take your time)\nOoh... by the morning it'll all be done\n(one more queue, one more try)\n\n[Instrumental]\n\n[Outro]\nMmm...\n(node to node)\nOoh... goodnight",
+                "workflowPath": [
+                  "45",
+                  "inputs",
+                  "lyrics"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "45-inputs-lyrics"
+              },
+              {
+                "title": "Max_duration",
+                "placeholder": "Max_duration",
+                "value": 60,
+                "workflowPath": [
+                  "45",
+                  "inputs",
+                  "max_duration"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "45-inputs-max_duration"
+              },
+              {
+                "title": "Cfg_scale",
+                "placeholder": "Cfg_scale",
+                "value": 1.7,
+                "workflowPath": [
+                  "45",
+                  "inputs",
+                  "cfg_scale"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "float",
+                "validations": {
+                  "required": true
+                },
+                "key": "45-inputs-cfg_scale"
+              },
+              {
+                "title": "Top_k",
+                "placeholder": "Top_k",
+                "value": 50,
+                "workflowPath": [
+                  "45",
+                  "inputs",
+                  "top_k"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "45-inputs-top_k"
+              }
+            ],
+            "key": "45-MiniMaxMusic3TextEncode"
+          },
+          {
+            "title": "加载CLIP",
+            "inputs": [
+              {
+                "title": "Clip_name",
+                "placeholder": "Clip_name",
+                "value": "minimax_music3_text_encoder_pruned_int8_convrot.safetensors",
+                "workflowPath": [
+                  "46",
+                  "inputs",
+                  "clip_name"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "46-inputs-clip_name"
+              },
+              {
+                "title": "Type",
+                "placeholder": "Type",
+                "value": "minimax",
+                "workflowPath": [
+                  "46",
+                  "inputs",
+                  "type"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "46-inputs-type"
+              },
+              {
+                "title": "Device",
+                "placeholder": "Device",
+                "value": "default",
+                "workflowPath": [
+                  "46",
+                  "inputs",
+                  "device"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "46-inputs-device"
+              }
+            ],
+            "key": "46-CLIPLoader"
+          },
+          {
+            "title": "加载VAE",
+            "inputs": [
+              {
+                "title": "Vae_name",
+                "placeholder": "Vae_name",
+                "value": "MiniMax\\minimax_music3_dav.safetensors",
+                "workflowPath": [
+                  "47",
+                  "inputs",
+                  "vae_name"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "47-inputs-vae_name"
+              }
+            ],
+            "key": "47-VAELoader"
+          },
+          {
+            "title": "Empty MiniMax Music3 Latent Audio",
+            "inputs": [
+              {
+                "title": "Batch_size",
+                "placeholder": "Batch_size",
+                "value": 1,
+                "workflowPath": [
+                  "49",
+                  "inputs",
+                  "batch_size"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "49-inputs-batch_size"
+              }
+            ],
+            "key": "49-EmptyMiniMaxMusic3LatentAudio"
+          },
+          {
+            "title": "K采样器",
+            "inputs": [
+              {
+                "title": "Steps",
+                "placeholder": "Steps",
+                "value": 30,
+                "workflowPath": [
+                  "50",
+                  "inputs",
+                  "steps"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "50-inputs-steps"
+              },
+              {
+                "title": "Cfg",
+                "placeholder": "Cfg",
+                "value": 1.7,
+                "workflowPath": [
+                  "50",
+                  "inputs",
+                  "cfg"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "float",
+                "validations": {
+                  "required": true
+                },
+                "key": "50-inputs-cfg"
+              },
+              {
+                "title": "Sampler_name",
+                "placeholder": "Sampler_name",
+                "value": "euler",
+                "workflowPath": [
+                  "50",
+                  "inputs",
+                  "sampler_name"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "50-inputs-sampler_name"
+              },
+              {
+                "title": "Scheduler",
+                "placeholder": "Scheduler",
+                "value": "simple",
+                "workflowPath": [
+                  "50",
+                  "inputs",
+                  "scheduler"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "50-inputs-scheduler"
+              },
+              {
+                "title": "Denoise",
+                "placeholder": "Denoise",
+                "value": 1,
+                "workflowPath": [
+                  "50",
+                  "inputs",
+                  "denoise"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "50-inputs-denoise"
+              }
+            ],
+            "key": "50-KSampler"
+          },
+          {
+            "title": "种子",
+            "inputs": [
+              {
+                "title": "Seed",
+                "placeholder": "Seed",
+                "value": 0,
+                "workflowPath": [
+                  "52",
+                  "inputs",
+                  "seed"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "seed",
+                "validations": {
+                  "required": true
+                },
+                "key": "52-inputs-seed"
+              }
+            ],
+            "key": "52-SeedNode"
+          },
+          {
+            "title": "VAE解码音频（分块）",
+            "inputs": [
+              {
+                "title": "Tile_size",
+                "placeholder": "Tile_size",
+                "value": 1536,
+                "workflowPath": [
+                  "53",
+                  "inputs",
+                  "tile_size"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "53-inputs-tile_size"
+              },
+              {
+                "title": "Overlap",
+                "placeholder": "Overlap",
+                "value": 64,
+                "workflowPath": [
+                  "53",
+                  "inputs",
+                  "overlap"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "number",
+                "validations": {
+                  "required": true
+                },
+                "key": "53-inputs-overlap"
+              }
+            ],
+            "key": "53-VAEDecodeAudioTiled"
+          },
+          {
+            "title": "切换",
+            "inputs": [
+              {
+                "title": "Switch",
+                "placeholder": "Switch",
+                "value": false,
+                "workflowPath": [
+                  "54",
+                  "inputs",
+                  "switch"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "boolean",
+                "validations": {
+                  "required": false
+                },
+                "key": "54-inputs-switch"
+              }
+            ],
+            "key": "54-ComfySwitchNode"
+          }
+        ],
+        "advancedInputs": [],
+        "id": "73a8cd200d754"
+      },
+      "workflowApiJSON": {
+        "35": {
+          "inputs": {
+            "filename_prefix": "audio/audio_minimax_music3",
+            "format": "mp3",
+            "format.quality": "V0",
+            "audio": [
+              "54",
+              0
+            ]
+          },
+          "class_type": "SaveAudioAdvanced",
+          "_meta": {
+            "title": "保存音频（高级）"
+          }
+        },
+        "44": {
+          "inputs": {
+            "unet_name": "minimax_music3_dit_fp16.safetensors",
+            "weight_dtype": "default"
+          },
+          "class_type": "UNETLoader",
+          "_meta": {
+            "title": "UNet加载器"
+          }
+        },
+        "45": {
+          "inputs": {
+            "caption": "",
+            "lyrics": "",
+            "seed": [
+              "52",
+              0
+            ],
+            "max_duration": 60,
+            "cfg_scale": 1.7,
+            "top_k": 50,
+            "clip": [
+              "46",
+              0
+            ]
+          },
+          "class_type": "MiniMaxMusic3TextEncode",
+          "_meta": {
+            "title": "MiniMax Music3 Text Encode"
+          }
+        },
+        "46": {
+          "inputs": {
+            "clip_name": "minimax_music3_text_encoder_pruned_int8_convrot.safetensors",
+            "type": "minimax",
+            "device": "default"
+          },
+          "class_type": "CLIPLoader",
+          "_meta": {
+            "title": "加载CLIP"
+          }
+        },
+        "47": {
+          "inputs": {
+            "vae_name": "MiniMax\\minimax_music3_dav.safetensors"
+          },
+          "class_type": "VAELoader",
+          "_meta": {
+            "title": "加载VAE"
+          }
+        },
+        "48": {
+          "inputs": {
+            "conditioning": [
+              "45",
+              0
+            ]
+          },
+          "class_type": "ConditioningZeroOut",
+          "_meta": {
+            "title": "条件零化"
+          }
+        },
+        "49": {
+          "inputs": {
+            "seconds": [
+              "45",
+              1
+            ],
+            "batch_size": 1
+          },
+          "class_type": "EmptyMiniMaxMusic3LatentAudio",
+          "_meta": {
+            "title": "Empty MiniMax Music3 Latent Audio"
+          }
+        },
+        "50": {
+          "inputs": {
+            "seed": [
+              "52",
+              0
+            ],
+            "steps": 30,
+            "cfg": 1.7,
+            "sampler_name": "euler",
+            "scheduler": "simple",
+            "denoise": 1,
+            "model": [
+              "44",
+              0
+            ],
+            "positive": [
+              "45",
+              0
+            ],
+            "negative": [
+              "48",
+              0
+            ],
+            "latent_image": [
+              "49",
+              0
+            ]
+          },
+          "class_type": "KSampler",
+          "_meta": {
+            "title": "K采样器"
+          }
+        },
+        "51": {
+          "inputs": {
+            "samples": [
+              "50",
+              0
+            ],
+            "vae": [
+              "47",
+              0
+            ]
+          },
+          "class_type": "VAEDecodeAudio",
+          "_meta": {
+            "title": "VAE解码（音频）"
+          }
+        },
+        "52": {
+          "inputs": {
+            "seed": 0
+          },
+          "class_type": "SeedNode",
+          "_meta": {
+            "title": "种子"
+          }
+        },
+        "53": {
+          "inputs": {
+            "tile_size": 1536,
+            "overlap": 64,
+            "samples": [
+              "50",
+              0
+            ],
+            "vae": [
+              "47",
+              0
+            ]
+          },
+          "class_type": "VAEDecodeAudioTiled",
+          "_meta": {
+            "title": "VAE解码音频（分块）"
+          }
+        },
+        "54": {
+          "inputs": {
+            "switch": false,
+            "on_false": [
+              "51",
+              0
+            ],
+            "on_true": [
+              "53",
+              0
+            ]
+          },
+          "class_type": "ComfySwitchNode",
+          "_meta": {
+            "title": "切换"
           }
         }
       }
