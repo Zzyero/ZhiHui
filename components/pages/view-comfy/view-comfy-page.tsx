@@ -19,7 +19,7 @@ class WorkflowJSONError extends Error {
     }
 }
 
-const DEFAULT_SECTIONS = ['智能生图', '智能修图', '视频生成', '音频克隆'];
+const DEFAULT_SECTIONS = ['智能生图', '智能修图', '视频生成', '音频生成'];
 
 
 
@@ -31,7 +31,6 @@ export default function ViewComfyPage() {
     const [appTitle, setAppTitle] = useState<string>(viewComfyState.appTitle || "");
     const [appImg, setAppImg] = useState<string>(viewComfyState.appImg || "");
     const [appImgError, setAppImgError] = useState<string | undefined>(undefined);
-    const [savingSections, setSavingSections] = useState(false);
     const [savingToFile, setSavingToFile] = useState(false);
 
     // 如果 sections 为空，初始化默认两个分类（不持久化，等用户点保存再写）
@@ -77,23 +76,6 @@ export default function ViewComfyPage() {
             };
         });
         viewComfyStateDispatcher({ type: ActionType.SET_SECTIONS, payload: next });
-    };
-
-    const saveSections = async () => {
-        setSavingSections(true);
-        try {
-            const res = await fetch('/api/view-comfy', {
-                method: 'POST',
-                headers: { 'content-type': 'application/json' },
-                body: JSON.stringify({ action: 'update-sections', sections: viewComfyState.sections }),
-            });
-            if (!res.ok) throw new Error(await res.text());
-            toast.success('分类已保存到 view_comfy.json');
-        } catch (err) {
-            toast.error('保存分类失败: ' + (err instanceof Error ? err.message : String(err)));
-        } finally {
-            setSavingSections(false);
-        }
     };
 
     const saveToFile = async () => {
@@ -323,14 +305,6 @@ export default function ViewComfyPage() {
                                                     </label>
                                                 );
                                             })}
-                                            <Button
-                                                size="sm"
-                                                variant="default"
-                                                disabled={savingSections}
-                                                onClick={saveSections}
-                                            >
-                                                {savingSections ? '保存中…' : '保存分类'}
-                                            </Button>
                                         </div>
                                     )}
                                     {showDeleteWorkflowButton() && (

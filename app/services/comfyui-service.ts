@@ -34,9 +34,15 @@ export class ComfyUIService {
 
         try {
             const encoder = new TextEncoder();
+            let isClosed = false;
             const send = (controller: ReadableStreamDefaultController<Uint8Array>, event: string, data: unknown) => {
-                const dataStr = typeof data === "string" ? data : JSON.stringify(data);
-                controller.enqueue(encoder.encode(`event: ${event}\ndata: ${dataStr}\n\n`));
+                if (isClosed) return;
+                try {
+                    const dataStr = typeof data === "string" ? data : JSON.stringify(data);
+                    controller.enqueue(encoder.encode("event: " + event + "\ndata: " + dataStr + "\n\n"));
+                } catch {
+                    isClosed = true;
+                }
             };
             const apiService = this.comfyUIAPIService;
             const getFileFromComfyOutputDirectory = this.getFileFromComfyOutputDirectory.bind(this);
@@ -154,9 +160,11 @@ export class ComfyUIService {
                         send(controller, "cancelled", { promptId: clientPromptId });
                     }
                     controller.close();
+                    isClosed = true;
                 },
                 async cancel() {
-                    // 客户端断开/刷新时，从队列移除未开始的任务
+                    // 客户端断开/刷新时：标记流已关闭，避免后续 WS 进度事件往已关闭的 controller 里写
+                    isClosed = true;
                     generationQueue.cancel(clientPromptId);
                 },
             });

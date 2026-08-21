@@ -7,6 +7,15 @@ import { ComfyUIAPIService } from "../services/comfyui-api-service";
 
 const COMFY_WORKFLOWS_DIR = path.join(process.cwd(), "comfy", "workflows");
 
+const LOADER_CLASS_TYPES = new Set([
+  "LoadImage",
+  "LoadImageMask",
+  "loadImage_ViewComfy",
+  "VHS_LoadVideo",
+  "LoadVideo",
+  "LoadAudio",
+]);
+
 export class ComfyWorkflow {
    
   private workflow: { [key: string]: any };
@@ -25,6 +34,9 @@ export class ComfyWorkflow {
     try {
       for (const input of viewComfy) {
         const path = input.key.split("-");
+        const nodeId = path[0];
+        const node = this.workflow[nodeId];
+        const isEmpty = input.value === null || input.value === undefined || input.value === "";
          
         let obj: any = this.workflow;
         for (let i = 0; i < path.length - 1; i++) {
@@ -35,17 +47,24 @@ export class ComfyWorkflow {
         }
         if (input.value instanceof File) {
           if (path[path.length - 1] === "viewcomfymask") {
+            const t0 = Date.now();
             await this.uploadMaskToComfy({
               comfyUIService,
               maskFile: input.value,
               maskKeyParam: input.key,
               viewComfy,
-            })
+            });
+            console.log(`[upload] mask ${input.key} 耗时 ${Date.now() - t0}ms`);
           } else {
+            const t0 = Date.now();
             const fileName = `${this.getFileNamePrefix()}${input.value.name}`;
             const uploadedName = await comfyUIService.uploadToInput(input.value, fileName);
             obj[path[path.length - 1]] = uploadedName;
+            console.log(`[upload] image ${input.key} (${input.value.size} 字节) 耗时 ${Date.now() - t0}ms`);
           }
+        } else if (node && LOADER_CLASS_TYPES.has(node.class_type) && isEmpty) {
+          // 可选参考输入为空：断开该加载节点（删除节点 + 下游连接置 null）
+          this.disconnectLoaderNode(nodeId);
         } else {
           obj[path[path.length - 1]] = input.value;
         }
@@ -72,6 +91,20 @@ export class ComfyWorkflow {
               node.inputs[key] = newSeed;
             }
           });
+      }
+    }
+  }
+
+  private disconnectLoaderNode(nodeId: string) {
+    delete this.workflow[nodeId];
+    for (const key in this.workflow) {
+      const node = this.workflow[key];
+      if (!node || !node.inputs) continue;
+      for (const inputName in node.inputs) {
+        const v = node.inputs[inputName];
+        if (Array.isArray(v) && v.length === 2 && v[0] === nodeId) {
+          node.inputs[inputName] = null;
+        }
       }
     }
   }
@@ -103,9 +136,10 @@ export class ComfyWorkflow {
     comfyUIService: ComfyUIAPIService
   }) {
     const { maskKeyParam, maskFile, viewComfy, comfyUIService } = params;
-    const originalFilePath = maskKeyParam.slice(0, "-viewcomfymask".length)
+    // maskKeyParam = "<imageKey>-viewcomfymask"，例如 "643-inputs-image-viewcomfymask"
+    const originalFilePath = maskKeyParam.slice(0, -"-viewcomfymask".length)
     const originalFilePathKeys = originalFilePath.split("-");
-     
+
     let obj: any = this.workflow;
     for (let i = 0; i < originalFilePathKeys.length - 1; i++) {
       if (i === originalFilePathKeys.length - 1) {
@@ -128,8 +162,8 @@ export class ComfyWorkflow {
     }
     const originalFile = viewComfyInput.value as File;
 
+    // clipspace 约定：把原图 + mask 写入 ComfyUI clipspace 缓存，LoadImage 节点用 clipspace/xxx [input] 读取
     const clipspaceMaskFilename = this.getMaskFilename("mask", this.id);
-
     await comfyUIService.uploadMask({
       maskFileName: clipspaceMaskFilename,
       maskFile,
@@ -137,7 +171,6 @@ export class ComfyWorkflow {
     });
 
     const clipspacePaintedFilename = this.getMaskFilename("painted", this.id);
-
     await comfyUIService.uploadImage({
       imageFile: originalFile,
       imageFileName: clipspacePaintedFilename,
@@ -151,11 +184,11 @@ export class ComfyWorkflow {
       originalFileRef: clipspacePaintedFilename
     });
 
-    obj[originalFilePathKeys[originalFilePathKeys.length - 1]] = `clipspace/${clipspacePaintedMaskFilename} [input]`
-
+    obj[originalFilePathKeys[originalFilePathKeys.length - 1]] = "clipspace/" + clipspacePaintedMaskFilename + " [input]"
   }
 
   private getMaskFilename(filename: string, id: string) {
-    return `clipspace-${filename}-${id}.png`
+    return "clipspace-" + filename + "-" + id + ".png"
   }
+
 }

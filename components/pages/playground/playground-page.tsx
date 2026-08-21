@@ -89,6 +89,9 @@ const getCorrectMimeType = (filename: string): string => {
         'mp4': 'video/mp4', 'webm': 'video/webm', 'mkv': 'video/x-matroska',
         'avi': 'video/x-msvideo', 'mov': 'video/quicktime', 'wmv': 'video/x-ms-wmv',
         'mp3': 'audio/mpeg', 'wav': 'audio/wav', 'ogg': 'audio/ogg',
+        'flac': 'audio/flac', 'm4a': 'audio/mp4', 'aac': 'audio/aac',
+        'opus': 'audio/opus', 'wma': 'audio/x-ms-wma',
+        'm4v': 'video/x-m4v', '3gp': 'video/3gpp',
         'png': 'image/png', 'jpg': 'image/jpeg', 'jpeg': 'image/jpeg',
         'gif': 'image/gif', 'webp': 'image/webp', 'bmp': 'image/bmp',
     };
@@ -576,7 +579,7 @@ export default function PlaygroundPage({ sectionName }: { sectionName?: string }
     );
 }
 
-export function ImageDialog({ output, showOutputFileName, onAddToGallery }: { output: IOutput, showOutputFileName: boolean, onAddToGallery?: (output: IOutput) => void }) {
+export function ImageDialog({ output, showOutputFileName, onAddToGallery, className }: { output: IOutput, showOutputFileName: boolean, onAddToGallery?: (output: IOutput) => void, className?: string }) {
     const backgroundColor = "black";
     const scaleUp = false;
     const zoomFactor = 8;
@@ -650,7 +653,7 @@ export function ImageDialog({ output, showOutputFileName, onAddToGallery }: { ou
                     key={output.url}
                     src={output.url}
                     alt={`${output.url}`}
-                    className={cn("w-full h-64 object-contain rounded-md transition-all hover:scale-105 hover:cursor-pointer")}
+                    className={cn("w-full h-64 object-contain rounded-md transition-all hover:scale-105 hover:cursor-pointer", className)}
                     draggable="true"
                     onDragStart={createMediaDragHandler({
                         url: output.url,
@@ -820,27 +823,28 @@ export function VideoDialog({ output, showOutputFileName }: { output: IOutput, s
 }
 
 export function AudioDialog({ output }: { output: IOutput }) {
+    const handleDownload = () => {
+        const link = document.createElement('a')
+        link.href = output.url
+        link.download = getOutputFileName(output)
+        link.click()
+    }
+
     return (
-        <Dialog>
-            <DialogTrigger asChild>
-                <div
-                    draggable="true"
-                    onDragStart={createMediaDragHandler({
-                        url: output.url,
-                        filename: getOutputFileName(output),
-                        contentType: getOutputContentType(output)
-                    })}
-                >
-                    <audio src={output.url} controls />
-                </div>
-            </DialogTrigger>
-            <DialogContent className="max-w-fit max-h-[90vh] border-0 p-0 bg-transparent [&>button]:bg-background [&>button]:border [&>button]:border-border [&>button]:rounded-full [&>button]:p-1 [&>button]:shadow-md">
-                <DialogHeader className="sr-only">
-                    <DialogTitle>音频预览</DialogTitle>
-                </DialogHeader>
-                <audio src={output.url} controls />
-            </DialogContent>
-        </Dialog>
+        <div
+            draggable="true"
+            onDragStart={createMediaDragHandler({
+                url: output.url,
+                filename: getOutputFileName(output),
+                contentType: getOutputContentType(output)
+            })}
+            className="flex flex-row items-center gap-2 w-full"
+        >
+            <audio src={output.url} controls className="flex-1 min-w-0" />
+            <Button variant="outline" size="icon" onClick={handleDownload} aria-label="下载音频">
+                <Download className="h-4 w-4" />
+            </Button>
+        </div>
     )
 }
 
@@ -940,21 +944,29 @@ function OutputRenderer({
     }
 
     const outputComponent = getOutputComponent();
+    const contentType = getOutputContentType(output);
+    const isAudio = contentType.startsWith('audio/');
 
     return (
         <>
             {outputComponent && (
-                <div
-                    key={output.url}
-                    className="flex pt-1 w-64 h-64 items-center justify-center"
-                >
-                    <BlurFade key={output.url} delay={0.25} inView className="flex items-center justify-center w-full h-full">
+                isAudio ? (
+                    <BlurFade key={output.url} delay={0.25} inView className="flex flex-1 min-w-0 items-center gap-2 pt-1">
                         {outputComponent}
                     </BlurFade>
-                </div>
+                ) : (
+                    <div
+                        key={output.url}
+                        className="flex pt-1 w-64 h-64 items-center justify-center"
+                    >
+                        <BlurFade key={output.url} delay={0.25} inView className="flex items-center justify-center w-full h-full">
+                            {outputComponent}
+                        </BlurFade>
+                    </div>
+                )
             )}
             {
-                ((getOutputContentType(output)).startsWith('text/') && textOutputEnabled) && (
+                (contentType.startsWith('text/') && textOutputEnabled) && (
                     <BlurFade key={`${output.url}-text`} delay={0.25} inView className="flex items-center justify-center w-full h-full">
                         <TextOutput output={output} />
                     </BlurFade>

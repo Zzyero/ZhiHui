@@ -6,7 +6,7 @@ export const SECTION_ROUTES: Record<string, string> = {
     "智能生图": "/playground",
     "智能修图": "/image-edit",
     "视频生成": "/video-generate",
-    "音频克隆": "/audio-clone",
+    "音频生成": "/audio-clone",
 };
 
 /** 把字段 key（"6-inputs-text"）拆成 nodeId 与 fieldName */

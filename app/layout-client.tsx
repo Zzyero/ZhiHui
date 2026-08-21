@@ -4,7 +4,7 @@ import { SettingsService } from '@/app/services/settings-service';
 import { TopNav } from '@/components/top-nav';
 import { Sidebar, SidebarContent, SidebarFooter, SidebarGroup, SidebarGroupContent, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarProvider } from '@/components/ui/sidebar';
 import { Toaster } from 'sonner';
-import { FileJson, Gauge, Images, Mic, SquareTerminal, Video, Wand2 } from 'lucide-react';
+import { Bot, FileJson, Gauge, Images, Mic, SquareTerminal, Video, Wand2 } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from "next/navigation";
 import { Suspense, useEffect } from "react";
@@ -66,9 +66,14 @@ export function AppSidebar() {
       icon: Video,
     },
     {
-      title: "音频克隆",
+      title: "音频生成",
       url: "/audio-clone",
       icon: Mic,
+    },
+    {
+      title: "智能体",
+      url: "/agent",
+      icon: Bot,
     },
     {
       title: "画廊",

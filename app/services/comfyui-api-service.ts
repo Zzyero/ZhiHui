@@ -128,8 +128,10 @@ export class ComfyUIAPIService {
             };
 
             this.ws.onmessage = (event) => {
-                // console.log("WebSocket message received:", event.data);
-                this.comfyEventDataHandler(event.data);
+                // ComfyUI 会通过 WS 推送二进制预览图（Blob/ArrayBuffer），只处理文本 JSON 事件
+                if (typeof event.data === "string") {
+                    this.comfyEventDataHandler(event.data);
+                }
             };
         } catch (error) {
             console.error(error);
@@ -540,7 +542,7 @@ export class ComfyUIAPIService {
         const data = new URLSearchParams({ ...file }).toString();
 
         try {
-            const response = await fetch(`${this.getUrl("http")}/view?${encodeURI(data)}`);
+            const response = await fetch(`${this.getUrl("http")}/view?${data}`);
             if (!response.ok) {
                 if (response.status === 404) {
                     const fileName = file.filename || "";
@@ -578,7 +580,8 @@ export class ComfyUIAPIService {
         for (const key in output) {
              
             for (const dict of output[key] as any[]) {
-                if (dict.type !== "temp") {
+                // 只保留图片/视频等输出对象（带 type 字段），跳过文本节点输出的字符串
+                if (dict && typeof dict === "object" && (dict as any).type !== "temp") {
                     this.outputFiles.push(dict)
                 }
             }

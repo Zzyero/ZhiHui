@@ -1,15 +1,17 @@
 import { spawn, exec } from "node:child_process";
 import http from "node:http";
+import path from "node:path";
 
 const PORT = 3000;
 const URL = `http://localhost:${PORT}`;
 const isWin = process.platform === "win32";
 
-// 启动 next dev
-const dev = spawn(isWin ? "next.cmd" : "next", ["dev", "-p", String(PORT)], {
+// 启动 next dev：直接用 node 起，显式传堆上限（避免 next.cmd 包装层吞掉 NODE_OPTIONS）
+// worker 进程的内存由 Next.js 根据 NODE_OPTIONS 自动分配
+const nextBin = path.join(process.cwd(), "node_modules", "next", "dist", "bin", "next");
+const dev = spawn(process.execPath, ["--max-old-space-size=12288", "--inspect", nextBin, "dev", "-p", String(PORT)], {
   stdio: "inherit",
-  shell: isWin,
-  env: { ...process.env, NODE_OPTIONS: "--inspect" },
+  env: { ...process.env, NODE_OPTIONS: "--max-old-space-size=12288" },
 });
 
 dev.on("error", (err) => {

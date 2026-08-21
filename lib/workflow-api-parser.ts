@@ -88,6 +88,7 @@ export function workflowAPItoViewComfy(source: WorkflowApiJSON): IViewComfyBase 
                     input.title = getTitleFromValue(value.class_type, value);
                     input.placeholder = getTitleFromValue(value.class_type, value);
                     input.value = null;
+                    input.validations.required = false;
                     finalInput = {
                         title: getTitleFromValue(value.class_type, value),
                         inputs: [input],
@@ -107,6 +108,7 @@ export function workflowAPItoViewComfy(source: WorkflowApiJSON): IViewComfyBase 
                     if (typeof uploadInputIndex !== "undefined") {
                         inputs[uploadInputIndex].valueType = "video"
                         inputs[uploadInputIndex].value = null
+                        inputs[uploadInputIndex].validations.required = false
                     }
 
                     finalInput = {
@@ -128,6 +130,7 @@ export function workflowAPItoViewComfy(source: WorkflowApiJSON): IViewComfyBase 
                     videoInput.title = getTitleFromValue(value.class_type, value);
                     videoInput.placeholder = getTitleFromValue(value.class_type, value);
                     videoInput.value = null;
+                    videoInput.validations.required = false;
                     finalInput = {
                         title: getTitleFromValue(value.class_type, value),
                         inputs: [videoInput],
@@ -146,6 +149,7 @@ export function workflowAPItoViewComfy(source: WorkflowApiJSON): IViewComfyBase 
                     const audioInput = inputs[0];
                     audioInput.valueType = "audio";
                     audioInput.value = null;
+                    audioInput.validations.required = false;
                     finalInput = {
                         title: getTitleFromValue(value.class_type, value),
                         inputs: [audioInput],

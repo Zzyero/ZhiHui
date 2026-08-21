@@ -33,6 +33,7 @@ import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import type { IMonitorSnapshot, IGPUInfo } from "@/app/services/monitor-service"
 import type { IStatsData } from "@/app/services/stats-service"
+import AgentSettingsCard from "@/components/pages/admin/agent-settings-card"
 
 function localDateKey(ts: number): string {
     const d = new Date(ts)
@@ -413,6 +414,8 @@ export default function AdminPage() {
                         </div>
                     </CardContent>
                 </Card>
+
+                <AgentSettingsCard />
             </div>
         </div>
     )
