@@ -7,8 +7,13 @@ import { useViewComfy, ActionType } from "@/app/providers/view-comfy-provider"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
-import { ArrowUp, Loader2, MessageSquare, Paperclip, Pencil, Plus, Sparkles, Trash2, X } from "lucide-react"
-import { ImageDialog, VideoDialog, AudioDialog, type IOutput } from "@/components/pages/playground/playground-page"
+import { ArrowUp, Loader2, MessageSquare, Paperclip, Pencil, Plus, Sparkles, Square, Trash2, X } from "lucide-react"
+interface IAgentOutputView {
+    filename: string
+    contentType: string
+    url: string
+    size: number
+}
 
 function mimeFor(name: string): string {
     const ext = name.toLowerCase().split(".").pop() || ""
@@ -41,6 +46,7 @@ export default function AgentPage() {
     const fileInputRef = React.useRef<HTMLInputElement>(null)
     const textareaRef = React.useRef<HTMLTextAreaElement>(null)
     const scrollRef = React.useRef<HTMLDivElement>(null)
+    const abortControllerRef = React.useRef<AbortController | null>(null)
     const [renamingId, setRenamingId] = React.useState<string | null>(null)
     const [renameValue, setRenameValue] = React.useState("")
     const renameBlurSkipRef = React.useRef(false)
@@ -92,7 +98,7 @@ export default function AgentPage() {
         }
     }
 
-    const handleAddToGallery = async (output: IOutput, workflowTitle?: string, workflowId?: string) => {
+    const handleAddToGallery = async (output: IAgentOutputView, workflowTitle?: string, workflowId?: string) => {
         try {
             const res = await fetch(output.url)
             const blob = await res.blob()
@@ -160,8 +166,11 @@ export default function AgentPage() {
         formData.append("message", text)
         for (const f of files) formData.append("file", f)
 
+        const controller = new AbortController()
+        abortControllerRef.current = controller
+
         try {
-            const res = await fetch("/api/agent/chat", { method: "POST", body: formData })
+            const res = await fetch("/api/agent/chat", { method: "POST", body: formData, signal: controller.signal })
             if (!res.ok) {
                 let err = "发送失败"
                 try {
@@ -238,11 +247,18 @@ export default function AgentPage() {
             else throw new Error("未收到回复")
             await loadSessions()
         } catch (error) {
-            toast.error(error instanceof Error ? error.message : "发送失败")
+            if (!controller.signal.aborted) {
+                toast.error(error instanceof Error ? error.message : "发送失败")
+            }
         } finally {
             setLoading(false)
             setStatus(null)
+            abortControllerRef.current = null
         }
+    }
+
+    const handleStop = () => {
+        abortControllerRef.current?.abort()
     }
 
     const handleSend = async () => {
@@ -323,14 +339,24 @@ export default function AgentPage() {
                         <Paperclip className="size-4" />
                     </button>
                 </div>
-                <button
-                    onClick={handleSend}
-                    disabled={loading || (!input.trim() && attachments.length === 0)}
-                    className="flex size-8 items-center justify-center rounded-full bg-primary text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-40"
-                    aria-label="发送"
-                >
-                    {loading ? <Loader2 className="size-4 animate-spin" /> : <ArrowUp className="size-4" />}
-                </button>
+                {loading ? (
+                    <button
+                        onClick={handleStop}
+                        className="flex size-8 items-center justify-center rounded-full bg-foreground text-background transition-colors hover:bg-foreground/80"
+                        aria-label="停止输出"
+                    >
+                        <Square className="size-3.5 fill-current" />
+                    </button>
+                ) : (
+                    <button
+                        onClick={handleSend}
+                        disabled={!input.trim() && attachments.length === 0}
+                        className="flex size-8 items-center justify-center rounded-full bg-primary text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-40"
+                        aria-label="发送"
+                    >
+                        <ArrowUp className="size-4" />
+                    </button>
+                )}
             </div>
         </div>
     )
@@ -437,26 +463,29 @@ export default function AgentPage() {
                                                 <div className="text-[15px] leading-relaxed text-foreground">
                                                     {m.content && <div className="whitespace-pre-wrap">{m.content}</div>}
                                                     {m.outputs?.map((o, i) => {
-                                                        const output: IOutput = {
+                                                        const output: IAgentOutputView = {
                                                             filename: o.name,
                                                             contentType: mimeFor(o.name),
                                                             url: "/api/agent/file/outputs/" + o.name,
                                                             size: 0,
                                                         }
                                                         if (o.type === "video") {
-                                                            return <VideoDialog key={i} output={output} showOutputFileName={false} />
+                                                            return <video key={i} src={output.url} controls className="mt-3 max-h-80 w-full rounded-xl border border-border/50" />
                                                         }
                                                         if (o.type === "audio") {
-                                                            return <AudioDialog key={i} output={output} />
+                                                            return <audio key={i} src={output.url} controls className="mt-3 w-full" />
                                                         }
                                                         return (
-                                                            <ImageDialog
-                                                                key={i}
-                                                                output={output}
-                                                                showOutputFileName={false}
-                                                                onAddToGallery={(out) => handleAddToGallery(out, o.workflowTitle, o.workflowId)}
-                                                                className="mt-3 h-auto max-h-80 w-auto rounded-xl border border-border/50 shadow-sm"
-                                                            />
+                                                            <div key={i} className="mt-3">
+                                                                <a href={output.url} target="_blank" rel="noreferrer">
+                                                                    <img src={output.url} alt={output.filename} className="max-h-80 w-auto rounded-xl border border-border/50 shadow-sm" />
+                                                                </a>
+                                                                <div className="mt-2">
+                                                                    <Button variant="outline" size="sm" onClick={() => handleAddToGallery(output, o.workflowTitle, o.workflowId)}>
+                                                                        添加到画廊
+                                                                    </Button>
+                                                                </div>
+                                                            </div>
                                                         )
                                                     })}
                                                 </div>

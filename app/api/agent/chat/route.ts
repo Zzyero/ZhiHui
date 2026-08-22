@@ -20,19 +20,30 @@ export async function POST(request: NextRequest) {
         }
 
         const encoder = new TextEncoder();
+        const abortController = new AbortController();
         const stream = new ReadableStream<Uint8Array>({
             async start(controller) {
                 const emit = (event: IAgentProgressEvent) => {
-                    controller.enqueue(encoder.encode(`event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`));
+                    try {
+                        controller.enqueue(encoder.encode(`event: ${event.type}\ndata: ${JSON.stringify(event)}\n\n`));
+                    } catch {
+                        // 客户端已断开，忽略入队失败
+                    }
                 };
                 try {
-                    const assistantMessage = await agentService.chat(sessionId, message, attachments, emit);
+                    const assistantMessage = await agentService.chat(sessionId, message, attachments, emit, abortController.signal);
                     emit({ type: "done", message: assistantMessage });
                 } catch (error) {
-                    emit({ type: "error", error: error instanceof Error ? error.message : String(error) });
+                    if (!abortController.signal.aborted) {
+                        emit({ type: "error", error: error instanceof Error ? error.message : String(error) });
+                    }
                 } finally {
-                    controller.close();
+                    try { controller.close(); } catch { /* ignore */ }
                 }
+            },
+            cancel() {
+                // 客户端中断（点击停止/断开连接）
+                abortController.abort();
             },
         });
 

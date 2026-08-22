@@ -59,7 +59,7 @@ export interface IAgentProgressEvent {
     promptId?: string;
     realPromptId?: string;
     sectionName?: string;
-    queueStatus?: "queued" | "running" | "completed" | "error";
+    queueStatus?: "queued" | "running" | "completed" | "error" | "canceled";
 }
 
 const DEFAULT_DATA_DIR = path.join(process.cwd(), "data");
@@ -124,16 +124,21 @@ function findLongTextKey(view: Record<string, any>): string | undefined {
     return undefined;
 }
 
+function throwIfAborted(signal?: AbortSignal): void {
+    if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
+}
+
 interface ILlmResponse {
     content: string;
     toolCalls: { id: string; type?: string; function: { name: string; arguments: string } }[];
 }
 
-async function callLlm(settings: IAgentSettings, messages: unknown[], tools: unknown[]): Promise<ILlmResponse> {
+async function callLlm(settings: IAgentSettings, messages: unknown[], tools: unknown[], signal?: AbortSignal): Promise<ILlmResponse> {
     let base = settings.baseUrl || "http://localhost:11434/v1";
     while (base.endsWith("/")) base = base.slice(0, -1);
     const res = await fetch(base + "/chat/completions", {
         method: "POST",
+        signal,
         headers: {
             "Content-Type": "application/json",
             ...(settings.apiKey ? { Authorization: "Bearer " + settings.apiKey } : {}),
@@ -252,13 +257,15 @@ class AgentService {
     }
 
     /** 执行一个工作流，返回产物（图片/视频/音频）并保存到 outputs 目录 */
-    private async executeWorkflow(skill: IWorkflowSkill, viewComfyInputs: IInput[], emit?: (event: IAgentProgressEvent) => void): Promise<IAgentOutput[]> {
+    private async executeWorkflow(skill: IWorkflowSkill, viewComfyInputs: IInput[], emit?: (event: IAgentProgressEvent) => void, signal?: AbortSignal): Promise<IAgentOutput[]> {
+        throwIfAborted(signal);
         const taskId = crypto.randomUUID();
         const sectionName = "智能体";
         const startedAt = Date.now();
         const api = getComfyUIAPIService();
         const workflow = new ComfyWorkflow(skill.workflowApiJSON);
         await workflow.setViewComfy(viewComfyInputs, api);
+        throwIfAborted(signal);
 
         emit?.({ type: "queue", promptId: taskId, sectionName, workflowTitle: skill.title, queueStatus: "queued" });
 
@@ -269,7 +276,21 @@ class AgentService {
             try {
                 const realPromptId = await api.startQueuePrompt(workflow.getWorkflow());
                 emit?.({ type: "queue", promptId: taskId, realPromptId, sectionName, workflowTitle: skill.title, queueStatus: "running" });
+
+                // 客户端中断 → 中断 ComfyUI 当前任务
+                let onAbort: (() => void) | undefined;
+                if (signal) {
+                    onAbort = () => { api.cancelPrompt(realPromptId, "running").catch(() => {}); };
+                    if (signal.aborted) {
+                        onAbort();
+                        onAbort = undefined;
+                    } else {
+                        signal.addEventListener("abort", onAbort, { once: true });
+                    }
+                }
+
                 const result = await api.waitForCompletion();
+                if (onAbort) signal?.removeEventListener("abort", onAbort);
                 status = result.status;
                 if (result.outputFiles.length === 0) return;
                 for (const file of result.outputFiles) {
@@ -284,6 +305,10 @@ class AgentService {
             }
         });
 
+        if (signal?.aborted) {
+            emit?.({ type: "queue", promptId: taskId, sectionName, workflowTitle: skill.title, queueStatus: "canceled" });
+            throw new DOMException("Aborted", "AbortError");
+        }
         if (execError) {
             emit?.({ type: "queue", promptId: taskId, sectionName, workflowTitle: skill.title, queueStatus: "error" });
             throw execError;
@@ -321,7 +346,8 @@ class AgentService {
         skills: IWorkflowSkill[],
         savedAttachments: IAgentAttachment[],
         session: IAgentSession,
-        emit?: (event: IAgentProgressEvent) => void
+        emit?: (event: IAgentProgressEvent) => void,
+        signal?: AbortSignal
     ): Promise<{ content: string; outputs?: IAgentOutput[] }> {
         const name = toolCall.function.name;
 
@@ -375,9 +401,10 @@ class AgentService {
             }
 
             emit?.({ type: "status", phase: "generating", workflowTitle: skill.title });
-            const outputs = await this.executeWorkflow(skill, viewComfyInputs, emit);
+            const outputs = await this.executeWorkflow(skill, viewComfyInputs, emit, signal);
             return { content: `已通过工作流「${skill.title}」生成 ${outputs.length} 个文件。`, outputs };
         } catch (error) {
+            if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
             return { content: "生成失败：" + (error instanceof Error ? error.message : String(error)) };
         }
     }
@@ -387,7 +414,8 @@ class AgentService {
         sessionId: string,
         text: string,
         attachments: { file: File }[],
-        emit?: (event: IAgentProgressEvent) => void
+        emit?: (event: IAgentProgressEvent) => void,
+        signal?: AbortSignal
     ): Promise<IAgentMessage> {
         const session = await this.load(sessionId);
         if (!session) throw new Error("会话不存在");
@@ -467,8 +495,9 @@ class AgentService {
         const outputs: IAgentOutput[] = [];
 
         for (let round = 0; round < maxRounds; round++) {
+            throwIfAborted(signal);
             emit?.({ type: "status", phase: "thinking" });
-            const llm = await callLlm(settings, llmMessages, allTools);
+            const llm = await callLlm(settings, llmMessages, allTools, signal);
             const toolCalls = llm.toolCalls || [];
             if (toolCalls.length === 0) {
                 assistantContent = llm.content;
@@ -478,7 +507,7 @@ class AgentService {
 
             llmMessages.push({ role: "assistant", content: llm.content || "", tool_calls: toolCalls });
             for (const tc of toolCalls) {
-                const result = await this.executeToolCall(tc, skills, savedAttachments, session, emit);
+                const result = await this.executeToolCall(tc, skills, savedAttachments, session, emit, signal);
                 llmMessages.push({ role: "tool", tool_call_id: tc.id, content: result.content });
                 if (result.outputs?.length) {
                     outputs.push(...result.outputs);
@@ -489,13 +518,14 @@ class AgentService {
         }
 
         // 兜底：模型未调用任何工具（可能不支持函数调用）且用户明显要生成时，用首个文生图工作流
+        throwIfAborted(signal);
         if (!calledAnyTool && outputs.length === 0 && looksLikeGenerationRequest(text)) {
             const t2iSkill = skills.find((s) => findLongTextKey(s.viewComfyJSON));
             const promptKey = t2iSkill ? findLongTextKey(t2iSkill.viewComfyJSON) : undefined;
             if (t2iSkill && promptKey) {
                 try {
                     emit?.({ type: "status", phase: "generating", workflowTitle: t2iSkill.title });
-                    const generated = await this.executeWorkflow(t2iSkill, [{ key: promptKey, value: text }], emit);
+                    const generated = await this.executeWorkflow(t2iSkill, [{ key: promptKey, value: text }], emit, signal);
                     outputs.push(...generated);
                     const img = generated.find((o) => o.type === "image");
                     if (img) session.currentImage = img.name;
