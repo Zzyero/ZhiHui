@@ -2,18 +2,13 @@
 
 import * as React from "react"
 import { toast } from "sonner"
-import type { IAgentMessage, IAgentSessionSummary } from "@/app/services/agent-service"
+import type { IAgentMessage, IAgentSessionSummary, IAgentTraceStep } from "@/app/services/agent-service"
 import { useViewComfy, ActionType } from "@/app/providers/view-comfy-provider"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
 import { ArrowUp, Loader2, MessageSquare, Paperclip, Pencil, Plus, Sparkles, Square, Trash2, X } from "lucide-react"
-interface IAgentOutputView {
-    filename: string
-    contentType: string
-    url: string
-    size: number
-}
+import { ImageDialog, VideoDialog, AudioDialog, type IOutput } from "@/components/pages/playground/playground-page"
 
 function mimeFor(name: string): string {
     const ext = name.toLowerCase().split(".").pop() || ""
@@ -42,6 +37,7 @@ export default function AgentPage() {
     const [attachments, setAttachments] = React.useState<File[]>([])
     const [loading, setLoading] = React.useState(false)
     const [status, setStatus] = React.useState<string | null>(null)
+    const [liveTrace, setLiveTrace] = React.useState<IAgentTraceStep[]>([])
     const { viewComfyStateDispatcher } = useViewComfy()
     const fileInputRef = React.useRef<HTMLInputElement>(null)
     const textareaRef = React.useRef<HTMLTextAreaElement>(null)
@@ -98,7 +94,7 @@ export default function AgentPage() {
         }
     }
 
-    const handleAddToGallery = async (output: IAgentOutputView, workflowTitle?: string, workflowId?: string) => {
+    const handleAddToGallery = async (output: IOutput, workflowTitle?: string, workflowId?: string) => {
         try {
             const res = await fetch(output.url)
             const blob = await res.blob()
@@ -159,6 +155,7 @@ export default function AgentPage() {
         setAttachments([])
         setLoading(true)
         setStatus("思考中…")
+        setLiveTrace([])
         if (textareaRef.current) textareaRef.current.style.height = "auto"
 
         const formData = new FormData()
@@ -208,6 +205,7 @@ export default function AgentPage() {
                         if (eventName === "status") setStatus(statusLabel(obj))
                         else if (eventName === "done") finalMessage = obj.message
                         else if (eventName === "error") errorMsg = obj.error || "生成失败"
+                        else if (eventName === "trace") setLiveTrace((prev) => [...prev, obj.step])
                         else if (eventName === "queue") {
                             const section = obj.sectionName || "智能体"
                             if (obj.queueStatus === "queued" && obj.promptId) {
@@ -253,6 +251,7 @@ export default function AgentPage() {
         } finally {
             setLoading(false)
             setStatus(null)
+            setLiveTrace([])
             abortControllerRef.current = null
         }
     }
@@ -462,30 +461,42 @@ export default function AgentPage() {
                                             ) : (
                                                 <div className="text-[15px] leading-relaxed text-foreground">
                                                     {m.content && <div className="whitespace-pre-wrap">{m.content}</div>}
+                                                    {m.trace && m.trace.length > 0 && (
+                                                        <details className="mt-2 rounded-lg border border-border/60 bg-muted/30">
+                                                            <summary className="cursor-pointer select-none px-3 py-2 text-xs text-muted-foreground">
+                                                                思考过程 · {m.trace.length} 步
+                                                            </summary>
+                                                            <div className="space-y-1.5 border-t border-border/40 px-3 py-2">
+                                                                {m.trace.map((s, i) => (
+                                                                    <div key={i} className="text-xs leading-relaxed">
+                                                                        <div className="font-medium text-foreground/80">{s.title}</div>
+                                                                        {s.detail && <div className="whitespace-pre-wrap text-muted-foreground">{s.detail}</div>}
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        </details>
+                                                    )}
                                                     {m.outputs?.map((o, i) => {
-                                                        const output: IAgentOutputView = {
+                                                        const output: IOutput = {
                                                             filename: o.name,
                                                             contentType: mimeFor(o.name),
                                                             url: "/api/agent/file/outputs/" + o.name,
                                                             size: 0,
                                                         }
                                                         if (o.type === "video") {
-                                                            return <video key={i} src={output.url} controls className="mt-3 max-h-80 w-full rounded-xl border border-border/50" />
+                                                            return <VideoDialog key={i} output={output} showOutputFileName={false} />
                                                         }
                                                         if (o.type === "audio") {
-                                                            return <audio key={i} src={output.url} controls className="mt-3 w-full" />
+                                                            return <AudioDialog key={i} output={output} />
                                                         }
                                                         return (
-                                                            <div key={i} className="mt-3">
-                                                                <a href={output.url} target="_blank" rel="noreferrer">
-                                                                    <img src={output.url} alt={output.filename} className="max-h-80 w-auto rounded-xl border border-border/50 shadow-sm" />
-                                                                </a>
-                                                                <div className="mt-2">
-                                                                    <Button variant="outline" size="sm" onClick={() => handleAddToGallery(output, o.workflowTitle, o.workflowId)}>
-                                                                        添加到画廊
-                                                                    </Button>
-                                                                </div>
-                                                            </div>
+                                                            <ImageDialog
+                                                                key={i}
+                                                                output={output}
+                                                                showOutputFileName={false}
+                                                                onAddToGallery={(out) => handleAddToGallery(out, o.workflowTitle, o.workflowId)}
+                                                                className="mt-3 h-auto max-h-80 w-auto rounded-xl border border-border/50 shadow-sm"
+                                                            />
                                                         )
                                                     })}
                                                 </div>
@@ -498,9 +509,26 @@ export default function AgentPage() {
                                         <div className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-muted">
                                             <Sparkles className="size-3.5 text-muted-foreground" />
                                         </div>
-                                        <div className="flex items-center gap-2 py-1 text-sm text-muted-foreground">
-                                            <Loader2 className="size-4 animate-spin" />
-                                            <span>{status || "思考中…"}</span>
+                                        <div className="min-w-0 flex-1">
+                                            <div className="flex items-center gap-2 py-1 text-sm text-muted-foreground">
+                                                <Loader2 className="size-4 animate-spin" />
+                                                <span>{status || "思考中…"}</span>
+                                            </div>
+                                            {liveTrace.length > 0 && (
+                                                <details open className="mt-1 rounded-lg border border-border/60 bg-muted/30">
+                                                    <summary className="cursor-pointer select-none px-3 py-2 text-xs text-muted-foreground">
+                                                        思考过程 · {liveTrace.length} 步
+                                                    </summary>
+                                                    <div className="space-y-1.5 border-t border-border/40 px-3 py-2">
+                                                        {liveTrace.map((s, i) => (
+                                                            <div key={i} className="text-xs leading-relaxed">
+                                                                <div className="font-medium text-foreground/80">{s.title}</div>
+                                                                {s.detail && <div className="whitespace-pre-wrap text-muted-foreground">{s.detail}</div>}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </details>
+                                            )}
                                         </div>
                                     </div>
                                 )}

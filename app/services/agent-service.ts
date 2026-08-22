@@ -25,12 +25,18 @@ export interface IAgentOutput {
     workflowId?: string;
 }
 
+export interface IAgentTraceStep {
+    title: string;
+    detail?: string;
+}
+
 export interface IAgentMessage {
     id: string;
     role: "user" | "assistant";
     content: string;
     attachments?: IAgentAttachment[];
     outputs?: IAgentOutput[];
+    trace?: IAgentTraceStep[];
     createdAt: number;
 }
 
@@ -50,7 +56,7 @@ export interface IAgentSessionSummary {
 }
 
 export interface IAgentProgressEvent {
-    type: "status" | "done" | "error" | "queue";
+    type: "status" | "done" | "error" | "queue" | "trace";
     phase?: "thinking" | "reading-skill" | "generating";
     skill?: string;
     workflowTitle?: string;
@@ -60,6 +66,7 @@ export interface IAgentProgressEvent {
     realPromptId?: string;
     sectionName?: string;
     queueStatus?: "queued" | "running" | "completed" | "error" | "canceled";
+    step?: IAgentTraceStep;
 }
 
 const DEFAULT_DATA_DIR = path.join(process.cwd(), "data");
@@ -124,12 +131,31 @@ function findLongTextKey(view: Record<string, any>): string | undefined {
     return undefined;
 }
 
+function describeToolCall(toolCall: { function: { name: string; arguments: string } }, skills: IWorkflowSkill[]): IAgentTraceStep | undefined {
+    const name = toolCall.function.name;
+    const args = parseToolArguments(toolCall.function.arguments);
+    if (name === "read_skill") {
+        return { title: "读取技能", detail: typeof args.name === "string" ? args.name : "" };
+    }
+    if (name === "list_skills") {
+        return { title: "列出可用技能" };
+    }
+    const skill = skills.find((s) => s.toolName === name);
+    if (skill) {
+        const promptKey = findLongTextKey(skill.viewComfyJSON);
+        const prompt = promptKey && typeof args[promptKey] === "string" ? args[promptKey] : "";
+        return { title: "调用工作流「" + skill.title + "」", detail: prompt || undefined };
+    }
+    return undefined;
+}
+
 function throwIfAborted(signal?: AbortSignal): void {
     if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
 }
 
 interface ILlmResponse {
     content: string;
+    reasoning?: string;
     toolCalls: { id: string; type?: string; function: { name: string; arguments: string } }[];
 }
 
@@ -158,8 +184,13 @@ async function callLlm(settings: IAgentSettings, messages: unknown[], tools: unk
     }
     const data = await res.json();
     const msg = data?.choices?.[0]?.message;
+    const reasoning =
+        (typeof msg?.reasoning_content === "string" && msg.reasoning_content) ||
+        (typeof msg?.reasoning === "string" && msg.reasoning) ||
+        undefined;
     return {
         content: msg?.content || "",
+        reasoning,
         toolCalls: msg?.tool_calls || [],
     };
 }
@@ -493,6 +524,11 @@ class AgentService {
         let assistantContent = "";
         let calledAnyTool = false;
         const outputs: IAgentOutput[] = [];
+        const trace: IAgentTraceStep[] = [];
+        const pushTrace = (step: IAgentTraceStep) => {
+            trace.push(step);
+            emit?.({ type: "trace", step });
+        };
 
         for (let round = 0; round < maxRounds; round++) {
             throwIfAborted(signal);
@@ -504,9 +540,15 @@ class AgentService {
                 break;
             }
             calledAnyTool = true;
+            const thinking = (llm.reasoning || "").trim() || (llm.content || "").trim();
+            if (thinking) {
+                pushTrace({ title: "思考", detail: thinking });
+            }
 
             llmMessages.push({ role: "assistant", content: llm.content || "", tool_calls: toolCalls });
             for (const tc of toolCalls) {
+                const step = describeToolCall(tc, skills);
+                if (step) pushTrace(step);
                 const result = await this.executeToolCall(tc, skills, savedAttachments, session, emit, signal);
                 llmMessages.push({ role: "tool", tool_call_id: tc.id, content: result.content });
                 if (result.outputs?.length) {
@@ -523,6 +565,7 @@ class AgentService {
             const t2iSkill = skills.find((s) => findLongTextKey(s.viewComfyJSON));
             const promptKey = t2iSkill ? findLongTextKey(t2iSkill.viewComfyJSON) : undefined;
             if (t2iSkill && promptKey) {
+                pushTrace({ title: "调用工作流「" + t2iSkill.title + "」（兜底）", detail: text });
                 try {
                     emit?.({ type: "status", phase: "generating", workflowTitle: t2iSkill.title });
                     const generated = await this.executeWorkflow(t2iSkill, [{ key: promptKey, value: text }], emit, signal);
@@ -546,6 +589,7 @@ class AgentService {
             role: "assistant",
             content: assistantContent,
             outputs: outputs.length ? outputs : undefined,
+            trace: trace.length ? trace : undefined,
             createdAt: Date.now(),
         };
         session.messages.push(assistantMessage);
