@@ -1,9 +1,15 @@
 import { execFile } from "node:child_process";
 import os from "node:os";
+import { getCudaDeviceOrder, normalizeUuid } from "@/app/services/cuda-device-order";
 
 export interface IGPUInfo {
+    /** nvidia-smi 的物理 index */
     index: number;
     name: string;
+    /** GPU UUID（与 torch 的 device uuid 对齐） */
+    uuid: string;
+    /** ComfyUI(CUDA) 设备序号，与 --cuda-device 一致 */
+    cudaIndex: number;
     utilization: number;  // %
     memoryUsed: number;   // MiB
     memoryTotal: number;  // MiB
@@ -44,7 +50,7 @@ export interface IMonitorSnapshot {
 
 const SAMPLE_INTERVAL_MS = 3000;
 const HISTORY_LIMIT = 30;
-const NVIDIA_SMI_QUERY = "--query-gpu=index,name,utilization.gpu,memory.used,memory.total,temperature.gpu,power.draw,power.limit";
+const NVIDIA_SMI_QUERY = "--query-gpu=index,name,uuid,utilization.gpu,memory.used,memory.total,temperature.gpu,power.draw,power.limit";
 const NVIDIA_SMI_FORMAT = "--format=csv,noheader,nounits";
 const LINE_FEED = String.fromCharCode(10);
 
@@ -97,6 +103,7 @@ class MonitorService {
         this.sampling = true;
         try {
             const [gpus, gpuAvailable] = await this.queryGpus();
+            await this.applyCudaOrder(gpus);
             this.snapshot = {
                 timestamp: Date.now(),
                 platform: os.platform(),
@@ -169,21 +176,33 @@ class MonitorService {
                     const t = line.trim();
                     if (!t) continue;
                     const p = t.split(",").map((s) => s.trim());
-                    // index,name,util,memUsed,memTotal,temp,power,powerLimit
+                    // index,name,uuid,util,memUsed,memTotal,temp,power,powerLimit
                     gpus.push({
                         index: Number(p[0]) || 0,
                         name: p[1] || "NVIDIA GPU",
-                        utilization: Number(p[2]) || 0,
-                        memoryUsed: Number(p[3]) || 0,
-                        memoryTotal: Number(p[4]) || 0,
-                        temperature: Number(p[5]) || 0,
-                        powerDraw: Number(p[6]) || 0,
-                        powerLimit: Number(p[7]) || 0,
+                        uuid: p[2] || "",
+                        cudaIndex: Number(p[0]) || 0, // 占位，下面按 CUDA 顺序覆盖
+                        utilization: Number(p[3]) || 0,
+                        memoryUsed: Number(p[4]) || 0,
+                        memoryTotal: Number(p[5]) || 0,
+                        temperature: Number(p[6]) || 0,
+                        powerDraw: Number(p[7]) || 0,
+                        powerLimit: Number(p[8]) || 0,
                     });
                 }
                 resolve([gpus, gpus.length > 0]);
             });
         });
+    }
+
+    /** 按 ComfyUI(CUDA) 设备顺序写回 cudaIndex 并重排 */
+    private async applyCudaOrder(gpus: IGPUInfo[]): Promise<void> {
+        const order = await getCudaDeviceOrder();
+        const cudaByUuid = new Map(order.map((d) => [d.uuid, d.cudaIndex]));
+        for (const g of gpus) {
+            g.cudaIndex = cudaByUuid.get(normalizeUuid(g.uuid)) ?? g.index;
+        }
+        gpus.sort((a, b) => a.cudaIndex - b.cudaIndex);
     }
 
     private pushHistory(): void {

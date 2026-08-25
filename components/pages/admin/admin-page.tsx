@@ -34,6 +34,7 @@ import { cn } from "@/lib/utils"
 import type { IMonitorSnapshot, IGPUInfo } from "@/app/services/monitor-service"
 import type { IStatsData } from "@/app/services/stats-service"
 import AgentSettingsCard from "@/components/pages/admin/agent-settings-card"
+import ComfyProcessesCard from "@/components/pages/admin/comfy-processes-card"
 
 function localDateKey(ts: number): string {
     const d = new Date(ts)
@@ -152,7 +153,7 @@ function GpuCard({ gpu }: { gpu: IGPUInfo }) {
                     <span className="text-[10px] text-muted-foreground">利用率</span>
                 </Ring>
                 <div className="min-w-0 flex-1">
-                    <div className="truncate text-sm font-medium">{gpu.name}</div>
+                    <div className="truncate text-sm font-medium">cuda:{gpu.cudaIndex} · {gpu.name}</div>
                     <div className="mt-3 space-y-2">
                         <div>
                             <div className="flex justify-between text-xs text-muted-foreground">
@@ -331,6 +332,8 @@ export default function AdminPage() {
                         )}
                     </CardContent>
                 </Card>
+
+                <ComfyProcessesCard />
 
                 <div className="grid gap-4 lg:grid-cols-2">
                     <Card>

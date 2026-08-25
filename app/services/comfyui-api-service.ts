@@ -93,11 +93,11 @@ export class ComfyUIAPIService {
     /** 当前队列状态 */
     private queueStatus: IComfyQueueStatus = { queueRemaining: 0, currentlyRunning: 0 };
 
-    constructor(clientId: string) {
+    constructor(clientId: string, baseUrl?: string) {
         this.secure = process.env.COMFYUI_SECURE === "true";
         this.httpBaseUrl = this.secure ? "https://" : "http://";
         this.wsBaseUrl = this.secure ? "wss://" : "ws://";
-        this.baseUrl = process.env.COMFYUI_API_URL || "127.0.0.1:8188";
+        this.baseUrl = baseUrl || process.env.COMFYUI_API_URL || "127.0.0.1:8188";
         this.clientId = clientId;
         this.comfyExecutionError = undefined;
         try {
@@ -785,13 +785,24 @@ export class ComfyUIAPIService {
     }
 }
 
-// 进程级单例：所有路由共用同一个 ComfyUIAPIService（共用 WS 订阅）
+// 进程级单例：默认后端（兼容旧调用）
 let _instance: ComfyUIAPIService | undefined;
 export function getComfyUIAPIService(): ComfyUIAPIService {
     if (!_instance) {
         _instance = new ComfyUIAPIService(crypto.randomUUID());
     }
     return _instance;
+}
+
+// 按 URL 缓存实例池：每个 ComfyUI 后端一个实例（各自独立的 WS 连接与 clientId）
+const _instancesByUrl = new Map<string, ComfyUIAPIService>();
+export function getComfyUIAPIServiceForUrl(url: string): ComfyUIAPIService {
+    let service = _instancesByUrl.get(url);
+    if (!service) {
+        service = new ComfyUIAPIService(crypto.randomUUID(), url);
+        _instancesByUrl.set(url, service);
+    }
+    return service;
 }
 
 /** 进程级 progress 事件历史：promptId 启动时清空，事件来了 push。 */

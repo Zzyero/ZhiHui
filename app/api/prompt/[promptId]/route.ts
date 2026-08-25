@@ -1,5 +1,4 @@
-import { getComfyUIAPIService } from '@/app/services/comfyui-api-service';
-import { generationQueue } from '@/app/services/generation-queue';
+import { backendRegistry } from '@/app/services/backend-registry';
 import { type NextRequest, NextResponse } from 'next/server';
 
 export async function DELETE(
@@ -16,16 +15,24 @@ export async function DELETE(
     const status = request.nextUrl.searchParams.get('status') || undefined;
 
     try {
-        // 排队中的任务：优先在本地串行队列里取消（尚未提交到 ComfyUI）
+        // 排队中的任务：优先在所有实例的本地队列里取消（尚未提交到 ComfyUI）
         if (status !== 'running') {
-            const cancelledLocally = generationQueue.cancel(promptId);
+            const cancelledLocally = backendRegistry.cancelLocal(promptId);
             if (cancelledLocally) {
                 return NextResponse.json({ success: true, promptId, cancelled: true, local: true });
             }
         }
 
-        const comfyService = getComfyUIAPIService();
-        await comfyService.cancelPrompt(promptId, status);
+        // 已提交的任务：找到它所属的实例，中断该实例上的任务
+        const routing = backendRegistry.getRouting(promptId);
+        if (!routing) {
+            return NextResponse.json({ error: "任务不存在或已结束" }, { status: 404 });
+        }
+        const backend = await backendRegistry.getBackendById(routing.backendId);
+        if (!backend) {
+            return NextResponse.json({ error: "该任务所属实例已离线" }, { status: 404 });
+        }
+        await backend.service.cancelPrompt(routing.realPromptId ?? promptId, status);
 
         return NextResponse.json({ success: true, promptId });
     } catch (error) {

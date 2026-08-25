@@ -15,7 +15,7 @@ interface QueueJob {
     resolve: (outcome: "completed" | "cancelled") => void;
 }
 
-class GenerationQueue {
+export class GenerationQueue {
     private jobs: QueueJob[] = [];
     private running = false;
 
@@ -34,19 +34,32 @@ class GenerationQueue {
      * 已开始运行的任务不在队列中，取消会返回 false（需走 ComfyUI /interrupt）。
      */
     cancel(id: string): boolean {
-        for (const job of this.jobs) {
-            if (job.id === id) {
-                job.cancelled = true;
-                job.resolve("cancelled");
-                return true;
-            }
-        }
-        return false;
+        const index = this.jobs.findIndex((j) => j.id === id);
+        if (index === -1) return false;
+        const [job] = this.jobs.splice(index, 1);
+        job.cancelled = true;
+        job.resolve("cancelled");
+        return true;
     }
 
     /** 是否仍在排队中 */
     isPending(id: string): boolean {
         return this.jobs.some((j) => j.id === id);
+    }
+
+    /** 当前排队中的任务数（不含正在执行的） */
+    size(): number {
+        return this.jobs.length;
+    }
+
+    /** 是否正在执行任务 */
+    isRunning(): boolean {
+        return this.running;
+    }
+
+    /** 是否空闲：没有排队任务、也没有正在执行的任务 */
+    isIdle(): boolean {
+        return !this.running && this.jobs.length === 0;
     }
 
     private async processNext() {

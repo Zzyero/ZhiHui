@@ -1,11 +1,10 @@
 import { ComfyUIService } from '@/app/services/comfyui-service';
-import { getComfyUIAPIService } from '@/app/services/comfyui-api-service';
 import { type NextRequest, NextResponse } from 'next/server';
 import { ErrorResponseFactory } from '@/app/models/errors';
 import { IViewComfy } from '@/app/interfaces/comfy-input';
 
 const errorResponseFactory = new ErrorResponseFactory();
-const comfyUIService = new ComfyUIService(getComfyUIAPIService());
+const comfyUIService = new ComfyUIService();
 
 export async function POST(request: NextRequest) {
     const formData = await request.formData();

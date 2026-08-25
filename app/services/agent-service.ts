@@ -4,9 +4,9 @@ import crypto from "node:crypto";
 import { buildSkills, type IWorkflowSkill } from "@/app/helpers/skill-builder";
 import { listSkills, readSkill } from "@/app/helpers/skill-registry";
 import { agentSettingsService, type IAgentSettings } from "@/app/services/agent-settings-service";
-import { getComfyUIAPIService, getMimeType } from "@/app/services/comfyui-api-service";
+import { getMimeType } from "@/app/services/comfyui-api-service";
 import { ComfyWorkflow } from "@/app/models/comfy-workflow";
-import { generationQueue } from "@/app/services/generation-queue";
+import { backendRegistry } from "@/app/services/backend-registry";
 import { statsService } from "@/app/services/stats-service";
 import type { IInput } from "@/app/interfaces/input";
 
@@ -293,9 +293,12 @@ class AgentService {
         const taskId = crypto.randomUUID();
         const sectionName = "智能体";
         const startedAt = Date.now();
-        const api = getComfyUIAPIService();
+        // 选卡：空闲优先，全忙给第一个
+        const backend = await backendRegistry.pickBackend();
+        const api = backend.service;
         const workflow = new ComfyWorkflow(skill.workflowApiJSON);
         await workflow.setViewComfy(viewComfyInputs, api);
+        backendRegistry.registerPrompt(taskId, backend);
         throwIfAborted(signal);
 
         emit?.({ type: "queue", promptId: taskId, sectionName, workflowTitle: skill.title, queueStatus: "queued" });
@@ -303,9 +306,10 @@ class AgentService {
         const files: File[] = [];
         let status: string | undefined;
         let execError: unknown;
-        await generationQueue.enqueue(taskId, async () => {
+        await backendRegistry.enqueue(backend, taskId, async () => {
             try {
                 const realPromptId = await api.startQueuePrompt(workflow.getWorkflow());
+                backendRegistry.setRealPromptId(taskId, realPromptId);
                 emit?.({ type: "queue", promptId: taskId, realPromptId, sectionName, workflowTitle: skill.title, queueStatus: "running" });
 
                 // 客户端中断 → 中断 ComfyUI 当前任务
@@ -335,6 +339,7 @@ class AgentService {
                 execError = e;
             }
         });
+        backendRegistry.unregisterPrompt(taskId);
 
         if (signal?.aborted) {
             emit?.({ type: "queue", promptId: taskId, sectionName, workflowTitle: skill.title, queueStatus: "canceled" });
