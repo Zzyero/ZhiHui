@@ -684,7 +684,8 @@ function AdvancedInputSection(args: {
                             return null;
                         }
                         return (
-                            <fieldset key={advancedField.id} className="grid gap-4 rounded-lg border p-4">
+                            <fieldset key={advancedField.id} className={cn("grid gap-4", editMode && "rounded-lg border p-4")}>
+                                {editMode && (
                                 <legend className="-ml-1 px-1 text-sm font-medium">
                                     {
 
@@ -756,6 +757,7 @@ function AdvancedInputSection(args: {
 
                                     )}
                                 </legend>
+                                )}
                                 <NestedInputField form={form} nestedIndex={index} editMode={editMode} formFieldName="advancedInputs" setShowEditDialog={setShowEditDialog} handleRemove={(inputIndex) => handleRemoveAdvanced({ groupIndex: index, inputIndex })} handleToggleVisibility={(inputIndex) => handleToggleVisibilityAdvanced({ groupIndex: index, inputIndex })} />
                             </fieldset>
                         );
@@ -957,7 +959,6 @@ function FormSeedInput(args: { input: IInputForm, field: any, editMode?: boolean
             <FormControl>
                 <div className="flex items-center space-x-2">
                     <Input
-                        placeholder={input.placeholder}
                         {...field}
                         type="number"
                         disabled={isRandomized} // Disable input if checkbox is checked
@@ -1266,7 +1267,6 @@ function FormTextAreaInput(args: {
             </FormLabel>
             <FormControl>
                 <AutoGrowTextarea
-                    placeholder={input.placeholder}
                     className={TEXT_AREA_STYLE}
                     {...field}
                 />
@@ -1365,12 +1365,10 @@ function FormBasicInput(args: {
             <FormControl>
                 {parseWorkflowApiTypeToInputHtmlType(input.valueType) === "text" ? (
                     <AutoGrowTextarea
-                        placeholder={input.placeholder}
                         {...field}
                     />
                 ) : (
                     <Input
-                        placeholder={input.placeholder}
                         {...field}
                         type={parseWorkflowApiTypeToInputHtmlType(input.valueType)}
                         min={input.range?.min}
@@ -1427,7 +1425,7 @@ function FormSelectInput(args: { input: IInputForm, field: any, editMode?: boole
                     defaultValue={field.value}
                 >
                     <SelectTrigger>
-                        <SelectValue placeholder={input.placeholder} />
+                        <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                         {input.options
@@ -2061,7 +2059,7 @@ function EditFieldDialog(props: {
         try {
             const current = viewComfyState.currentViewComfy;
             if (current && showEditDialog.formFieldName && typeof showEditDialog.nestedIndex === 'number') {
-                const baseJson = current.viewComfyJSON;
+                const baseJson = form?.getValues() ?? current.viewComfyJSON;
                 const isBasic = showEditDialog.formFieldName === "inputs";
                 const list = isBasic ? baseJson.inputs : baseJson.advancedInputs;
                 const groupIndex = showEditDialog.nestedIndex as number;

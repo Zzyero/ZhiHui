@@ -16,11 +16,22 @@ export async function POST(request: NextRequest) {
 
         if (action === "start") {
             const config = await loadBalancerService.getConfig();
-            const backend = config.backends.find((b) => b.gpuIndex === index);
+            let backend = config.backends.find((b) => b.gpuIndex === index);
             if (!backend) {
-                return NextResponse.json({ error: "未找到该显卡的配置" }, { status: 404 });
+                // 配置里还没有这张卡（尚未保存过完整配置）时，按默认端口补一条并持久化
+                backend = {
+                    id: `gpu-${index}`,
+                    gpuIndex: index,
+                    name: `GPU ${index}`,
+                    port: 8188 + index,
+                    enabled: true,
+                };
+                await loadBalancerService.saveConfig({
+                    enabled: config.enabled,
+                    backends: [...config.backends, backend],
+                });
             }
-            comfyProcessManager.start(backend);
+            await comfyProcessManager.start(backend);
             return NextResponse.json({ ok: true });
         }
 

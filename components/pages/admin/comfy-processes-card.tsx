@@ -97,6 +97,8 @@ export default function ComfyProcessesCard() {
                             name: gpu?.name ?? row.name,
                             utilization: gpu?.utilization ?? row.utilization,
                             status: proc?.status ?? row.status,
+                            // 端口被占用顺延后，用进程实际端口回填（停止态保留用户输入）
+                            port: proc && proc.status !== "stopped" ? String(proc.port) : row.port,
                             error: proc?.error,
                             logs: proc?.logs,
                         }
@@ -113,7 +115,10 @@ export default function ComfyProcessesCard() {
 
     const handleToggleProcess = async (row: IRow) => {
         const action = row.status === "running" ? "stop" : "start"
+        const nextStatus: ProcessStatus = action === "start" ? "starting" : "stopping"
         setActionBusy(row.gpuIndex)
+        // 乐观更新状态，避免按钮在请求返回后、下一轮轮询前闪回「启动/停止」
+        setRows((prev) => prev.map((r) => r.gpuIndex === row.gpuIndex ? { ...r, status: nextStatus } : r))
         try {
             const res = await fetch("/api/admin/comfy-process", {
                 method: "POST",
@@ -123,9 +128,12 @@ export default function ComfyProcessesCard() {
             const data = await res.json()
             if (!res.ok) {
                 toast.error(data?.message || data?.error || "操作失败")
+                // 失败回滚到操作前的状态
+                setRows((prev) => prev.map((r) => r.gpuIndex === row.gpuIndex ? { ...r, status: row.status } : r))
             }
         } catch {
             toast.error("操作失败")
+            setRows((prev) => prev.map((r) => r.gpuIndex === row.gpuIndex ? { ...r, status: row.status } : r))
         } finally {
             setActionBusy(null)
         }
@@ -214,7 +222,7 @@ export default function ComfyProcessesCard() {
                                             ) : (
                                                 <Play className="mr-1 size-4" />
                                             )}
-                                            {row.status === "running" ? "停止" : "启动"}
+                                            {row.status === "starting" ? "启动中" : row.status === "stopping" ? "停止中" : row.status === "running" ? "停止" : "启动"}
                                         </Button>
                                     </div>
                                     {row.error && (

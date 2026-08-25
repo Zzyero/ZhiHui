@@ -4,7 +4,7 @@ import fs from "node:fs/promises";
 export interface IBackendConfig {
     /** 稳定标识，例如 "gpu-0" */
     id: string;
-    /** 物理 GPU 序号，对应 nvidia-smi 的 index */
+    /** ComfyUI(CUDA) 设备序号，与 --cuda-device 一致 */
     gpuIndex: number;
     /** 显示名 */
     name: string;
@@ -74,6 +74,15 @@ class LoadBalancerService {
         return this.load();
     }
 
+    /** 更新某张卡的端口（端口被占用顺延时用），找不到该卡则原样返回 */
+    async updateBackendPort(gpuIndex: number, port: number): Promise<ILoadBalancerConfig> {
+        const current = await this.load();
+        const backends = current.backends.map((b) =>
+            b.gpuIndex === gpuIndex ? { ...b, port } : b
+        );
+        return this.saveConfig({ enabled: current.enabled, backends });
+    }
+
     async saveConfig(next: Partial<ILoadBalancerConfig>): Promise<ILoadBalancerConfig> {
         const current = await this.load();
         const rawBackends = Array.isArray(next.backends) ? next.backends : current.backends;
@@ -97,4 +106,6 @@ class LoadBalancerService {
     }
 }
 
-export const loadBalancerService = new LoadBalancerService();
+// Next.js 开发模式下不同路由处理器可能各自打包一份模块，用 globalThis 保证单例跨路由共享
+const globalForLoadBalancer = globalThis as unknown as { loadBalancerService?: LoadBalancerService };
+export const loadBalancerService = globalForLoadBalancer.loadBalancerService ?? (globalForLoadBalancer.loadBalancerService = new LoadBalancerService());

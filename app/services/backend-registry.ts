@@ -106,4 +106,6 @@ class BackendRegistry {
     }
 }
 
-export const backendRegistry = new BackendRegistry();
+// Next.js 开发模式下不同路由处理器可能各自打包一份模块，用 globalThis 保证单例跨路由共享
+const globalForBackendRegistry = globalThis as unknown as { backendRegistry?: BackendRegistry };
+export const backendRegistry = globalForBackendRegistry.backendRegistry ?? (globalForBackendRegistry.backendRegistry = new BackendRegistry());

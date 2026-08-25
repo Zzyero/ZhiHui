@@ -41,8 +41,10 @@ export interface IMonitorSnapshot {
     gpuAvailable: boolean;
     history: {
         timestamps: number[];
-        gpuUtilization: number[];
-        gpuMemory: number[];
+        /** 每张卡（按 cudaIndex 下标）的利用率历史 */
+        gpuUtilization: number[][];
+        /** 每张卡（按 cudaIndex 下标）的显存历史（MiB） */
+        gpuMemory: number[][];
         cpu: number[];
         memory: number[];
     };
@@ -91,8 +93,8 @@ class MonitorService {
     private cloneHistory(): IMonitorSnapshot["history"] {
         return {
             timestamps: [...this.history.timestamps],
-            gpuUtilization: [...this.history.gpuUtilization],
-            gpuMemory: [...this.history.gpuMemory],
+            gpuUtilization: this.history.gpuUtilization.map((arr) => [...arr]),
+            gpuMemory: this.history.gpuMemory.map((arr) => [...arr]),
             cpu: [...this.history.cpu],
             memory: [...this.history.memory],
         };
@@ -208,19 +210,22 @@ class MonitorService {
     private pushHistory(): void {
         const s = this.snapshot;
         if (!s) return;
-        const g0 = s.gpus[0];
         this.history.timestamps.push(s.timestamp);
         this.history.cpu.push(Math.round(s.cpu.usagePercent * 10) / 10);
         this.history.memory.push(Math.round(s.memory.usagePercent * 10) / 10);
-        this.history.gpuUtilization.push(g0 ? g0.utilization : 0);
-        this.history.gpuMemory.push(g0 ? g0.memoryUsed : 0);
+        for (const gpu of s.gpus) {
+            const utilArr = this.history.gpuUtilization[gpu.cudaIndex] ?? (this.history.gpuUtilization[gpu.cudaIndex] = []);
+            utilArr.push(gpu.utilization);
+            const memArr = this.history.gpuMemory[gpu.cudaIndex] ?? (this.history.gpuMemory[gpu.cudaIndex] = []);
+            memArr.push(gpu.memoryUsed);
+        }
 
         if (this.history.timestamps.length > HISTORY_LIMIT) {
             this.history.timestamps.shift();
             this.history.cpu.shift();
             this.history.memory.shift();
-            this.history.gpuUtilization.shift();
-            this.history.gpuMemory.shift();
+            for (const arr of Object.values(this.history.gpuUtilization)) arr.shift();
+            for (const arr of Object.values(this.history.gpuMemory)) arr.shift();
         }
     }
 }

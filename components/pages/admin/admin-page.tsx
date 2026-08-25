@@ -3,10 +3,11 @@
 import * as React from "react"
 import {
     ResponsiveContainer,
-    AreaChart,
-    Area,
     BarChart,
     Bar,
+    LineChart,
+    Line,
+    Legend,
     XAxis,
     YAxis,
     Tooltip,
@@ -77,6 +78,12 @@ const tooltipStyle = {
     borderRadius: "8px",
     color: "hsl(var(--foreground))",
     fontSize: "12px",
+}
+
+const GPU_LINE_COLORS = ["#22c55e", "#3b82f6", "#ef4444", "#f59e0b", "#8b5cf6", "#06b6d4", "#ec4899", "#84cc16"]
+
+function gpuLineColor(cudaIndex: number): string {
+    return GPU_LINE_COLORS[cudaIndex % GPU_LINE_COLORS.length]
 }
 
 function Ring({ value, max, color, size = 92, strokeWidth = 9, children }: {
@@ -244,8 +251,15 @@ export default function AdminPage() {
 
     const gpuHistory = React.useMemo(() => {
         const h = monitor?.history
+        const gpus = monitor?.gpus ?? []
         if (!h || h.timestamps.length === 0) return []
-        return h.timestamps.map((t, i) => ({ t: new Date(t).toLocaleTimeString(), gpu: h.gpuUtilization[i] ?? 0 }))
+        return h.timestamps.map((t, i) => {
+            const row: Record<string, string | number> = { t: new Date(t).toLocaleTimeString() }
+            for (const g of gpus) {
+                row[`gpu${g.cudaIndex}`] = h.gpuUtilization[g.cudaIndex]?.[i] ?? 0
+            }
+            return row
+        })
     }, [monitor])
 
     const cpu = monitor?.cpu
@@ -315,15 +329,27 @@ export default function AdminPage() {
                                     {gpuHistory.length < 2 ? (
                                         <div className="flex h-40 items-center justify-center text-xs text-muted-foreground">正在积累历史数据…</div>
                                     ) : (
-                                        <div className="h-40">
+                                        <div className="h-48">
                                             <ResponsiveContainer width="100%" height="100%">
-                                                <AreaChart data={gpuHistory} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
+                                                <LineChart data={gpuHistory} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
                                                     <CartesianGrid strokeDasharray="3 3" strokeOpacity={0.2} />
                                                     <XAxis dataKey="t" tick={{ fontSize: 10 }} tickLine={false} axisLine={false} minTickGap={24} />
                                                     <YAxis domain={[0, 100]} tick={{ fontSize: 10 }} tickLine={false} axisLine={false} />
                                                     <Tooltip contentStyle={tooltipStyle} />
-                                                    <Area type="monotone" dataKey="gpu" stroke="#22c55e" strokeWidth={2} fill="#22c55e" fillOpacity={0.15} name="GPU 利用率 %" />
-                                                </AreaChart>
+                                                    <Legend wrapperStyle={{ fontSize: 10 }} iconSize={8} />
+                                                    {monitor.gpus.map((gpu) => (
+                                                        <Line
+                                                            key={gpu.cudaIndex}
+                                                            type="monotone"
+                                                            dataKey={`gpu${gpu.cudaIndex}`}
+                                                            stroke={gpuLineColor(gpu.cudaIndex)}
+                                                            strokeWidth={2}
+                                                            dot={false}
+                                                            isAnimationActive={false}
+                                                            name={`cuda:${gpu.cudaIndex}`}
+                                                        />
+                                                    ))}
+                                                </LineChart>
                                             </ResponsiveContainer>
                                         </div>
                                     )}

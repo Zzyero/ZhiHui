@@ -7,6 +7,7 @@ export const dynamic = "force-dynamic";
 export async function GET() {
     try {
         await comfyProcessManager.init();
+        await comfyProcessManager.reconcile();
         return NextResponse.json({ processes: comfyProcessManager.getAll() });
     } catch (error) {
         console.error("GET /api/admin/comfy-process/status failed", error);

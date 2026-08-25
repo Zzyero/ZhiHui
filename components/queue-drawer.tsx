@@ -3,7 +3,6 @@
 import * as React from "react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import {
     Popover,
     PopoverContent,
@@ -106,7 +105,7 @@ export function QueueDropdown({ className }: QueueDropdownProps) {
                     )}
                 </div>
 
-                <ScrollArea className="max-h-[300px]">
+                <div className="max-h-[300px] overflow-y-auto">
                     {allQueuedTasks.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
                             <ListTodoIcon className="size-10 mb-2 opacity-30" />
@@ -139,7 +138,7 @@ export function QueueDropdown({ className }: QueueDropdownProps) {
                             ))}
                         </div>
                     )}
-                </ScrollArea>
+                </div>
             </PopoverContent>
         </Popover>
     )

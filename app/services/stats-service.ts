@@ -97,4 +97,6 @@ class StatsService {
     }
 }
 
-export const statsService = new StatsService();
+// Next.js 开发模式下不同路由处理器可能各自打包一份模块，用 globalThis 保证单例跨路由共享
+const globalForStats = globalThis as unknown as { statsService?: StatsService };
+export const statsService = globalForStats.statsService ?? (globalForStats.statsService = new StatsService());
