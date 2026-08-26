@@ -93,11 +93,11 @@ export class ComfyUIAPIService {
     /** 当前队列状态 */
     private queueStatus: IComfyQueueStatus = { queueRemaining: 0, currentlyRunning: 0 };
 
-    constructor(clientId: string) {
+    constructor(clientId: string, baseUrl?: string) {
         this.secure = process.env.COMFYUI_SECURE === "true";
         this.httpBaseUrl = this.secure ? "https://" : "http://";
         this.wsBaseUrl = this.secure ? "wss://" : "ws://";
-        this.baseUrl = process.env.COMFYUI_API_URL || "127.0.0.1:8188";
+        this.baseUrl = baseUrl || process.env.COMFYUI_API_URL || "127.0.0.1:8188";
         this.clientId = clientId;
         this.comfyExecutionError = undefined;
         try {
@@ -785,26 +785,44 @@ export class ComfyUIAPIService {
     }
 }
 
-// 进程级单例：所有路由共用同一个 ComfyUIAPIService（共用 WS 订阅）
-let _instance: ComfyUIAPIService | undefined;
+// 进程级共享存储：Next.js 开发模式下不同路由处理器可能各自打包一份模块，
+// 用 globalThis 保证单例跨路由共享（否则启动路由 spawn 的进程，状态查询路由看不到）。
+const globalForComfy = globalThis as unknown as {
+    comfyApiInstance?: ComfyUIAPIService;
+    comfyApiInstancesByUrl?: Map<string, ComfyUIAPIService>;
+    comfyProgressLog?: Map<string, IComfyProgressEvent[]>;
+};
+
+// 默认后端（兼容旧调用）
 export function getComfyUIAPIService(): ComfyUIAPIService {
-    if (!_instance) {
-        _instance = new ComfyUIAPIService(crypto.randomUUID());
+    if (!globalForComfy.comfyApiInstance) {
+        globalForComfy.comfyApiInstance = new ComfyUIAPIService(crypto.randomUUID());
     }
-    return _instance;
+    return globalForComfy.comfyApiInstance;
 }
 
-/** 进程级 progress 事件历史：promptId 启动时清空，事件来了 push。 */
-const progressLog = new Map<string, IComfyProgressEvent[]>();
+// 按 URL 缓存实例池：每个 ComfyUI 后端一个实例（各自独立的 WS 连接与 clientId）
+export function getComfyUIAPIServiceForUrl(url: string): ComfyUIAPIService {
+    const instances = globalForComfy.comfyApiInstancesByUrl ?? (globalForComfy.comfyApiInstancesByUrl = new Map());
+    let service = instances.get(url);
+    if (!service) {
+        service = new ComfyUIAPIService(crypto.randomUUID(), url);
+        instances.set(url, service);
+    }
+    return service;
+}
 
 /** 记录一个 prompt 的启动（清空历史） */
 export function startProgressLog(promptId: string) {
-    progressLog.set(promptId, []);
+    const log = globalForComfy.comfyProgressLog ?? (globalForComfy.comfyProgressLog = new Map());
+    log.set(promptId, []);
 }
 
 /** 推一条 progress 事件到历史（由 ComfyUIAPIService.emit 调用） */
 export function appendProgressEvent(event: IComfyProgressEvent) {
-    const list = progressLog.get(event.promptId);
+    const log = globalForComfy.comfyProgressLog;
+    if (!log) return;
+    const list = log.get(event.promptId);
     if (list) {
         list.push(event);
     }
@@ -812,10 +830,13 @@ export function appendProgressEvent(event: IComfyProgressEvent) {
 
 /** 读取一个 prompt 的历史（只读拷贝） */
 export function getProgressLog(promptId: string): IComfyProgressEvent[] {
-    return [...(progressLog.get(promptId) ?? [])];
+    const log = globalForComfy.comfyProgressLog;
+    if (!log) return [];
+    return [...(log.get(promptId) ?? [])];
 }
 
 /** 清理一个 prompt 的历史（可选，避免无限增长） */
 export function clearProgressLog(promptId: string) {
-    progressLog.delete(promptId);
+    const log = globalForComfy.comfyProgressLog;
+    if (log) log.delete(promptId);
 }

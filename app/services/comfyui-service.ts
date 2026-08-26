@@ -4,20 +4,18 @@ import { ComfyWorkflow } from "@/app/models/comfy-workflow";
 import fs from "node:fs/promises";
 import { ComfyErrorHandler } from "@/app/helpers/comfy-error-handler";
 import { ComfyError, ComfyWorkflowError } from "@/app/models/errors";
-import { ComfyUIAPIService, type IComfyProgressEvent, getMimeType } from "@/app/services/comfyui-api-service";
+import { type IComfyProgressEvent, getMimeType } from "@/app/services/comfyui-api-service";
 import { missingViewComfyFileError, viewComfyFileName } from "@/app/constants";
 import { SettingsService } from "@/app/services/settings-service";
-import { generationQueue } from "@/app/services/generation-queue";
+import { backendRegistry } from "@/app/services/backend-registry";
 import { statsService } from "@/app/services/stats-service";
 
 const settingsService = new SettingsService();
 export class ComfyUIService {
     private comfyErrorHandler: ComfyErrorHandler;
-    private comfyUIAPIService: ComfyUIAPIService;
 
-    constructor(comfyUIAPIService: ComfyUIAPIService) {
+    constructor() {
         this.comfyErrorHandler = new ComfyErrorHandler();
-        this.comfyUIAPIService = comfyUIAPIService;
     }
 
     async runWorkflow(args: IComfyInput): Promise<{ stream: ReadableStream<Uint8Array>; promptId: string; totalElapsedMs: number }> {
@@ -29,8 +27,14 @@ export class ComfyUIService {
         }
 
         const comfyWorkflow = new ComfyWorkflow(workflow);
-        // 上传输入（图片/遮罩）可并行，不占用串行队列
-        await comfyWorkflow.setViewComfy(args.viewComfy.inputs, this.comfyUIAPIService);
+
+        // 选卡：空闲优先，全忙给第一个
+        const backend = await backendRegistry.pickBackend();
+        const apiService = backend.service;
+        // 上传输入到选中实例（上传/提交/取产物必须同一实例）
+        await comfyWorkflow.setViewComfy(args.viewComfy.inputs, apiService);
+        // 登记 prompt → 实例，便于排队期取消
+        backendRegistry.registerPrompt(clientPromptId, backend);
 
         try {
             const encoder = new TextEncoder();
@@ -44,7 +48,6 @@ export class ComfyUIService {
                     isClosed = true;
                 }
             };
-            const apiService = this.comfyUIAPIService;
             const getFileFromComfyOutputDirectory = this.getFileFromComfyOutputDirectory.bind(this);
 
             // 真正执行生成的函数（在队列槽位内运行）
@@ -54,6 +57,7 @@ export class ComfyUIService {
 
                 // 1. 提交到 ComfyUI（此时才是真正开始排队执行）
                 promptId = await apiService.startQueuePrompt(workflow);
+                backendRegistry.setRealPromptId(clientPromptId, promptId);
                 startedAt = Date.now();
                 send(controller, "started", { promptId, startedAt });
 
@@ -154,18 +158,19 @@ export class ComfyUIService {
 
             const stream = new ReadableStream<Uint8Array>({
                 async start(controller) {
-                    // 串行队列：轮到自己才真正提交执行；排队中连接保持挂起
-                    const outcome = await generationQueue.enqueue(clientPromptId, () => runGeneration(controller));
+                    // 该实例自己的串行队列：轮到自己才真正提交执行；排队中连接保持挂起
+                    const outcome = await backendRegistry.enqueue(backend, clientPromptId, () => runGeneration(controller));
                     if (outcome === "cancelled") {
                         send(controller, "cancelled", { promptId: clientPromptId });
                     }
+                    backendRegistry.unregisterPrompt(clientPromptId);
                     controller.close();
                     isClosed = true;
                 },
                 async cancel() {
                     // 客户端断开/刷新时：标记流已关闭，避免后续 WS 进度事件往已关闭的 controller 里写
                     isClosed = true;
-                    generationQueue.cancel(clientPromptId);
+                    backendRegistry.cancelLocal(clientPromptId);
                 },
             });
 

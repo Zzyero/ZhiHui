@@ -541,8 +541,8 @@ function PlaygroundPageContent({ doPost, sectionName }: IPlaygroundPageContent) 
                                 </div>
                                 </>
                             )}
-                            <div className="flex-1 h-full p-4 flex overflow-y-auto">
-                                <div className="flex flex-col w-full h-full">
+                            <div className="p-4">
+                                <div className="flex flex-col w-full">
                                     <IndeterminateLoadingBarStyles />
                                     {sectionQueue.map((task, index) => (
                                         <Fragment key={task.promptId}>
