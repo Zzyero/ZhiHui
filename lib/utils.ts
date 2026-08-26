@@ -16,6 +16,18 @@ export function getComfyUIRandomSeed() {
   return Math.floor(Math.random() * (maxFloored - minCeiled + 1) + minCeiled);
 }
 
+/** 生成唯一 ID；非安全上下文（如局域网 http://IP 访问）没有 crypto.randomUUID，回退到手写 UUID */
+export function generateId(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
 export function fromSecondsToTime(seconds: number) {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);

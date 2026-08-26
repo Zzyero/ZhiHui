@@ -282,37 +282,59 @@ function viewComfyReducer(state: IViewComfyState, action: Action): IViewComfySta
             if (action.payload.workflows.length === 0) {
                 return state;
             }
-            // Initialize currentViewComfyBySection for each section
-            const initialSectionWorkflows: Record<string, IViewComfy> = {};
+            const nextViewComfys: IViewComfy[] = action.payload.workflows.map((workflow: any) => ({
+                viewComfyJSON: workflow.viewComfyJSON,
+                workflowApiJSON: workflow.workflowApiJSON,
+            }));
+            const nextIds = new Set(nextViewComfys.map((vc) => vc.viewComfyJSON.id));
             const sections = action.payload.sections ?? [];
+
+            // 保留仍存在的工作流的当前选中：重新 INIT（如从画廊复刻后进入 playground）
+            // 不应把用户选中的工作流覆盖回每个 section 的第一条。
+            const nextBySection: Record<string, IViewComfy> = {};
+            for (const [name, cur] of Object.entries(state.currentViewComfyBySection)) {
+                if (!cur) continue;
+                const fresh = nextViewComfys.find((vc) => vc.viewComfyJSON.id === cur.viewComfyJSON.id);
+                if (fresh) nextBySection[name] = fresh;
+            }
+            // 只对没有有效选中的 section 设置默认第一条
             for (const section of sections) {
-                // Find first workflow that belongs to this section
-                const sectionWorkflow = action.payload.workflows.find((w: any) =>
+                if (nextBySection[section.name]) continue;
+                const sectionWorkflow = nextViewComfys.find((w) =>
                     section.workflows.includes(w.viewComfyJSON.title)
                 );
                 if (sectionWorkflow) {
-                    initialSectionWorkflows[section.name] = {
+                    nextBySection[section.name] = {
                         viewComfyJSON: sectionWorkflow.viewComfyJSON,
                         workflowApiJSON: sectionWorkflow.workflowApiJSON
                     };
                 }
             }
+
+            // 保留仍存在工作流的表单数据（一键复刻回填不因重新 INIT 丢失）
+            const nextFormData: IViewComfyState["formDataByWorkflow"] = {};
+            for (const [id, data] of Object.entries(state.formDataByWorkflow)) {
+                if (nextIds.has(id)) nextFormData[id] = data;
+            }
+
+            const prevGlobalId = state.currentViewComfy?.viewComfyJSON.id;
+            const globalCurrent = prevGlobalId
+                ? nextViewComfys.find((vc) => vc.viewComfyJSON.id === prevGlobalId) ?? nextViewComfys[0]
+                : nextViewComfys[0];
+
             return {
                 appTitle: action.payload.appTitle ?? "智绘·先锋",
                 appImg: action.payload.appImg ?? "",
-                viewComfys: [...action.payload.workflows.map((workflow: any) => ({
-                    viewComfyJSON: workflow.viewComfyJSON,
-                    workflowApiJSON: workflow.workflowApiJSON,
-                }))],
-                currentViewComfy: { viewComfyJSON: action.payload.workflows[0].viewComfyJSON, workflowApiJSON: action.payload.workflows[0].workflowApiJSON },
-                currentViewComfyBySection: initialSectionWorkflows,
-                viewComfyDraft: { viewComfyJSON: action.payload.workflows[0].viewComfyJSON, workflowApiJSON: action.payload.workflows[0].workflowApiJSON },
-                sections: action.payload.sections ?? [],
+                viewComfys: nextViewComfys,
+                currentViewComfy: globalCurrent,
+                currentViewComfyBySection: nextBySection,
+                viewComfyDraft: { viewComfyJSON: nextViewComfys[0].viewComfyJSON, workflowApiJSON: nextViewComfys[0].workflowApiJSON },
+                sections,
                 resultsBySection: {},
                 loadingBySection: {},
                 progressByPrompt: {},
                 advancedInputsOpenByWorkflow: {},
-                formDataByWorkflow: {},
+                formDataByWorkflow: nextFormData,
                 queueStatus: state.queueStatus,
                 queueBySection: state.queueBySection,
                 formResetNonce: state.formResetNonce,
