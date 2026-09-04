@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { flushSync } from "react-dom"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { useViewComfy, ActionType } from "@/app/providers/view-comfy-provider"
@@ -101,19 +102,23 @@ export default function GalleryPage() {
             return
         }
         const cloned = applyPromptToInputs(workflow.viewComfyJSON, selected.prompt)
-        viewComfyStateDispatcher({
-            type: ActionType.UPDATE_CURRENT_VIEW_COMFY,
-            payload: { viewComfy: workflow, sectionName: selected.sectionName },
+        // 先同步提交状态，再跳转，避免导航时拿到旧状态被自动选中逻辑覆盖成第一条工作流
+        flushSync(() => {
+            viewComfyStateDispatcher({
+                type: ActionType.UPDATE_CURRENT_VIEW_COMFY,
+                payload: { viewComfy: workflow, sectionName: selected.sectionName },
+            })
+            viewComfyStateDispatcher({
+                type: ActionType.SET_FORM_DATA,
+                payload: {
+                    workflowId: selected.workflowId,
+                    inputs: cloned.inputs,
+                    advancedInputs: cloned.advancedInputs,
+                },
+            })
+            viewComfyStateDispatcher({ type: ActionType.REQUEST_FORM_RESET })
         })
-        viewComfyStateDispatcher({
-            type: ActionType.SET_FORM_DATA,
-            payload: {
-                workflowId: selected.workflowId,
-                inputs: cloned.inputs,
-                advancedInputs: cloned.advancedInputs,
-            },
-        })
-        viewComfyStateDispatcher({ type: ActionType.REQUEST_FORM_RESET })
+        setSelected(null)
         router.push(SECTION_ROUTES[selected.sectionName] ?? "/playground")
     }
 

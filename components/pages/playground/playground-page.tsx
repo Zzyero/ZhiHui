@@ -23,7 +23,7 @@ import { ErrorAlertDialog } from "@/components/ui/error-alert-dialog";
 import { ApiErrorHandler } from "@/lib/api-error-handler";
 import { ResponseError } from "@/app/models/errors";
 import BlurFade from "@/components/ui/blur-fade";
-import { cn, getComfyUIRandomSeed } from "@/lib/utils";
+import { cn, generateId, getComfyUIRandomSeed } from "@/lib/utils";
 import { createMediaDragHandler } from "@/lib/drag-utils";
 import WorkflowSwitcher from "@/components/workflow-switchter";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -175,6 +175,8 @@ function PlaygroundPageContent({ doPost, sectionName }: IPlaygroundPageContent) 
 
     useEffect(() => {
         if (!viewMode) return;
+        // 已初始化过则跳过：避免每次进入页面都重新 INIT，把一键复刻选中的工作流与回填参数覆盖回第一条
+        if (viewComfyState.viewComfys.length > 0) return;
 
         const fetchViewComfy = async () => {
             try {
@@ -218,7 +220,7 @@ function PlaygroundPageContent({ doPost, sectionName }: IPlaygroundPageContent) 
             }
         };
         fetchViewComfy();
-    }, [viewMode, viewComfyStateDispatcher]);
+    }, [viewMode, viewComfyState.viewComfys.length, viewComfyStateDispatcher]);
 
     const onSetResults = useCallback(async (params: ISetResults) => {
         const { promptId, status, errorData, localPromptId, totalElapsedMs } = params;
@@ -320,7 +322,7 @@ function PlaygroundPageContent({ doPost, sectionName }: IPlaygroundPageContent) 
         setShowOutputFileName(data.showOutputFileName ?? false);
 
         // 每个任务独立的本地 promptId 与启动时间（闭包内捕获，避免并发任务互相覆盖）
-        const localPromptId = crypto.randomUUID();
+        const localPromptId = generateId();
         const generationStartedAt = Date.now();
 
         let realPromptId: string | undefined = undefined;

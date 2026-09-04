@@ -35,7 +35,7 @@ if (PORT !== DEFAULT_PORT) {
 // 启动 next dev：直接用 node 起，显式传堆上限（避免 next.cmd 包装层吞掉 NODE_OPTIONS）
 // worker 进程的内存由 Next.js 根据 NODE_OPTIONS 自动分配
 const nextBin = path.join(process.cwd(), "node_modules", "next", "dist", "bin", "next");
-const dev = spawn(process.execPath, ["--max-old-space-size=12288", "--inspect", nextBin, "dev", "-p", String(PORT)], {
+const dev = spawn(process.execPath, ["--max-old-space-size=12288", nextBin, "dev", "-p", String(PORT)], {
   stdio: "inherit",
   env: { ...process.env, NODE_OPTIONS: "--max-old-space-size=12288" },
 });
