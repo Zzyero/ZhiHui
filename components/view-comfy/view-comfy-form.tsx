@@ -332,6 +332,28 @@ export function ViewComfyForm(args: {
                                                         </FormItem>
                                                     )}
                                                 />
+                                                <FormField
+                                                    control={form.control}
+                                                    name="agentEnabled"
+                                                    render={({ field }) => (
+                                                        <FormItem key="agentEnabled" className="">
+                                                            <FormControl>
+                                                                <div className={"flex ml-0.5 space-x-2 mb-[-5px]"}>
+                                                                    <FormLabel>
+                                                                        允许智能体调用该工作流
+                                                                    </FormLabel>
+                                                                    <Checkbox
+                                                                        checked={field.value !== false}
+                                                                        onCheckedChange={(v) => field.onChange(v === true)}
+                                                                    />
+                                                                </div>
+                                                            </FormControl>
+                                                            <FormDescription className="pt-2 pb-2">
+                                                                关闭后，智能体将看不到也不能调用这个工作流
+                                                            </FormDescription>
+                                                        </FormItem>
+                                                    )}
+                                                />
                                             </div>
                                         )}
 

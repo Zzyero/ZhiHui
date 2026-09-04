@@ -50,6 +50,9 @@ const SAVE_NODE_MEDIA: Record<string, PromptMediaType> = {
 
 const MEDIA_LABEL: Record<PromptMediaType, string> = { image: "图片", video: "视频", audio: "音频" };
 
+/** 视频后处理类工作流：不吃生成提示词，不需要挂视频提示词规范 */
+const NO_PROMPT_SKILL_TITLES = new Set(["视频音色转换", "视频高清放大", "视频补帧"]);
+
 function sanitizeToolName(title: string, id: string): string {
     const base = (title || "workflow")
         .toLowerCase()
@@ -102,7 +105,9 @@ export async function buildSkills(): Promise<{
         const workflowId: string = view.id || "";
         const toolName = sanitizeToolName(title, workflowId);
         const mediaType: PromptMediaType = (view.mediaType as PromptMediaType) || deriveMediaType(w.workflowApiJSON, title, sections);
-        const skillName = getSkillForWorkflow(mediaType, title, promptSkills)?.name;
+        const skillName = NO_PROMPT_SKILL_TITLES.has(title)
+            ? undefined
+            : getSkillForWorkflow(mediaType, title, promptSkills)?.name;
 
         const properties: Record<string, unknown> = {};
         const required: string[] = [];

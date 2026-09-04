@@ -69,6 +69,7 @@
         "title": "全能参考视频生成",
         "description": "",
         "viewcomfyEndpoint": "",
+        "agentEnabled": true,
         "previewImages": [],
         "inputs": [
           {
@@ -89,7 +90,8 @@
                 "validations": {
                   "required": false
                 },
-                "key": "137-inputs-image"
+                "key": "137-inputs-image",
+                "agentExposed": true
               }
             ],
             "key": "137-LoadImage"
@@ -112,7 +114,8 @@
                 "validations": {
                   "required": false
                 },
-                "key": "139-inputs-image"
+                "key": "139-inputs-image",
+                "agentExposed": true
               }
             ],
             "key": "139-LoadImage"
@@ -135,7 +138,8 @@
                 "validations": {
                   "required": false
                 },
-                "key": "147-inputs-image"
+                "key": "147-inputs-image",
+                "agentExposed": true
               }
             ],
             "key": "147-LoadImage"
@@ -158,7 +162,8 @@
                 "validations": {
                   "required": false
                 },
-                "key": "148-inputs-image"
+                "key": "148-inputs-image",
+                "agentExposed": true
               }
             ],
             "key": "148-LoadImage"
@@ -181,7 +186,8 @@
                 "validations": {
                   "required": false
                 },
-                "key": "149-inputs-image"
+                "key": "149-inputs-image",
+                "agentExposed": true
               }
             ],
             "key": "149-LoadImage"
@@ -204,7 +210,8 @@
                 "validations": {
                   "required": false
                 },
-                "key": "150-inputs-image"
+                "key": "150-inputs-image",
+                "agentExposed": true
               }
             ],
             "key": "150-LoadImage"
@@ -227,7 +234,8 @@
                 "validations": {
                   "required": false
                 },
-                "key": "151-inputs-image"
+                "key": "151-inputs-image",
+                "agentExposed": true
               }
             ],
             "key": "151-LoadImage"
@@ -250,7 +258,8 @@
                 "validations": {
                   "required": false
                 },
-                "key": "152-inputs-image"
+                "key": "152-inputs-image",
+                "agentExposed": true
               }
             ],
             "key": "152-LoadImage"
@@ -273,7 +282,8 @@
                 "validations": {
                   "required": false
                 },
-                "key": "153-inputs-image"
+                "key": "153-inputs-image",
+                "agentExposed": true
               }
             ],
             "key": "153-LoadImage"
@@ -296,7 +306,8 @@
                 "validations": {
                   "required": false
                 },
-                "key": "154-inputs-video"
+                "key": "154-inputs-video",
+                "agentExposed": true
               },
               {
                 "title": "参考视频2",
@@ -445,7 +456,8 @@
                 "validations": {
                   "required": false
                 },
-                "key": "155-inputs-video"
+                "key": "155-inputs-video",
+                "agentExposed": true
               },
               {
                 "title": "Force_rate",
@@ -594,7 +606,8 @@
                 "validations": {
                   "required": false
                 },
-                "key": "156-inputs-video"
+                "key": "156-inputs-video",
+                "agentExposed": true
               },
               {
                 "title": "Force_rate",
@@ -743,7 +756,8 @@
                 "validations": {
                   "required": false
                 },
-                "key": "160-inputs-audio"
+                "key": "160-inputs-audio",
+                "agentExposed": true
               }
             ],
             "key": "160-LoadAudio"
@@ -766,7 +780,8 @@
                 "validations": {
                   "required": false
                 },
-                "key": "161-inputs-audio"
+                "key": "161-inputs-audio",
+                "agentExposed": true
               }
             ],
             "key": "161-LoadAudio"
@@ -789,7 +804,8 @@
                 "validations": {
                   "required": false
                 },
-                "key": "162-inputs-audio"
+                "key": "162-inputs-audio",
+                "agentExposed": true
               }
             ],
             "key": "162-LoadAudio"
@@ -812,7 +828,8 @@
                 "validations": {
                   "required": true
                 },
-                "key": "138-inputs-value"
+                "key": "138-inputs-value",
+                "agentExposed": true
               }
             ],
             "key": "138-PrimitiveStringMultiline"
@@ -928,11 +945,46 @@
                 ],
                 "helpText": "Helper Text",
                 "tooltip": "",
-                "valueType": "string",
+                "valueType": "select",
+                "options": [
+                  {
+                    "label": "1:1",
+                    "value": "1:1 (Square)"
+                  },
+                  {
+                    "label": "2:3",
+                    "value": "2:3 (Portrait Photo)"
+                  },
+                  {
+                    "label": "3:2",
+                    "value": "3:2 (Photo)"
+                  },
+                  {
+                    "label": "3:4",
+                    "value": "3:4 (Portrait Standard)"
+                  },
+                  {
+                    "label": "4:3",
+                    "value": "4:3 (Standard)"
+                  },
+                  {
+                    "label": "9:16",
+                    "value": "9:16 (Portrait Widescreen)"
+                  },
+                  {
+                    "label": "16:9",
+                    "value": "16:9 (Widescreen)"
+                  },
+                  {
+                    "label": "21:9",
+                    "value": "21:9 (Ultrawide)"
+                  }
+                ],
                 "validations": {
                   "required": true
                 },
-                "key": "115-inputs-aspect_ratio"
+                "key": "115-inputs-aspect_ratio",
+                "agentExposed": true
               },
               {
                 "title": "分辨率",
@@ -949,7 +1001,8 @@
                 "validations": {
                   "required": true
                 },
-                "key": "115-inputs-megapixels"
+                "key": "115-inputs-megapixels",
+                "agentExposed": true
               },
               {
                 "title": "Multiple",
@@ -1290,7 +1343,8 @@
                 "validations": {
                   "required": true
                 },
-                "key": "132-inputs-value"
+                "key": "132-inputs-value",
+                "agentExposed": true
               }
             ],
             "key": "132-PrimitiveFloat"
@@ -2017,6 +2071,7 @@
         "title": "图像生成",
         "description": "",
         "viewcomfyEndpoint": "",
+        "agentEnabled": false,
         "previewImages": [],
         "inputs": [
           {
@@ -2295,7 +2350,8 @@
                 "validations": {
                   "required": true
                 },
-                "key": "58-inputs-width"
+                "key": "58-inputs-width",
+                "agentExposed": true
               },
               {
                 "title": "高",
@@ -2312,7 +2368,8 @@
                 "validations": {
                   "required": true
                 },
-                "key": "58-inputs-height"
+                "key": "58-inputs-height",
+                "agentExposed": true
               },
               {
                 "title": "批次",
@@ -2329,7 +2386,8 @@
                 "validations": {
                   "required": true
                 },
-                "key": "58-inputs-batch_size"
+                "key": "58-inputs-batch_size",
+                "agentExposed": true
               }
             ],
             "key": "58-EmptySD3LatentImage"
@@ -2399,7 +2457,8 @@
                 "validations": {
                   "required": true
                 },
-                "key": "7-inputs-text"
+                "key": "7-inputs-text",
+                "agentExposed": false
               }
             ],
             "key": "7-CLIPTextEncode"
@@ -2554,6 +2613,7 @@
         "title": "图像生成（4步加速）",
         "description": "",
         "viewcomfyEndpoint": "",
+        "agentEnabled": true,
         "previewImages": [],
         "inputs": [
           {
@@ -2833,7 +2893,8 @@
                 "validations": {
                   "required": true
                 },
-                "key": "58-inputs-width"
+                "key": "58-inputs-width",
+                "agentExposed": true
               },
               {
                 "title": "高",
@@ -2850,7 +2911,8 @@
                 "validations": {
                   "required": true
                 },
-                "key": "58-inputs-height"
+                "key": "58-inputs-height",
+                "agentExposed": true
               },
               {
                 "title": "批次",
@@ -2978,7 +3040,8 @@
                 "validations": {
                   "required": true
                 },
-                "key": "7-inputs-text"
+                "key": "7-inputs-text",
+                "agentExposed": false
               }
             ],
             "key": "7-CLIPTextEncode"
@@ -3147,6 +3210,7 @@
         "title": "图像编辑",
         "description": "",
         "viewcomfyEndpoint": "",
+        "agentEnabled": true,
         "previewImages": [],
         "inputs": [
           {
@@ -3167,7 +3231,8 @@
                 "validations": {
                   "required": false
                 },
-                "key": "41-inputs-image"
+                "key": "41-inputs-image",
+                "agentExposed": true
               }
             ],
             "key": "41-LoadImage"
@@ -3191,7 +3256,8 @@
                   "required": true
                 },
                 "key": "150-inputs-prompt",
-                "id": "065f23a3-d919-4f57-88cd-01330fb4732e"
+                "id": "065f23a3-d919-4f57-88cd-01330fb4732e",
+                "agentExposed": true
               }
             ],
             "key": "150-TextEncodeQwenImageEditPlus"
@@ -3851,6 +3917,30 @@
               }
             ],
             "key": "41-LoadImage"
+          },
+          {
+            "title": "TextEncodeQwenImageEditPlus (Positive)",
+            "inputs": [
+              {
+                "title": "提示词",
+                "placeholder": "Prompt",
+                "value": "",
+                "workflowPath": [
+                  "150",
+                  "inputs",
+                  "prompt"
+                ],
+                "helpText": "Helper Text",
+                "tooltip": "",
+                "valueType": "string",
+                "validations": {
+                  "required": true
+                },
+                "key": "150-inputs-prompt",
+                "id": "44b6ffa2-1256-497e-afc6-e1ec1d118fb0"
+              }
+            ],
+            "key": "150-TextEncodeQwenImageEditPlus"
           }
         ],
         "advancedInputs": [
@@ -3997,30 +4087,6 @@
             ],
             "key": "148-TextEncodeQwenImageEditPlus",
             "visibility": "deleted"
-          },
-          {
-            "title": "TextEncodeQwenImageEditPlus (Positive)",
-            "inputs": [
-              {
-                "title": "提示词",
-                "placeholder": "Prompt",
-                "value": "把左上角气泡中的“真当我是便宜货啊”改为“我可不是便宜货！”",
-                "workflowPath": [
-                  "150",
-                  "inputs",
-                  "prompt"
-                ],
-                "helpText": "Helper Text",
-                "tooltip": "",
-                "valueType": "string",
-                "validations": {
-                  "required": true
-                },
-                "key": "150-inputs-prompt",
-                "id": "44b6ffa2-1256-497e-afc6-e1ec1d118fb0"
-              }
-            ],
-            "key": "150-TextEncodeQwenImageEditPlus"
           },
           {
             "title": "CFG归一化",
@@ -4562,6 +4628,7 @@
         "title": "文生视频",
         "description": "",
         "viewcomfyEndpoint": "",
+        "agentEnabled": true,
         "previewImages": [],
         "inputs": [
           {
@@ -4656,12 +4723,47 @@
                 ],
                 "helpText": "Helper Text",
                 "tooltip": "",
-                "valueType": "string",
+                "valueType": "select",
+                "options": [
+                  {
+                    "label": "1:1",
+                    "value": "1:1 (Square)"
+                  },
+                  {
+                    "label": "2:3",
+                    "value": "2:3 (Portrait Photo)"
+                  },
+                  {
+                    "label": "3:2",
+                    "value": "3:2 (Photo)"
+                  },
+                  {
+                    "label": "3:4",
+                    "value": "3:4 (Portrait Standard)"
+                  },
+                  {
+                    "label": "4:3",
+                    "value": "4:3 (Standard)"
+                  },
+                  {
+                    "label": "9:16",
+                    "value": "9:16 (Portrait Widescreen)"
+                  },
+                  {
+                    "label": "16:9",
+                    "value": "16:9 (Widescreen)"
+                  },
+                  {
+                    "label": "21:9",
+                    "value": "21:9 (Ultrawide)"
+                  }
+                ],
                 "validations": {
                   "required": true
                 },
                 "key": "115-inputs-aspect_ratio",
-                "id": "2d3ed8c2-4fd7-4af8-a53b-946aa56970a2"
+                "id": "2d3ed8c2-4fd7-4af8-a53b-946aa56970a2",
+                "agentExposed": true
               },
               {
                 "title": "分辨率",
@@ -4679,7 +4781,8 @@
                   "required": true
                 },
                 "key": "115-inputs-megapixels",
-                "id": "2a58bc1b-e3d7-497b-b201-0485cc4641b9"
+                "id": "2a58bc1b-e3d7-497b-b201-0485cc4641b9",
+                "agentExposed": true
               },
               {
                 "title": "Multiple",
@@ -5017,7 +5120,8 @@
                   "required": true
                 },
                 "key": "138-inputs-prompt",
-                "id": "562d1239-870f-4648-ab57-0e78081ff1d4"
+                "id": "562d1239-870f-4648-ab57-0e78081ff1d4",
+                "agentExposed": true
               }
             ],
             "key": "138-MiniMaxH3ImageToVideo"
@@ -5065,7 +5169,8 @@
                   "required": true
                 },
                 "key": "140-inputs-value",
-                "id": "a09da3c8-7ade-4274-aa4e-0de3c477e2cd"
+                "id": "a09da3c8-7ade-4274-aa4e-0de3c477e2cd",
+                "agentExposed": true
               }
             ],
             "key": "140-PrimitiveFloat"
@@ -5401,7 +5506,8 @@
                 "validations": {
                   "required": false
                 },
-                "key": "114-inputs-image"
+                "key": "114-inputs-image",
+                "agentExposed": true
               }
             ],
             "key": "114-LoadImage"
@@ -5424,7 +5530,8 @@
                 "validations": {
                   "required": false
                 },
-                "key": "121-inputs-image"
+                "key": "121-inputs-image",
+                "agentExposed": true
               }
             ],
             "key": "121-LoadImage"
@@ -5448,7 +5555,8 @@
                   "required": true
                 },
                 "key": "138-inputs-prompt",
-                "id": "b1f19356-ed07-4dde-b70e-6200247105da"
+                "id": "b1f19356-ed07-4dde-b70e-6200247105da",
+                "agentExposed": true
               }
             ],
             "key": "138-MiniMaxH3ImageToVideo"
@@ -5547,12 +5655,47 @@
                 ],
                 "helpText": "Helper Text",
                 "tooltip": "",
-                "valueType": "string",
+                "valueType": "select",
+                "options": [
+                  {
+                    "label": "1:1",
+                    "value": "1:1 (Square)"
+                  },
+                  {
+                    "label": "2:3",
+                    "value": "2:3 (Portrait Photo)"
+                  },
+                  {
+                    "label": "3:2",
+                    "value": "3:2 (Photo)"
+                  },
+                  {
+                    "label": "3:4",
+                    "value": "3:4 (Portrait Standard)"
+                  },
+                  {
+                    "label": "4:3",
+                    "value": "4:3 (Standard)"
+                  },
+                  {
+                    "label": "9:16",
+                    "value": "9:16 (Portrait Widescreen)"
+                  },
+                  {
+                    "label": "16:9",
+                    "value": "16:9 (Widescreen)"
+                  },
+                  {
+                    "label": "21:9",
+                    "value": "21:9 (Ultrawide)"
+                  }
+                ],
                 "validations": {
                   "required": true
                 },
                 "key": "115-inputs-aspect_ratio",
-                "id": "db2fe972-72b2-490b-bec5-858286c9e9bd"
+                "id": "db2fe972-72b2-490b-bec5-858286c9e9bd",
+                "agentExposed": true
               },
               {
                 "title": "分辨率",
@@ -5570,7 +5713,8 @@
                   "required": true
                 },
                 "key": "115-inputs-megapixels",
-                "id": "f46ef320-f0f2-49f5-a978-e8c8bdcf3fa6"
+                "id": "f46ef320-f0f2-49f5-a978-e8c8bdcf3fa6",
+                "agentExposed": true
               },
               {
                 "title": "Multiple",
@@ -5932,7 +6076,8 @@
                   "required": true
                 },
                 "key": "140-inputs-value",
-                "id": "3a9e388c-3c9a-4bfc-bdb7-b626ebb79005"
+                "id": "3a9e388c-3c9a-4bfc-bdb7-b626ebb79005",
+                "agentExposed": true
               }
             ],
             "key": "140-PrimitiveFloat"
@@ -6293,7 +6438,8 @@
                 "validations": {
                   "required": false
                 },
-                "key": "146-inputs-image"
+                "key": "146-inputs-image",
+                "agentExposed": true
               }
             ],
             "key": "146-LoadImage"
@@ -6316,7 +6462,8 @@
                 "validations": {
                   "required": false
                 },
-                "key": "147-inputs-image"
+                "key": "147-inputs-image",
+                "agentExposed": true
               }
             ],
             "key": "147-LoadImage"
@@ -6339,7 +6486,8 @@
                 "validations": {
                   "required": false
                 },
-                "key": "148-inputs-image"
+                "key": "148-inputs-image",
+                "agentExposed": true
               }
             ],
             "key": "148-LoadImage"
@@ -6362,7 +6510,8 @@
                 "validations": {
                   "required": false
                 },
-                "key": "149-inputs-image"
+                "key": "149-inputs-image",
+                "agentExposed": true
               }
             ],
             "key": "149-LoadImage"
@@ -6385,7 +6534,8 @@
                 "validations": {
                   "required": false
                 },
-                "key": "150-inputs-image"
+                "key": "150-inputs-image",
+                "agentExposed": true
               }
             ],
             "key": "150-LoadImage"
@@ -6408,7 +6558,8 @@
                 "validations": {
                   "required": false
                 },
-                "key": "151-inputs-image"
+                "key": "151-inputs-image",
+                "agentExposed": true
               }
             ],
             "key": "151-LoadImage"
@@ -6431,7 +6582,8 @@
                 "validations": {
                   "required": false
                 },
-                "key": "152-inputs-image"
+                "key": "152-inputs-image",
+                "agentExposed": true
               }
             ],
             "key": "152-LoadImage"
@@ -6454,7 +6606,8 @@
                 "validations": {
                   "required": false
                 },
-                "key": "153-inputs-image"
+                "key": "153-inputs-image",
+                "agentExposed": true
               }
             ],
             "key": "153-LoadImage"
@@ -6477,7 +6630,8 @@
                 "validations": {
                   "required": false
                 },
-                "key": "154-inputs-image"
+                "key": "154-inputs-image",
+                "agentExposed": true
               }
             ],
             "key": "154-LoadImage"
@@ -6501,7 +6655,8 @@
                   "required": true
                 },
                 "key": "145-inputs-prompt",
-                "id": "6228bf34-eee7-4f0c-8876-7e9abf04b17d"
+                "id": "6228bf34-eee7-4f0c-8876-7e9abf04b17d",
+                "agentExposed": true
               },
               {
                 "title": "Ref_image_size",
@@ -6618,12 +6773,47 @@
                 ],
                 "helpText": "Helper Text",
                 "tooltip": "",
-                "valueType": "string",
+                "valueType": "select",
+                "options": [
+                  {
+                    "label": "1:1",
+                    "value": "1:1 (Square)"
+                  },
+                  {
+                    "label": "2:3",
+                    "value": "2:3 (Portrait Photo)"
+                  },
+                  {
+                    "label": "3:2",
+                    "value": "3:2 (Photo)"
+                  },
+                  {
+                    "label": "3:4",
+                    "value": "3:4 (Portrait Standard)"
+                  },
+                  {
+                    "label": "4:3",
+                    "value": "4:3 (Standard)"
+                  },
+                  {
+                    "label": "9:16",
+                    "value": "9:16 (Portrait Widescreen)"
+                  },
+                  {
+                    "label": "16:9",
+                    "value": "16:9 (Widescreen)"
+                  },
+                  {
+                    "label": "21:9",
+                    "value": "21:9 (Ultrawide)"
+                  }
+                ],
                 "validations": {
                   "required": true
                 },
                 "key": "115-inputs-aspect_ratio",
-                "id": "a9059fcf-4508-49cd-9e16-510f582bd935"
+                "id": "a9059fcf-4508-49cd-9e16-510f582bd935",
+                "agentExposed": true
               },
               {
                 "title": "分辨率",
@@ -6641,7 +6831,8 @@
                   "required": true
                 },
                 "key": "115-inputs-megapixels",
-                "id": "ab5ee92e-284f-40cc-921c-457d1c48a601"
+                "id": "ab5ee92e-284f-40cc-921c-457d1c48a601",
+                "agentExposed": true
               },
               {
                 "title": "Multiple",
@@ -6901,7 +7092,7 @@
               {
                 "title": "随机种",
                 "placeholder": "Noise_seed",
-                "value": 623018587210030,
+                "value": 5e-324,
                 "workflowPath": [
                   "136",
                   "inputs",
@@ -7003,7 +7194,8 @@
                   "required": true
                 },
                 "key": "140-inputs-value",
-                "id": "c90dd8fc-dd84-4457-8b98-45fb709536b1"
+                "id": "c90dd8fc-dd84-4457-8b98-45fb709536b1",
+                "agentExposed": true
               }
             ],
             "key": "140-PrimitiveFloat"
@@ -7440,6 +7632,7 @@
         "title": "参考生图",
         "description": "",
         "viewcomfyEndpoint": "",
+        "agentEnabled": true,
         "previewImages": [],
         "inputs": [
           {
@@ -7460,7 +7653,8 @@
                 "validations": {
                   "required": false
                 },
-                "key": "40-inputs-image"
+                "key": "40-inputs-image",
+                "agentExposed": true
               }
             ],
             "key": "40-LoadImage"
@@ -7483,7 +7677,8 @@
                 "validations": {
                   "required": false
                 },
-                "key": "71-inputs-image"
+                "key": "71-inputs-image",
+                "agentExposed": true
               }
             ],
             "key": "71-LoadImage"
@@ -7506,7 +7701,8 @@
                 "validations": {
                   "required": false
                 },
-                "key": "72-inputs-image"
+                "key": "72-inputs-image",
+                "agentExposed": true
               }
             ],
             "key": "72-LoadImage"
@@ -7529,7 +7725,8 @@
                 "validations": {
                   "required": false
                 },
-                "key": "73-inputs-image"
+                "key": "73-inputs-image",
+                "agentExposed": true
               }
             ],
             "key": "73-LoadImage"
@@ -7552,7 +7749,8 @@
                 "validations": {
                   "required": false
                 },
-                "key": "74-inputs-image"
+                "key": "74-inputs-image",
+                "agentExposed": true
               }
             ],
             "key": "74-LoadImage"
@@ -7575,7 +7773,8 @@
                 "validations": {
                   "required": false
                 },
-                "key": "75-inputs-image"
+                "key": "75-inputs-image",
+                "agentExposed": true
               }
             ],
             "key": "75-LoadImage"
@@ -7598,7 +7797,8 @@
                 "validations": {
                   "required": false
                 },
-                "key": "76-inputs-image"
+                "key": "76-inputs-image",
+                "agentExposed": true
               }
             ],
             "key": "76-LoadImage"
@@ -7621,7 +7821,8 @@
                 "validations": {
                   "required": false
                 },
-                "key": "77-inputs-image"
+                "key": "77-inputs-image",
+                "agentExposed": true
               }
             ],
             "key": "77-LoadImage"
@@ -7644,7 +7845,8 @@
                 "validations": {
                   "required": false
                 },
-                "key": "78-inputs-image"
+                "key": "78-inputs-image",
+                "agentExposed": true
               }
             ],
             "key": "78-LoadImage"
@@ -7817,7 +8019,8 @@
                   "required": true
                 },
                 "key": "5-inputs-value",
-                "id": "4b33ef57-4fd4-4411-b6d9-44940173e904"
+                "id": "4b33ef57-4fd4-4411-b6d9-44940173e904",
+                "agentExposed": true
               }
             ],
             "key": "5-PrimitiveStringMultiline"
@@ -7841,7 +8044,8 @@
                   "required": true
                 },
                 "key": "6-inputs-value",
-                "id": "1a5ea6f5-3c0e-4485-a901-d5d18e373bbf"
+                "id": "1a5ea6f5-3c0e-4485-a901-d5d18e373bbf",
+                "agentExposed": true
               }
             ],
             "key": "6-PrimitiveInt"
@@ -7865,7 +8069,8 @@
                   "required": true
                 },
                 "key": "7-inputs-value",
-                "id": "70dbdfb9-a83e-4526-a1e5-61d902a69f85"
+                "id": "70dbdfb9-a83e-4526-a1e5-61d902a69f85",
+                "agentExposed": true
               }
             ],
             "key": "7-PrimitiveInt"
@@ -7888,7 +8093,8 @@
                 "validations": {
                   "required": true
                 },
-                "key": "8-inputs-value"
+                "key": "8-inputs-value",
+                "agentExposed": false
               }
             ],
             "key": "8-PrimitiveFloat"
@@ -8517,7 +8723,8 @@
                 "validations": {
                   "required": false
                 },
-                "key": "14-inputs-image"
+                "key": "14-inputs-image",
+                "agentExposed": true
               }
             ],
             "key": "14-LoadImage"
@@ -8637,6 +8844,7 @@
         "title": "局部重绘",
         "description": "",
         "viewcomfyEndpoint": "",
+        "agentEnabled": false,
         "previewImages": [],
         "inputs": [
           {
@@ -9850,6 +10058,7 @@
         "title": "多人物对话",
         "description": "",
         "viewcomfyEndpoint": "",
+        "agentEnabled": false,
         "previewImages": [],
         "inputs": [
           {
@@ -10542,6 +10751,7 @@
         "title": "音频编辑",
         "description": "",
         "viewcomfyEndpoint": "",
+        "agentEnabled": false,
         "previewImages": [],
         "inputs": [
           {
@@ -11103,7 +11313,8 @@
                 "validations": {
                   "required": true
                 },
-                "key": "45-inputs-caption"
+                "key": "45-inputs-caption",
+                "agentExposed": true
               },
               {
                 "title": "Lyrics",
@@ -11120,7 +11331,8 @@
                 "validations": {
                   "required": true
                 },
-                "key": "45-inputs-lyrics"
+                "key": "45-inputs-lyrics",
+                "agentExposed": true
               },
               {
                 "title": "时长",
@@ -11138,7 +11350,8 @@
                   "required": true
                 },
                 "key": "45-inputs-max_duration",
-                "id": "7d73cc5c-52d9-49ad-b571-da80f8f1d711"
+                "id": "7d73cc5c-52d9-49ad-b571-da80f8f1d711",
+                "agentExposed": true
               },
               {
                 "title": "Cfg_scale",
@@ -11278,7 +11491,8 @@
                   "required": true
                 },
                 "key": "49-inputs-batch_size",
-                "id": "1424c070-9fa9-41dd-ade0-697508068992"
+                "id": "1424c070-9fa9-41dd-ade0-697508068992",
+                "agentExposed": true
               }
             ],
             "key": "49-EmptyMiniMaxMusic3LatentAudio"
@@ -11385,7 +11599,7 @@
               {
                 "title": "Seed",
                 "placeholder": "Seed",
-                "value": 1091783033014045,
+                "value": 5e-324,
                 "workflowPath": [
                   "52",
                   "inputs",
@@ -11663,6 +11877,7 @@
         "title": "音频音色转换",
         "description": "",
         "viewcomfyEndpoint": "",
+        "agentEnabled": false,
         "previewImages": [],
         "inputs": [
           {
@@ -12102,6 +12317,7 @@
         "title": "语音克隆",
         "description": "",
         "viewcomfyEndpoint": "",
+        "agentEnabled": false,
         "previewImages": [],
         "inputs": [
           {
@@ -12267,7 +12483,7 @@
               {
                 "title": "随机种",
                 "placeholder": "Seed",
-                "value": 5e-324,
+                "value": 2137222250,
                 "workflowPath": [
                   "5",
                   "inputs",
@@ -12645,6 +12861,7 @@
         "title": "图片高清放大",
         "description": "",
         "viewcomfyEndpoint": "",
+        "agentEnabled": true,
         "previewImages": [],
         "inputs": [
           {
@@ -12665,7 +12882,8 @@
                 "validations": {
                   "required": false
                 },
-                "key": "82-inputs-image"
+                "key": "82-inputs-image",
+                "agentExposed": true
               }
             ],
             "key": "82-LoadImage"
@@ -14071,6 +14289,7 @@
         "title": "视频音色转换",
         "description": "",
         "viewcomfyEndpoint": "",
+        "agentEnabled": false,
         "previewImages": [],
         "inputs": [
           {
@@ -14836,6 +15055,7 @@
         "title": "视频高清放大",
         "description": "",
         "viewcomfyEndpoint": "",
+        "agentEnabled": true,
         "previewImages": [],
         "inputs": [
           {
@@ -14858,7 +15078,8 @@
                 },
                 "key": "25-inputs-video",
                 "id": "e33cf37f-9192-40e4-aed6-b902d73f57c8",
-                "visibility": "active"
+                "visibility": "active",
+                "agentExposed": true
               },
               {
                 "title": "Force_rate",
@@ -16077,6 +16298,7 @@
         "title": "视频补帧",
         "description": "",
         "viewcomfyEndpoint": "",
+        "agentEnabled": true,
         "previewImages": [],
         "inputs": [
           {
@@ -16099,7 +16321,8 @@
                 },
                 "key": "49-inputs-video",
                 "id": "f5d597eb-6469-478b-8a96-ffa5de10c801",
-                "visibility": "active"
+                "visibility": "active",
+                "agentExposed": true
               },
               {
                 "title": "Force_rate",
@@ -16702,6 +16925,7 @@
         "title": "扩图",
         "description": "",
         "viewcomfyEndpoint": "",
+        "agentEnabled": true,
         "previewImages": [],
         "inputs": [
           {
@@ -16722,7 +16946,8 @@
                 "validations": {
                   "required": false
                 },
-                "key": "76-inputs-image"
+                "key": "76-inputs-image",
+                "agentExposed": true
               }
             ],
             "key": "76-LoadImage"
@@ -16746,7 +16971,8 @@
                   "required": true
                 },
                 "key": "102-inputs-left",
-                "id": "a583f34b-461f-47d8-8eaa-13eafaa5945b"
+                "id": "a583f34b-461f-47d8-8eaa-13eafaa5945b",
+                "agentExposed": true
               },
               {
                 "title": "上侧",
@@ -16764,7 +16990,8 @@
                   "required": true
                 },
                 "key": "102-inputs-top",
-                "id": "d15e1b00-268f-48bd-bf24-8f43effe3fa2"
+                "id": "d15e1b00-268f-48bd-bf24-8f43effe3fa2",
+                "agentExposed": true
               },
               {
                 "title": "右侧",
@@ -16782,7 +17009,8 @@
                   "required": true
                 },
                 "key": "102-inputs-right",
-                "id": "aa296400-9818-41ed-b70f-be5a23009cdd"
+                "id": "aa296400-9818-41ed-b70f-be5a23009cdd",
+                "agentExposed": true
               },
               {
                 "title": "下侧",
@@ -16800,7 +17028,8 @@
                   "required": true
                 },
                 "key": "102-inputs-bottom",
-                "id": "55864157-ba47-4845-a8e4-9c20efb72efa"
+                "id": "55864157-ba47-4845-a8e4-9c20efb72efa",
+                "agentExposed": true
               },
               {
                 "title": "Feathering",
@@ -17325,11 +17554,12 @@
                   "required": true
                 },
                 "key": "117-inputs-text",
-                "agentExposed": false
+                "agentExposed": false,
+                "visibility": "active"
               }
             ],
             "key": "117-CLIPTextEncode",
-            "visibility": "deleted"
+            "visibility": "active"
           }
         ],
         "id": "f0d88791b6ddc8"

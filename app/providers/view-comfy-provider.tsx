@@ -9,6 +9,8 @@ export interface IViewComfyBase {
     textOutputEnabled?: boolean;
     viewcomfyEndpoint?: string;
     showOutputFileName?: boolean;
+    /** 是否暴露给智能体调用；false = 隐藏，undefined/true = 可被智能体调用 */
+    agentEnabled?: boolean;
     previewImages: string[];
     inputs: IMultiValueInput[];
     advancedInputs: IMultiValueInput[];

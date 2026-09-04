@@ -5,7 +5,8 @@ export const dynamic = "force-dynamic";
 
 export async function GET() {
     try {
-        return NextResponse.json(await agentSettingsService.getSettings());
+        // 返回脱敏后的公开配置，绝不把 apiKey 明文下发到浏览器
+        return NextResponse.json(await agentSettingsService.getPublicSettings());
     } catch (error) {
         console.error("GET /api/agent/settings failed", error);
         return NextResponse.json({ error: "Failed to read settings" }, { status: 500 });
@@ -15,8 +16,9 @@ export async function GET() {
 export async function POST(request: NextRequest) {
     try {
         const body = await request.json();
-        const settings = await agentSettingsService.saveSettings(body ?? {});
-        return NextResponse.json(settings);
+        await agentSettingsService.saveSettings(body ?? {});
+        // 保存后同样只返回脱敏后的公开配置，避免 apiKey 明文回传
+        return NextResponse.json(await agentSettingsService.getPublicSettings());
     } catch (error) {
         console.error("POST /api/agent/settings failed", error);
         return NextResponse.json({ error: "Failed to save settings" }, { status: 500 });

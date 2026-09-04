@@ -16,6 +16,16 @@ export interface IAgentSettings {
     maxRounds?: number;
 }
 
+/** 返回给客户端的公开配置（不含 apiKey 明文，仅告知是否已配置） */
+export interface IAgentSettingsPublic {
+    baseUrl: string;
+    model: string;
+    temperature?: number;
+    maxTokens?: number;
+    maxRounds?: number;
+    hasApiKey: boolean;
+}
+
 const DEFAULT_SETTINGS: IAgentSettings = {
     baseUrl: "http://localhost:11434/v1",
     apiKey: "",
@@ -61,11 +71,28 @@ class AgentSettingsService {
         return this.load();
     }
 
+    /** 公开配置：绝不把 apiKey 明文返回给客户端，只返回是否已配置 */
+    async getPublicSettings(): Promise<IAgentSettingsPublic> {
+        const s = await this.load();
+        return {
+            baseUrl: s.baseUrl,
+            model: s.model,
+            temperature: s.temperature,
+            maxTokens: s.maxTokens,
+            maxRounds: s.maxRounds,
+            hasApiKey: Boolean(s.apiKey && s.apiKey.trim() !== ""),
+        };
+    }
+
     async saveSettings(settings: Partial<IAgentSettings>): Promise<IAgentSettings> {
         const current = await this.load();
+        // 空字符串视为“不修改”，避免前端提交空 key 时把已有 key 清空（防止误删，也防止把脱敏占位符写回）
+        const nextApiKey = typeof settings.apiKey === "string" && settings.apiKey.trim() !== ""
+            ? settings.apiKey
+            : current.apiKey;
         const next: IAgentSettings = {
             baseUrl: typeof settings.baseUrl === "string" ? settings.baseUrl : current.baseUrl,
-            apiKey: typeof settings.apiKey === "string" ? settings.apiKey : current.apiKey,
+            apiKey: nextApiKey,
             model: typeof settings.model === "string" ? settings.model : current.model,
             temperature: typeof settings.temperature === "number" ? settings.temperature : current.temperature,
             maxTokens: typeof settings.maxTokens === "number" ? settings.maxTokens : current.maxTokens,

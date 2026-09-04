@@ -19,6 +19,9 @@ export interface IProcessInfo {
 
 const LOG_LIMIT = 200;
 
+// 去除 ANSI 转义序列（颜色码、光标控制等），避免在网页日志里显示成 [32m/[0m 乱码
+const ANSI_ESCAPE_REGEX = /\u001b\[[0-9;?]*[a-zA-Z]/g;
+
 function comfyDir(): string {
     return process.env.COMFYUI_DIR || path.resolve(process.cwd(), "..", "ComfyUI");
 }
@@ -196,7 +199,7 @@ class ComfyProcessManager {
         this.children.set(backend.gpuIndex, child);
 
         const log = (chunk: Buffer) => {
-            const text = chunk.toString();
+            const text = chunk.toString().replace(ANSI_ESCAPE_REGEX, "");
             info.logs.push(text);
             if (info.logs.length > LOG_LIMIT) {
                 info.logs.splice(0, info.logs.length - LOG_LIMIT);

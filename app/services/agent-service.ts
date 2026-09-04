@@ -92,6 +92,15 @@ function parseToolArguments(raw: string): Record<string, unknown> {
     }
 }
 
+/** 拆出内联在 content 里的思考过程（Qwen 等模型用 </think> 结束思考段），避免泄漏到回复正文 */
+function splitReasoning(content: string): { content: string; reasoning?: string } {
+    const idx = content.indexOf("</think>");
+    if (idx === -1) return { content };
+    const reasoning = content.slice(0, idx).replace(/^\s*<think>\s*/, "").trim();
+    const rest = content.slice(idx + "</think>".length).trim();
+    return { content: rest, reasoning: reasoning || undefined };
+}
+
 function outputTypeFromMime(mime: string): IAgentOutputType {
     if (mime.startsWith("video/")) return "video";
     if (mime.startsWith("audio/")) return "audio";
@@ -184,12 +193,15 @@ async function callLlm(settings: IAgentSettings, messages: unknown[], tools: unk
     }
     const data = await res.json();
     const msg = data?.choices?.[0]?.message;
+    const rawContent = typeof msg?.content === "string" ? msg.content : "";
+    const { content, reasoning: inlineReasoning } = splitReasoning(rawContent);
     const reasoning =
         (typeof msg?.reasoning_content === "string" && msg.reasoning_content) ||
         (typeof msg?.reasoning === "string" && msg.reasoning) ||
+        inlineReasoning ||
         undefined;
     return {
-        content: msg?.content || "",
+        content,
         reasoning,
         toolCalls: msg?.tool_calls || [],
     };
@@ -197,6 +209,26 @@ async function callLlm(settings: IAgentSettings, messages: unknown[], tools: unk
 
 class AgentService {
     private cache = new Map<string, IAgentSession>();
+    /** 每个会话一条 Promise 链，串行化同一会话内的并发 chat 写入，避免消息覆盖/乱序 */
+    private sessionTails = new Map<string, Promise<void>>();
+
+    /** 对同一会话的写操作串行执行；不同会话互不影响 */
+    private async runExclusive<T>(sessionId: string, task: () => Promise<T>): Promise<T> {
+        const previous = this.sessionTails.get(sessionId) ?? Promise.resolve();
+        let release!: () => void;
+        const gate = new Promise<void>((resolve) => { release = resolve; });
+        const tail = previous.then(() => gate);
+        this.sessionTails.set(sessionId, tail);
+        await previous;
+        try {
+            return await task();
+        } finally {
+            release();
+            if (this.sessionTails.get(sessionId) === tail) {
+                this.sessionTails.delete(sessionId);
+            }
+        }
+    }
 
     private async load(id: string): Promise<IAgentSession | undefined> {
         if (this.cache.has(id)) return this.cache.get(id);
@@ -244,21 +276,13 @@ class AgentService {
 
     async deleteSession(id: string): Promise<boolean> {
         this.cache.delete(id);
+        this.sessionTails.delete(id);
         try {
             await fs.unlink(path.join(sessionsDir(), id + ".json"));
             return true;
         } catch {
             return false;
         }
-    }
-
-    async renameSession(id: string, title: string): Promise<boolean> {
-        const session = await this.load(id);
-        if (!session) return false;
-        session.title = title.trim() || "新会话";
-        session.updatedAt = Date.now();
-        await this.persist(session);
-        return true;
     }
 
     async resolveFilePath(kind: "uploads" | "outputs", name: string): Promise<string | undefined> {
@@ -420,6 +444,8 @@ class AgentService {
             const videoAttachment = savedAttachments.find((a) => a.type.startsWith("video/"));
             const audioAttachment = savedAttachments.find((a) => a.type.startsWith("audio/"));
 
+            const filledFileKeys = new Set<string>();
+
             let imageFile: File | undefined;
             if (imageAttachment) {
                 imageFile = await this.readUploadAsFile(imageAttachment.name);
@@ -428,12 +454,23 @@ class AgentService {
             }
             if (imageFile && fileKeys.image.length) {
                 viewComfyInputs.push({ key: fileKeys.image[0], value: imageFile });
+                filledFileKeys.add(fileKeys.image[0]);
             }
             if (videoAttachment && fileKeys.video.length) {
                 viewComfyInputs.push({ key: fileKeys.video[0], value: await this.readUploadAsFile(videoAttachment.name) });
+                filledFileKeys.add(fileKeys.video[0]);
             }
             if (audioAttachment && fileKeys.audio.length) {
                 viewComfyInputs.push({ key: fileKeys.audio[0], value: await this.readUploadAsFile(audioAttachment.name) });
+                filledFileKeys.add(fileKeys.audio[0]);
+            }
+
+            // 未显式提供的文件输入置空：否则会把工作流默认参数里的旧文件路径原样传给 ComfyUI，
+            // 触发 "Invalid image/video/audio file" 校验失败。置空后 setViewComfy 会断开对应加载节点。
+            for (const key of [...fileKeys.image, ...fileKeys.video, ...fileKeys.audio, ...fileKeys.mask]) {
+                if (!filledFileKeys.has(key)) {
+                    viewComfyInputs.push({ key, value: "" });
+                }
             }
 
             emit?.({ type: "status", phase: "generating", workflowTitle: skill.title });
@@ -445,7 +482,7 @@ class AgentService {
         }
     }
 
-    /** 发送消息并得到助手回复（ReAct 多步循环） */
+    /** 发送消息并得到助手回复（ReAct 多步循环）；同一会话并发时串行执行 */
     async chat(
         sessionId: string,
         text: string,
@@ -453,6 +490,18 @@ class AgentService {
         emit?: (event: IAgentProgressEvent) => void,
         signal?: AbortSignal
     ): Promise<IAgentMessage> {
+        return this.runExclusive(sessionId, () => this.performChat(sessionId, text, attachments, emit, signal));
+    }
+
+    private async performChat(
+        sessionId: string,
+        text: string,
+        attachments: { file: File }[],
+        emit?: (event: IAgentProgressEvent) => void,
+        signal?: AbortSignal
+    ): Promise<IAgentMessage> {
+        // 若在排队等待锁期间已被中断，直接退出，避免写入会话
+        throwIfAborted(signal);
         const session = await this.load(sessionId);
         if (!session) throw new Error("会话不存在");
 
@@ -540,15 +589,15 @@ class AgentService {
             emit?.({ type: "status", phase: "thinking" });
             const llm = await callLlm(settings, llmMessages, allTools, signal);
             const toolCalls = llm.toolCalls || [];
+            const thinking = (llm.reasoning || "").trim();
+            if (thinking) {
+                pushTrace({ title: "思考", detail: thinking });
+            }
             if (toolCalls.length === 0) {
                 assistantContent = llm.content;
                 break;
             }
             calledAnyTool = true;
-            const thinking = (llm.reasoning || "").trim() || (llm.content || "").trim();
-            if (thinking) {
-                pushTrace({ title: "思考", detail: thinking });
-            }
 
             llmMessages.push({ role: "assistant", content: llm.content || "", tool_calls: toolCalls });
             for (const tc of toolCalls) {

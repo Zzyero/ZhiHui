@@ -8,6 +8,7 @@ import { Bot, FileJson, Gauge, Images, Mic, SquareTerminal, Video, Wand2 } from 
 import Link from 'next/link';
 import { usePathname, useRouter } from "next/navigation";
 import { Suspense, useEffect } from "react";
+import { AgentUiProvider } from '@/components/pages/agent/agent-ui-provider';
 
 const settingsService = new SettingsService();
 
@@ -29,7 +30,7 @@ export default function ClientRootLayout({ children }: { children: React.ReactNo
           <div className="flex flex-1 overflow-hidden">
             <AppSidebar />
             <main className="flex-1 overflow-x-auto overflow-y-hidden ml-[var(--sidebar-width)]">
-              {children}
+              <AgentUiProvider>{children}</AgentUiProvider>
             </main>
           </div>
         </SidebarProvider>

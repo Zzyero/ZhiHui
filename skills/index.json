@@ -2,19 +2,81 @@
   "skills": [
     {
       "name": "image-prompt",
-      "description": "图片生成提示词规范：构图、光线、风格、画质、比例。",
+      "description": "图片生成/图像编辑通用提示词规范（总纲）：先判断场景，命中特定场景先 read_skill 对应场景 skill，再按规范写英文提示词。适用 Qwen-Image 文生图/图编辑。",
       "mediaType": "image",
+      "titleKeywords": [
+        "图像生成",
+        "图像编辑"
+      ],
       "file": "image-prompt.md"
     },
     {
+      "name": "ref2i-prompt",
+      "description": "MiniMax H3 参考生图（REF2I）提示词规范：六段式（subject_definitions/summary/retention_analysis/detailed_description）把视频模型当图像编辑器，生成静态编辑图。",
+      "mediaType": "image",
+      "titleKeywords": [
+        "参考生图"
+      ],
+      "file": "ref2i-prompt.md"
+    },
+    {
+      "name": "portrait-prompt",
+      "description": "人像/头像提示词规范：Scene/Subject 分段，五官年龄、姿态、布光、背景与构图。",
+      "mediaType": "image",
+      "onDemand": true,
+      "file": "portrait-prompt.md"
+    },
+    {
+      "name": "product-prompt",
+      "description": "产品/电商图提示词规范：主体+背景、布光、材质、卖点与视角构图。",
+      "mediaType": "image",
+      "onDemand": true,
+      "file": "product-prompt.md"
+    },
+    {
+      "name": "poster-prompt",
+      "description": "海报/活动主视觉提示词规范：主视觉、文字排版留位、配色与信息层级。",
+      "mediaType": "image",
+      "onDemand": true,
+      "file": "poster-prompt.md"
+    },
+    {
+      "name": "social-prompt",
+      "description": "社媒配图/首图提示词规范：抓眼标题位、竖版构图、风格与情绪。",
+      "mediaType": "image",
+      "onDemand": true,
+      "file": "social-prompt.md"
+    },
+    {
+      "name": "comic-prompt",
+      "description": "漫画/插画/游戏素材提示词规范：画风线条、分镜、角色一致与留白。",
+      "mediaType": "image",
+      "onDemand": true,
+      "file": "comic-prompt.md"
+    },
+    {
+      "name": "infographic-prompt",
+      "description": "信息图/教育视觉提示词规范：图表类型、信息层级、配色与版面。",
+      "mediaType": "image",
+      "onDemand": true,
+      "file": "infographic-prompt.md"
+    },
+    {
+      "name": "appui-prompt",
+      "description": "App/Web 界面视觉提示词规范：页面类型、设备形态、UI 风格与品牌色。",
+      "mediaType": "image",
+      "onDemand": true,
+      "file": "appui-prompt.md"
+    },
+    {
       "name": "video-prompt",
-      "description": "视频生成提示词规范：镜头运动命令、时长、分辨率。",
+      "description": "MiniMax H3 视频提示词规范：把一句话/故事/对白整理成可直接生成的中文 H3 提示词（镜头运动、参考图标注、对白口型、防错约束）。",
       "mediaType": "video",
       "file": "video-prompt.md"
     },
     {
       "name": "music-prompt",
-      "description": "音乐生成提示词规范：流派、情绪、器乐、歌词结构标签。",
+      "description": "MiniMax Music 3 音乐提示词规范：把一句话/歌词整理成结构化 Caption（全局元数据/人声细节/编曲时间线），歌词段落标签作结构指令。",
       "mediaType": "audio",
       "titleKeywords": [
         "音乐",

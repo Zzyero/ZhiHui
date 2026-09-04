@@ -8,6 +8,8 @@ export interface IPromptSkill {
   description: string;
   mediaType: PromptMediaType;
   titleKeywords?: string[];
+  /** 仅按需（read_skill 指定名称）读取，不参与"工作流自动挂载" */
+  onDemand?: boolean;
   file: string;
 }
 
@@ -45,7 +47,8 @@ export async function readSkill(name: string): Promise<string | undefined> {
  * 规则：同 mediaType 内，优先匹配 titleKeywords，其次取无关键词的默认 skill。
  */
 export function getSkillForWorkflow(mediaType: string, title: string, skills: IPromptSkill[]): IPromptSkill | undefined {
-  const candidates = skills.filter((s) => s.mediaType === mediaType);
+  // onDemand 的场景 skill 不自动挂载，只靠 read_skill 按名读取
+  const candidates = skills.filter((s) => s.mediaType === mediaType && !s.onDemand);
   if (candidates.length === 0) return undefined;
   const t = title.toLowerCase();
   const byKeyword = candidates.find((s) => s.titleKeywords?.some((k) => t.includes(k.toLowerCase())));

@@ -7,12 +7,13 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Settings } from "lucide-react"
-import type { IAgentSettings } from "@/app/services/agent-settings-service"
+import type { IAgentSettingsPublic } from "@/app/services/agent-settings-service"
 
 export default function AgentSettingsCard() {
     const [baseUrl, setBaseUrl] = React.useState("")
     const [apiKey, setApiKey] = React.useState("")
     const [model, setModel] = React.useState("")
+    const [hasApiKey, setHasApiKey] = React.useState(false)
     const [saving, setSaving] = React.useState(false)
 
     React.useEffect(() => {
@@ -20,10 +21,11 @@ export default function AgentSettingsCard() {
             try {
                 const res = await fetch("/api/agent/settings")
                 if (!res.ok) return
-                const data: IAgentSettings = await res.json()
+                const data: IAgentSettingsPublic = await res.json()
                 setBaseUrl(data.baseUrl || "")
-                setApiKey(data.apiKey || "")
                 setModel(data.model || "")
+                // apiKey 不再下发明文，只显示“已配置”状态
+                setHasApiKey(Boolean(data.hasApiKey))
             } catch {
                 // 读取失败时保持空值
             }
@@ -63,7 +65,13 @@ export default function AgentSettingsCard() {
                     </div>
                     <div className="grid gap-1.5">
                         <Label htmlFor="agent-api-key">API Key（本地可留空）</Label>
-                        <Input id="agent-api-key" type="password" placeholder="sk-..." value={apiKey} onChange={(e) => setApiKey(e.target.value)} />
+                        <Input
+                            id="agent-api-key"
+                            type="password"
+                            placeholder={hasApiKey ? "已配置（留空保持不变）" : "sk-..."}
+                            value={apiKey}
+                            onChange={(e) => setApiKey(e.target.value)}
+                        />
                     </div>
                     <div className="grid gap-1.5">
                         <Label htmlFor="agent-model">模型名</Label>
